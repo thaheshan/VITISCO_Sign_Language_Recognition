@@ -18,5 +18,44 @@ import time
 
 
 
+#declare a variable to give the camera options
+cap = cv2.VideoCapture(0)
+
+#declare a variable with the hand count for every single frame to be counted there
+detector = HandDetector(maxHands=2)
+
+
+
+
+#here i imported the needed files for the gesture recongnitions
+#i imported the well-trained model with it's suitable lables for the gesture recognition
+# A well-trained keras recogition model imported here with it's suitable labels
+classifier = Classifier()
+
+
+#giving padding size aroung the bundary square wth odd set and image size
+#capture image count
+offset = 20
+imgSize = 300
+counter = 0
+
+
+
+# Frame rate control
+#giving value for maximum fps per frame for it's smoothnessqqq
+fps_limit = 30  # Limit to 30 fps for smoother performance
+
+
+#a time stamp for the previous frames for the frame rate cotrol
+prev_time = 0
+
+
+
+
+
+
+# Release resources
+cap.release()
+cv2.destroyAllWindows()
 
 
