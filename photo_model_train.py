@@ -35,7 +35,7 @@ classifier = Classifier()
 
 #giving padding size aroung the bundary square wth odd set and image size
 #capture image count
-offset = 40
+offset = 20
 imgSize = 300
 counter = 0
 
