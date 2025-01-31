@@ -7,6 +7,7 @@ from cvzone.HandTrackingModule import HandDetector
 
 #here i imported numpy library, which is for create a white background and mainpulate the matrices for resizing the images automatically 
 #while tracing the hands
+
 import numpy as np
 
 #importing time for showing unique time differences between capturing every images
@@ -18,6 +19,10 @@ import math
 # Initialize the video capture (0 for default camera)
 # for additional cameras we can use 1 or 2
 cap = cv2.VideoCapture(0)
+
+
+#hii, this is the main function for capturing the images from the camera
+
 
 # Check if the camera is opened correctly
 if not cap.isOpened():
