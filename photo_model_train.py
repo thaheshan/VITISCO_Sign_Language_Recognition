@@ -58,7 +58,7 @@ while True:
 
  # Handle unsuccessful frame capture
   if not success:
-      print("Failed to capture image from webcam")
+      print("Failed to capture image from webcam here!")
       break
      
     #stores the copy of output from the every frames for the detection of the images
