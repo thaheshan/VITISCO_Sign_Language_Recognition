@@ -56,3 +56,17 @@ def media_pipe_detection_model(image, model):
        image.flags.writeable = True  # Re-enable writing
        image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)  # Convert RGB back to BGR
        return image, results
+
+
+
+# Define constants
+DATA_COLLECTION_PATH = os.path.join('MP_Data')
+data_actions = np.array(["thanks", "hello", "I_love_you"])
+no_of_frame_for_data = 30
+sequence_length = 30
+
+
+
+
+cap.release()
+cv2.destroyAllWindows()
