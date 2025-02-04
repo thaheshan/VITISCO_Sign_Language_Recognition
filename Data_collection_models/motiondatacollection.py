@@ -39,6 +39,7 @@ mp_drawing = mp.solutions.drawing_utils
 
 
 def media_pipe_detection_model(image, model):
+       
        """
     Perform detection using Mediapipe's holistic model.
     Args:
@@ -48,3 +49,10 @@ def media_pipe_detection_model(image, model):
     Returns:
         Processed BGR image and detection results.
     """
+    
+       image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+       image.flags.writeable = False  # Improve performance by disabling write
+       results = model.process(image)  # Perform detection
+       image.flags.writeable = True  # Re-enable writing
+       image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)  # Convert RGB back to BGR
+       return image, results
