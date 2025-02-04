@@ -32,3 +32,19 @@ import time
 #2.convert the hand keypoints over time into sequences frames per every gesture ina time sequence 
 #3.LSTM model training with the extracted dataset (train a LSTM model to learn and  classify gestures based on their motion patterns)
 #4.build it accuracy with changing the components values (example epoches)
+
+# Import Mediapipe holistic and drawing utilities
+mp_holistic = mp.solutions.holistic
+mp_drawing = mp.solutions.drawing_utils
+
+
+def media_pipe_detection_model(image, model):
+       """
+    Perform detection using Mediapipe's holistic model.
+    Args:
+        image: The input BGR image.
+        model: The Mediapipe holistic model instance.
+
+    Returns:
+        Processed BGR image and detection results.
+    """
