@@ -31,7 +31,7 @@ detector = HandDetector(maxHands=2)
 #i imported the well-trained model with it's suitable lables for the gesture recognition
 # A well-trained keras recogition model imported here with it's suitable labels
 classifier = Classifier("models/keras_model.h5", "models/labels.txt")
-classifier = Classifier("models/keras_model.h5", "models/labels.txt")
+
 
 
 
