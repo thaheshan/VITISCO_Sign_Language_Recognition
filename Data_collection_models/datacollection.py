@@ -41,7 +41,7 @@ image_size = 300
 counter = 0
 
 # Folder to save the cropped images
-folder = r"../Sinhala Letters/eb"
+folder = r"../Sinhala Letters//sample"
 
 # Start video capture loop
 #until we give the exit requirement input it will run to capture the images
@@ -57,6 +57,9 @@ while True:
 
         print("Failed to capture image, skipping this frame...")
         continue  # Skip this loop iteration if the frame isn't captured properly
+
+        # Apply mirror effect
+    image = cv2.flip(image, 1)
 
     # Resize the image for faster processing (optional)
     image = cv2.resize(image, (640, 480))
