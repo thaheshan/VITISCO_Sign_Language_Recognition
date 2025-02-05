@@ -41,7 +41,7 @@ image_size = 300
 counter = 0
 
 # Folder to save the cropped images
-folder = r"C:\Users\Thahe\Desktop\Sign System Detection\Data\thank you"
+folder = r"../Sinhala Letters/eb"
 
 # Start video capture loop
 #until we give the exit requirement input it will run to capture the images
