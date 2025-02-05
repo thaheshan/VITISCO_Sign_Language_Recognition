@@ -58,8 +58,7 @@ while True:
         print("Failed to capture image, skipping this frame...")
         continue  # Skip this loop iteration if the frame isn't captured properly
 
-        # Apply mirror effect
-    image = cv2.flip(image, 1)
+
 
     # Resize the image for faster processing (optional)
     image = cv2.resize(image, (640, 480))
@@ -68,42 +67,46 @@ while True:
     hands, image = detector.findHands(image)
 
     #checking if hands mean, if true
-    
     if hands:
-        hand = hands[0]
-        #processsing the detected hand, with x axis , y axis and it's height and weight.
+        # Initialize bounding box limits with the first detected hand
+        x_min, y_min, x_max, y_max = hands[0]['bbox'][0], hands[0]['bbox'][1], hands[0]['bbox'][0] + hands[0]['bbox'][2], hands[0]['bbox'][1] + hands[0]['bbox'][3]
 
-        x, y, w, h = hand['bbox']  # Bounding box coordinates (x, y, width, height)
+    
+    # Loop through all detected hands and expand the bounding box
+        for hand in hands:
+            x, y, w, h = hand['bbox']
+            x_min = min(x_min, x)
+            y_min = min(y_min, y)
+            x_max = max(x_max, x + w)
+            y_max = max(y_max, y + h)
 
-        # Create a white image to place the resized hand image
-        #creating a white background, in the size of 300*300 pixels.
+        # Add offset to make sure hands are not cut off
+        x_min, y_min = max(0, x_min - offset), max(0, y_min - offset)
+        x_max, y_max = min(image.shape[1], x_max + offset), min(image.shape[0], y_max + offset)
+
+        # Crop the combined hand region
+        image_crop = image[y_min:y_max, x_min:x_max]
+
+        # Create a white image background (300x300 pixels)
         image_white = np.ones((image_size, image_size, 3), np.uint8) * 255
 
-        # Crop the hand image from the frame with boundary checks
-        #crop and re-size the hand region here with it's height abd weight and it's frame boundaries
-        y1, y2 = max(0, y - offset), min(image.shape[0], y + h + offset)
-        x1, x2 = max(0, x - offset), min(image.shape[1], x + w + offset)
-        image_crop = image[y1:y2, x1:x2]
-        image_crop_shape = image_crop.shape
+        # Aspect ratio calculation
+        aspect_ratio = (y_max - y_min) / (x_max - x_min)
 
-
-        aspect_ratio = h / w  # Calculate aspect ratio of the hand region
-
-        if aspect_ratio > 1:  # If the hand is taller than it is wide
-            scale = image_size / h
-            width_cal = math.ceil(scale * w)
+        if aspect_ratio > 1:  # Taller than wide
+            scale = image_size / (y_max - y_min)
+            width_cal = math.ceil(scale * (x_max - x_min))
             image_resized = cv2.resize(image_crop, (width_cal, image_size))
             width_gap = math.ceil((image_size - width_cal) / 2)
             image_white[:, width_gap:width_cal + width_gap] = image_resized
-
-        else:  # If the hand is wider than it is tall
-            scale = image_size / w
-            height_cal = math.ceil(scale * h)
+        else:  # Wider than tall
+            scale = image_size / (x_max - x_min)
+            height_cal = math.ceil(scale * (y_max - y_min))
             image_resized = cv2.resize(image_crop, (image_size, height_cal))
             height_gap = math.ceil((image_size - height_cal) / 2)
             image_white[height_gap:height_cal + height_gap, :] = image_resized
 
-        # Display the cropped hand and the resized hand on a white background
+        # Display the cropped combined hand region
         cv2.imshow('Cropped Image', image_crop)
         cv2.imshow('Resized Image', image_white)
 
@@ -122,7 +125,7 @@ while True:
         print(f"Saved {counter} images at {filename}")
 
     # If 'Esc' key is pressed, exit the loop
-    if key == 27:  # Escape key to exit
+    if key == ord('q'):  # Escape key to exit
         break
 
 # Release the video capture and close all OpenCV windows
