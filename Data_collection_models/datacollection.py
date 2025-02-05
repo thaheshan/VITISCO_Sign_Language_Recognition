@@ -2,7 +2,7 @@
 #here i used cv2 , which means open cv library for image and video processing to collect the data sets
 import cv2
 
-#in this opencv module i imported the handtracking library for hand detection and tracking the hand anywhere in the opening screen
+#in this opencv module i imported the handtracking library for hand detection and tracking the hand anywhere in the opening screen.
 from cvzone.HandTrackingModule import HandDetector
 
 #here i imported numpy library, which is for create a white background and mainpulate the matrices for resizing the images automatically 
