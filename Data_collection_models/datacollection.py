@@ -125,7 +125,7 @@ while True:
         print(f"Saved {counter} images at {filename}")
 
     # If 'Esc' key is pressed, exit the loop
-    if key == ord('q'):  # Escape key to exit
+    if key == ord(1):  # Escape key to exit
         break
 
 # Release the video capture and close all OpenCV windows
