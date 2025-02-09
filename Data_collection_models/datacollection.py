@@ -41,7 +41,7 @@ image_size = 300
 counter = 0
 
 # Folder to save the cropped images
-folder = r"../Sinhala Letters//sample"
+folder = r"C:\Users\zuhar\OneDrive\Desktop\Collected tamil letters\oona"
 
 # Start video capture loop
 #until we give the exit requirement input it will run to capture the images
