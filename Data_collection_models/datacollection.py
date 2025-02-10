@@ -39,17 +39,11 @@ detector = HandDetector(maxHands=2)
 offset = 20
 image_size = 300
 counter = 0
+total_images=350 
 
 # Folder to save the cropped images
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-folder = r"C:\Users\zuhar\OneDrive\Desktop\Collected tamil letters\oona"
-=======
+
 folder = r"C:\Users\AYMAN BROS\Desktop\Test git"
->>>>>>> Stashed changes
-=======
-folder = r"C:\Users\AYMAN BROS\Desktop\Test git"
->>>>>>> Stashed changes
 
 # Start video capture loop
 #until we give the exit requirement input it will run to capture the images
@@ -125,15 +119,62 @@ while True:
     key = cv2.waitKey(1)
 
     # If 's' key is pressed, save the cropped hand image to the specified folder
+    # If 's' key is pressed, start capturing 400 images automatically
     if key == ord('s') and hands:
-        counter += 1
-        # Save image with a better naming convention including timestamp
-        filename = f"{folder}/Image_{time.time():.6f}.jpg"  # More precise timestamp
-        cv2.imwrite(filename, image_white)
-        print(f"Saved {counter} images at {filename}")
+        print("Starting image capture...")
+
+        for i in range(total_images):  # <-- Make sure this line is properly aligned
+            success, image = cap.read()
+            if not success:
+                print(f"Skipping frame {i + 1}")
+                continue  
+
+            hands, image = detector.findHands(image)
+            if hands:
+                x_min, y_min, x_max, y_max = hands[0]['bbox'][0], hands[0]['bbox'][1], hands[0]['bbox'][0] + hands[0]['bbox'][2], hands[0]['bbox'][1] + hands[0]['bbox'][3]
+
+                for hand in hands:
+                    x, y, w, h = hand['bbox']
+                    x_min = min(x_min, x)
+                    y_min = min(y_min, y)
+                    x_max = max(x_max, x + w + w)
+                    y_max = max(y_max, y + h + h)
+
+                x_min, y_min = max(0, x_min - offset), max(0, y_min - offset)
+                x_max, y_max = min(image.shape[1], x_max + offset), min(image.shape[0], y_max + offset)
+
+                image_crop = image[y_min:y_max, x_min:x_max]
+                image_white = np.ones((image_size, image_size, 3), np.uint8) * 255
+
+                aspect_ratio = (y_max - y_min) / (x_max - x_min)
+
+                if aspect_ratio > 1:
+                    scale = image_size / (y_max - y_min)
+                    width_cal = math.ceil(scale * (x_max - x_min))
+                    image_resized = cv2.resize(image_crop, (width_cal, image_size))
+                    width_gap = math.ceil((image_size - width_cal) / 2)
+                    image_white[:, width_gap:width_cal + width_gap] = image_resized
+                else:
+                    scale = image_size / (x_max - x_min)
+                    height_cal = math.ceil(scale * (y_max - y_min))
+                    image_resized = cv2.resize(image_crop, (image_size, height_cal))
+                    height_gap = math.ceil((image_size - height_cal) / 2)
+                    image_white[height_gap:height_cal + height_gap, :] = image_resized
+
+                filename = f"{folder}/Image_{time.time():.6f}.jpg"
+                cv2.imwrite(filename, image_white)
+                counter += 1
+                print(f"Saved {counter}/{total_images} images at {filename}")
+
+                time.sleep(0.05)  # Small delay to avoid overloading CPU
+
+            if counter >= total_images:
+                print("Image capture complete!")
+                break  # Stops the loop after reaching 400 images
+
 
     # If 'Esc' key is pressed, exit the loop
-    if key == ord(1):  # Escape key to exit
+    if key == 27:  # Escape key to exit
         break
 
 # Release the video capture and close all OpenCV windows
