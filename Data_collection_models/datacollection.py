@@ -42,7 +42,11 @@ counter = 0
 
 # Folder to save the cropped images
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 folder = r"C:\Users\zuhar\OneDrive\Desktop\Collected tamil letters\oona"
+=======
+folder = r"C:\Users\AYMAN BROS\Desktop\Test git"
+>>>>>>> Stashed changes
 =======
 folder = r"C:\Users\AYMAN BROS\Desktop\Test git"
 >>>>>>> Stashed changes
