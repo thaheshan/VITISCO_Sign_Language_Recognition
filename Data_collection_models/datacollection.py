@@ -33,7 +33,7 @@ if not cap.isOpened():
 
 # Initialize the HandDetector with the option to detect one hand or two hands
 #define the hand detection count per in one frame
-detector = HandDetector(maxHands=2)
+detector = HandDetector(maxHands=4,  detectionCon=0.8, minTrackCon=0.6)
 
 # Parameters for image processing
 offset = 20
@@ -70,21 +70,34 @@ while True:
 
     #checking if hands mean, if true
     if hands:
-        # Initialize bounding box limits with the first detected hand
-        x_min, y_min, x_max, y_max = hands[0]['bbox'][0], hands[0]['bbox'][1], hands[0]['bbox'][0] + hands[0]['bbox'][2], hands[0]['bbox'][1] + hands[0]['bbox'][3]
 
-    
-    # Loop through all detected hands and expand the bounding box
+        # Initialize bounding box limits with first detected hand
+        x_min, y_min, x_max, y_max = float('inf'), float('inf'), 0, 0
+
         for hand in hands:
-            x, y, w, h = hand['bbox']
-            x_min = min(x_min, x)
-            y_min = min(y_min, y)
-            x_max = max(x_max, x + w + w)
-            y_max = max(y_max, y + h + h)
+            if "lmList" in hand:
+                lmList = hand['lmList']
+                handType = hand["type"]
 
-        # Add offset to make sure hands are not cut off
+                for lm in lmList:
+                    cv2.circle(image, (lm[0], lm[1]), 5, (0, 255, 0), -1)
+
+                # Update bounding box for each detected hand
+                x, y, w, h = hand['bbox']
+                x_min, y_min = min(x_min, x), min(y_min, y)
+                x_max, y_max = max(x_max, x + w), max(y_max, y + h)
+
+        # Expand bounding box slightly to ensure hands merge properly
         x_min, y_min = max(0, x_min - offset), max(0, y_min - offset)
         x_max, y_max = min(image.shape[1], x_max + offset), min(image.shape[0], y_max + offset)
+
+        # Crop the combined hand region
+        image_crop = image[y_min:y_max, x_min:x_max]
+
+        # Convert to grayscale & apply Gaussian blur
+        gray = cv2.cvtColor(image_crop, cv2.COLOR_BGR2GRAY)
+        blurred = cv2.GaussianBlur(gray, (5, 5), 0)
+
 
         # Crop the combined hand region
         image_crop = image[y_min:y_max, x_min:x_max]
