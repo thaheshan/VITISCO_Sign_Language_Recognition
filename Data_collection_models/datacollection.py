@@ -61,7 +61,7 @@ while True:
 
 
     # Resize the image for faster processing (optional)
-    image = cv2.resize(image, (640, 480))
+    image = cv2.resize(image, (940, 620))
 
     # Find hands in the captured image
     hands, image = detector.findHands(image)
@@ -77,8 +77,8 @@ while True:
             x, y, w, h = hand['bbox']
             x_min = min(x_min, x)
             y_min = min(y_min, y)
-            x_max = max(x_max, x + w)
-            y_max = max(y_max, y + h)
+            x_max = max(x_max, x + w + w)
+            y_max = max(y_max, y + h + h)
 
         # Add offset to make sure hands are not cut off
         x_min, y_min = max(0, x_min - offset), max(0, y_min - offset)
