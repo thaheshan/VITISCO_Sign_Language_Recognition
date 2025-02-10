@@ -41,7 +41,11 @@ image_size = 300
 counter = 0
 
 # Folder to save the cropped images
+<<<<<<< Updated upstream
 folder = r"C:\Users\zuhar\OneDrive\Desktop\Collected tamil letters\oona"
+=======
+folder = r"C:\Users\AYMAN BROS\Desktop\Test git"
+>>>>>>> Stashed changes
 
 # Start video capture loop
 #until we give the exit requirement input it will run to capture the images
