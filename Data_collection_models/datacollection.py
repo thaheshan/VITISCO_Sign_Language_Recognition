@@ -39,11 +39,11 @@ detector = HandDetector(maxHands=4,  detectionCon=0.8, minTrackCon=0.6)
 offset = 20
 image_size = 300
 counter = 0
-total_images=350 
+total_images=300 
 
 # Folder to save the cropped images
 
-folder = r"C:\Users\AYMAN BROS\Desktop\Test git"
+folder = r"C:\Users\zuhar\OneDrive\Desktop\Collected tamil letters\kou"
 
 # Start video capture loop
 #until we give the exit requirement input it will run to capture the images
