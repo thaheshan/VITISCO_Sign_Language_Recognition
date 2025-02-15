@@ -45,6 +45,8 @@ total_images=300
 
 folder = r"C:\Users\zuhar\OneDrive\Desktop\Collected tamil letters\kou"
 
+folder = r"E:\Studiezzz\2nd Year\Sem 2\SDGP\English Letters\T"
+
 # Start video capture loop
 #until we give the exit requirement input it will run to capture the images
 while True:
@@ -121,7 +123,7 @@ while True:
             height_gap = math.ceil((image_size - height_cal) / 2)
             image_white[height_gap:height_cal + height_gap, :] = image_resized
 
-        # Display the cropped combined hand region
+        # Display the cropped combined hand region~
         cv2.imshow('Cropped Image', image_crop)
         cv2.imshow('Resized Image', image_white)
 
