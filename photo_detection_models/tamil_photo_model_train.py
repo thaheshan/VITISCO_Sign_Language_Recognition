@@ -30,7 +30,7 @@ detector = HandDetector(maxHands=2)
 #here i imported the needed files for the gesture recongnitions
 #i imported the well-trained model with it's suitable lables for the gesture recognition
 # A well-trained keras recogition model imported here with it's suitable labels
-classifier = Classifier("../keras_model.h5", "../labels.txt")
+classifier = Classifier("../sinhala data trained model/keras_model.h5", "../labels.txt")
 
 
 
