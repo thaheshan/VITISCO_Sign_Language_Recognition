@@ -25,10 +25,14 @@ def create_kalman_filter():
     kf.H = np.array([[1, 0, 0, 0],
                      [0, 1, 0, 0]])  # Measurement Function
 
-    kf.P *= 1000  # Covariance
-    kf.R *= 10  # Measurement Noise
-    kf.Q *= 0.1  # Process Noise
+    kf.P *= 500  # Covariance
+    kf.R *= 5  # Measurement Noise
+    kf.Q *= np.eye(4)* 0.1  # Process Noise
     return kf
+#update exponential moving for sommether predictions in allover landmarks, when overlapping
+
+alpha = 0.6
+ema_positions =  [None]*21
 
 # Create Kalman Filters for 21 hand landmarks
 kalman_filters = [create_kalman_filter() for _ in range(21)]
@@ -64,14 +68,22 @@ while True:
                 for i, lm in enumerate(lmList):
                     x, y = lm[0], lm[1]
 
-                    # Predict using Kalman Filter
-                    kalman_filters[i].predict()
+                       # Kalman Prediction & Update
+                    kf = kalman_filters[i]
+                    kf.predict()
                     z = np.array([[x], [y]])
-                    kalman_filters[i].update(z)
+                    kf.update(z)
 
-                    # Get Estimated Position
-                    x_est, y_est = int(kalman_filters[i].x[0]), int(kalman_filters[i].x[1])
+                    x_est, y_est = int(kf.x[0]), int(kf.x[1])
 
+                    # Apply EMA Smoothing
+                    if ema_positions[i] is None:
+                        ema_positions[i] = (x_est, y_est)
+                    else:
+                        ema_x = int(alpha * x_est + (1 - alpha) * ema_positions[i][0])
+                        ema_y = int(alpha * y_est + (1 - alpha) * ema_positions[i][1])
+                        ema_positions[i] = (ema_x, ema_y)
+                        
                     # Draw Predicted (Red) or Detected (Green) Landmarks
                     if hand['type'] == "Right" and i == 0:  # If occluded, use prediction
                         cv2.circle(image, (x_est, y_est), 5, (0, 0, 255), -1)  # Red = Predicted
