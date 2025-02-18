@@ -14,32 +14,32 @@ const QuizApp = () => {
   const [selectedAnswer, setSelectedAnswer] = useState(null);
 
   const questions = [
-    {
+    /*{
       id: 1,
       title: 'Time Consuming',
       options: [
-        { id: 'A', text: 'HI', icon: require('./assets/zu1.jpg') },
-        { id: 'B', text: 'I LOVE YOU', icon: require('./assets/zu2.jpg') },
-        { id: 'C', text: 'Hallo', icon: require('./assets/zu3.jpg') },
+        { id: 'A', text: 'A', icon: require('./assets/zu1.jpg') },
+        { id: 'B', text: 'B', icon: require('./assets/zu2.jpg') },
+        { id: 'C', text: 'C', icon: require('./assets/zu3.jpg') },
       ],
-    },
+    },*/
     {
       id: 2,
       title: '',
-      image: require('./assets/zu1.jpg'),
+      image: require('./assets/download.jpeg'),
       options: [
-        { id: 'A', text: 'Friend' },
-        { id: 'B', text: 'நண்பர்' },
-        { id: 'C', text: 'Yaaluwa' },
+        { id: 'A', text: 'A' },
+        { id: 'B', text: 'C' },
+        { id: 'C', text: 'B' },
       ],
     },
     {
       id: 3,
-      title: 'select the correct sign for நண்பர்',
+      title: 'select the correct sign for B',
       options: [
+        { image: require('./assets/zu2.jpg') },
         { image: require('./assets/zu1.jpg') },
-        { image: require('./assets/zu1.jpg') },
-        { image: require('./assets/zu1.jpg') },
+        { image: require('./assets/zu3.jpg') },
         { image: require('./assets/zu1.jpg') },
       ],
       gridView: true,
