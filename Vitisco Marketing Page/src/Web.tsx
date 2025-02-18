@@ -38,19 +38,17 @@ const VitiscoLanding = () => {
       {/* Hero Section */}
       <header className="bg-gray-200 sticky top-0 z-50 shadow-lg py-1">
         <div className="px-4 lg:px-8 flex items-center justify-between cursor-pointer">
-
           <div className="flex items-center gap-4">
             <img
               src="/Images/vitisco logo PNG.png"
               alt="vitisco"
-              className="lg:w-20"
+              className="w-12 md:w-16 lg:w-20"
             />
-            <h1 className="text-2xl font-bold text-[#B2B5E7]-200 tracking-[10px] italic">
+            <h1 className="text-lg md:text-2xl font-bold text-[#B2B5E7]-100 tracking-wider italic">
               VITISCO
             </h1>
           </div>
-
-          <div className="flex items-center gap-x-16">
+          <div className="hidden md:flex items-center gap-x-16">
             <h1 className="text-sm font-bold text-gray-600">
               SITE LANGUAGE: ENGLISH
             </h1>
@@ -58,14 +56,14 @@ const VitiscoLanding = () => {
         </div>
       </header>
 
-      <section className="py-20 w-[1500px] mx-auto">
+      <section className="py-20 max-w-7xl mx-auto px-4">
         <div className="px-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
             <div className="transform hover:scale-105 transition-transform duration-300">
               <img
                 src="\Images\vitisco logo PNG.png"
                 alt="Community interaction"
-                className="rounded-2xl shadow-2xl w-[400px] mx-auto"
+                className="rounded-2xl shadow-2xl w-full max-w-md mx-auto"
               />
             </div>
             <div>
@@ -93,7 +91,7 @@ const VitiscoLanding = () => {
       </section>
 
       {/* Alternating Sections */}
-      <section className="py-20 w-[1500px] mx-auto">
+      <section className="py-20 max-w-7xl mx-auto px-4">
         {/* First Section - Image Right */}
         <div className="w-full px-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
@@ -123,7 +121,7 @@ const VitiscoLanding = () => {
               <img
                 src="/Images/sgn.jpg"
                 alt="Student learning sign language"
-                className="rounded-2xl shadow-2xl w-[600px] m-auto"
+                className="rounded-2xl shadow-2xl w-full max-w-md mx-auto"
               />
             </div>
           </div>
@@ -158,7 +156,7 @@ const VitiscoLanding = () => {
               <img
                 src="/Images/community.jpeg"
                 alt="Community interaction"
-                className="rounded-2xl shadow-2xl w-[600px]"
+                className="rounded-2xl shadow-2xl w-full max-w-md mx-auto"
               />
             </div>
             <div>
@@ -232,7 +230,7 @@ const VitiscoLanding = () => {
               <img
                 src="/Images/dashboard.jpg"
                 alt="Progress tracking dashboard"
-                className="rounded-2xl shadow-2xl w-[600px] mx-auto"
+                className="rounded-2xl shadow-2xl w-full max-w-md mx-auto"
               />
             </div>
           </div>
@@ -266,7 +264,7 @@ const VitiscoLanding = () => {
               <img
                 src="/Images/vr.jpg"
                 alt="Progress tracking dashboard"
-                className="rounded-2xl shadow-2xl w-[600px] mx-auto"
+                className="rounded-2xl shadow-2xl w-full max-w-md mx-auto"
               />
             </div>
             <div>
@@ -322,29 +320,30 @@ const VitiscoLanding = () => {
       </section>
 
       {/* Features Section */}
-      <section className="py-20 bg-gray-200 mt-12">
+      <section className="py-10 bg-gray-200 mt-12">
         <div className="px-4">
-          <h2 className="text-4xl font-bold text-center text-gray-800 mb-16">
-            Why Want To Choose{" "}
-            <span className="text-purple-800 tracking-[5px] italic">
+          <h2 className="text-2xl md:text-4xl font-bold text-center text-gray-800 mb-8 md:mb-16">
+            Why Choose{" "}
+            <span className="text-purple-800 tracking-widest italic">
               VITISCO
             </span>
             ?
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {features.map((feature, index) => (
               <Card
                 key={index}
-                className={`cursor-pointer border-none shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 ${feature.bgColor}`}
+                className={`border-none shadow-lg hover:shadow-xl transition-all duration-300 
+                                       transform hover:-translate-y-1 ${feature.bgColor}`}
               >
                 <CardHeader>
                   <div className="flex justify-center mb-4">{feature.icon}</div>
-                  <CardTitle className="text-center text-xl font-semibold text-gray-800">
+                  <CardTitle className="text-center text-lg md:text-xl font-semibold text-gray-800">
                     {feature.title}
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-center text-gray-600">
+                  <p className="text-center text-gray-600 text-sm md:text-base">
                     {feature.description}
                   </p>
                 </CardContent>
@@ -377,12 +376,24 @@ const VitiscoLanding = () => {
             <div>
               <p className="text-2xl font-bold">Developers</p>
               <br />
-              <p className="text-[18px] text-gray-300 mb-3 hover:text-white">Suresh Thaheshan</p>
-              <p className="text-[18px] text-gray-300 mb-3 hover:text-white">Zuhar Ahamed</p>
-              <p className="text-[18px] text-gray-300 mb-3 hover:text-white">Ayman Jaleel</p>
-              <p className="text-[18px] text-gray-300 mb-3 hover:text-white">Mohamed Shazni</p>
-              <p className="text-[18px] text-gray-300 mb-3 hover:text-white">Rifaideen Shilma</p>
-              <p className="text-[18px] text-gray-300 hover:text-white">Muaaza Mazeer</p>
+              <p className="text-[18px] text-gray-300 mb-3 hover:text-white">
+                Suresh Thaheshan
+              </p>
+              <p className="text-[18px] text-gray-300 mb-3 hover:text-white">
+                Zuhar Ahamed
+              </p>
+              <p className="text-[18px] text-gray-300 mb-3 hover:text-white">
+                Ayman Jaleel
+              </p>
+              <p className="text-[18px] text-gray-300 mb-3 hover:text-white">
+                Mohamed Shazni
+              </p>
+              <p className="text-[18px] text-gray-300 mb-3 hover:text-white">
+                Rifaideen Shilma
+              </p>
+              <p className="text-[18px] text-gray-300 hover:text-white">
+                Muaaza Mazeer
+              </p>
             </div>
             <div>
               <p className="text-2xl font-bold">Apps</p>
