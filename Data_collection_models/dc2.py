@@ -120,6 +120,7 @@ while True:
             image_white[height_gap:height_cal + height_gap, :] = image_resized
 
         # Display Processed Images
+        
         cv2.imshow('Cropped Image', image_crop)
         cv2.imshow('Resized Image', image_white)
 
