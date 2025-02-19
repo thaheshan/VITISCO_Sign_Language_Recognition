@@ -7,6 +7,7 @@ import {
   StyleSheet,
   SafeAreaView,
   StatusBar,
+  ScrollView,
 } from 'react-native';
 
 const QuizApp = () => {
@@ -71,6 +72,7 @@ const QuizApp = () => {
     const question = questions[currentQuestion];
 
     return (
+      <ScrollView contentContainerStyle={styles.scrollContainer}>
       <View style={styles.questionContainer}>
         {question.title && (
           <Text style={styles.questionTitle}>{question.title}</Text>
@@ -118,6 +120,7 @@ const QuizApp = () => {
           </View>
         )}
       </View>
+      </ScrollView>
     );
   };
 
@@ -150,6 +153,10 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#E6E6FA',
+  },
+  scrollContainer: {
+    flexGrow: 1,
+    paddingBottom: 100, // Ensures space for the continue button
   },
   header: {
     flexDirection: 'row',
