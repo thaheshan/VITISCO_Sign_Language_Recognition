@@ -1,7 +1,15 @@
+import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, BookOpen, Video, Award } from "lucide-react";
 
 const VitiscoLanding = () => {
+  const [cursorPosition, setCursorPosition] = useState({ x: 0, y: 0 });
+  const [scrolled, setScrolled] = useState(false);
+  const particleContainerRef = useRef<HTMLDivElement>(null);
+  const videoSectionRef = useRef<HTMLDivElement>(null);
+  const lastParticleTime = useRef(0);
+  const particleInterval = 50;
+
   const features = [
     {
       icon: <Video className="w-8 h-8 text-indigo-500" />,
@@ -33,35 +41,147 @@ const VitiscoLanding = () => {
     },
   ];
 
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      setCursorPosition({ x: e.clientX, y: e.clientY });
+
+      const now = Date.now();
+      if (now - lastParticleTime.current >= particleInterval) {
+        lastParticleTime.current = now;
+        
+        if (particleContainerRef.current) {
+          const particle = document.createElement('div');
+          particle.className = 'particle';
+          particle.style.left = `${e.clientX}px`;
+          particle.style.top = `${e.clientY}px`;
+          particleContainerRef.current.appendChild(particle);
+
+          setTimeout(() => {
+            particle.remove();
+          }, 1000);
+        }
+      }
+    };
+
+    const handleScroll = () => {
+      if (videoSectionRef.current) {
+        const videoSectionHeight = videoSectionRef.current.offsetHeight;
+        setScrolled(window.scrollY > videoSectionHeight);
+      }
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('scroll', handleScroll);
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, []);
+
   return (
-    <div className="bg-gray-200">
-      {/* Hero Section */}
-      <header className="bg-gray-200 sticky top-0 z-50 shadow-lg py-1">
+    <div className="bg-gray-200 hidden-cursor">
+      {/* Custom Cursor Elements */}
+      <div
+        className="custom-cursor"
+        style={{
+          position: 'fixed',
+          left: cursorPosition.x,
+          top: cursorPosition.y,
+          pointerEvents: 'none',
+          zIndex: 9999,
+          transform: 'translate(-50%, -50%)',
+        }}
+      >
+        <img
+          src="/Images/vitisco logo PNG.png"
+          alt="cursor"
+          className="w-24 h-24 transition-transform duration-100 ease-out"
+        />
+      </div>
+      <div ref={particleContainerRef} className="particle-container" />
+
+      {/* Updated Header Navigation */}
+      <header className={`fixed w-full top-0 z-50 py-1 transition-all duration-300 ${
+        scrolled 
+          ? 'bg-white shadow-lg' 
+          : 'bg-transparent backdrop-blur-sm'
+      }`}>
         <div className="px-4 lg:px-8 flex items-center justify-between cursor-pointer">
           <div className="flex items-center gap-4">
             <img
               src="/Images/vitisco logo PNG.png"
               alt="vitisco"
-              className="w-12 md:w-16 lg:w-20"
+              className={`w-12 md:w-16 lg:w-20 transition-all duration-300 ${
+                scrolled ? 'filter-none' : 'filter-none'
+              }`}
             />
-            <h1 className="text-lg md:text-2xl font-bold text-[#B2B5E7]-100 tracking-wider italic">
+            <h1 className={`text-lg md:text-2xl font-bold tracking-wider italic ${
+              scrolled ? 'text-purple-800' : 'text-white'
+            }`}>
               VITISCO
             </h1>
           </div>
+          
           <div className="hidden md:flex items-center gap-x-16">
-            <h1 className="text-sm font-bold text-gray-600">
-              SITE LANGUAGE: ENGLISH
-            </h1>
+            <h1 className={`text-sm font-bold ${
+              scrolled ? 'text-gray-600' : 'text-white'
+            }`}>About</h1>
+            <h1 className={`text-sm font-bold ${
+              scrolled ? 'text-gray-600' : 'text-white'
+            }`}>Contact Us</h1>
+            <h1 className={`text-sm font-bold ${
+              scrolled ? 'text-gray-600' : 'text-white'
+            }`}>Features</h1>
+            <h1 className={`text-sm font-bold ${
+              scrolled ? 'text-gray-600' : 'text-white'
+            }`}>Get Started!</h1>
+            <h1 className={`text-sm font-bold ${
+              scrolled ? 'text-gray-600' : 'text-white'
+            }`}>SITE LANGUAGE: ENGLISH</h1>
           </div>
         </div>
       </header>
 
-      <section className="py-20 max-w-7xl mx-auto px-4">
+      {/* Video Section */}
+      <section className="relative bg-black py-16" ref={videoSectionRef}>
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="aspect-video overflow-hidden rounded-3xl shadow-2xl transform hover:scale-[1.01] transition-transform duration-300">
+            <video 
+              controls 
+              autoPlay 
+              muted 
+              loop
+              className="w-full h-full object-cover"
+              poster="/Images/video-poster.jpg"
+            >
+              <source src="/videos/platform-demo.mp4" type="video/mp4" />
+              Your browser does not support the video tag.
+            </video>
+          </div>
+          
+          <div className="mt-8 text-center">
+            <h3 className="text-2xl font-bold text-white mb-4">
+              Watch How VITISCO Transforms Sign Language Learning
+            </h3>
+            <div className="flex justify-center space-x-4">
+              <button className="bg-purple-600 text-white px-8 py-3 rounded-full hover:bg-purple-700 transition-all transform hover:scale-105">
+                Take Video Tour
+              </button>
+              <button className="border-2 border-white text-white px-8 py-3 rounded-full hover:bg-white hover:text-purple-900 transition-all">
+                See Success Stories
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Original Hero Section Enhanced */}
+      <section className="py-20 max-w-7xl mx-auto px-4 mt-16">
         <div className="px-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
             <div className="transform hover:scale-105 transition-transform duration-300">
               <img
-                src="\Images\vitisco logo PNG.png"
+                src="/Images/vitisco logo PNG.png"
                 alt="Community interaction"
                 className="rounded-2xl shadow-2xl w-full max-w-md mx-auto"
               />
@@ -82,7 +202,7 @@ const VitiscoLanding = () => {
                   Collect your badges and rewards Now Onwards!!
                 </span>
               </p>
-              <button className="bg-purple-800 text-white text-2xl px-[30px] py-[20px] rounded-lg hover:bg-purple-700 transition-all transform hover:scale-105">
+              <button className="bg-purple-800 text-white text-2xl px-[30px] py-[20px] rounded-lg hover:bg-purple-700 transition-all transform hover:scale-105 shadow-xl">
                 Let's Begin!
               </button>
             </div>
@@ -90,9 +210,9 @@ const VitiscoLanding = () => {
         </div>
       </section>
 
-      {/* Alternating Sections */}
+      {/* Alternating Content Sections */}
       <section className="py-20 max-w-7xl mx-auto px-4">
-        {/* First Section - Image Right */}
+        {/* First Section */}
         <div className="w-full px-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
             <div className="order-2 md:order-1">
@@ -103,59 +223,29 @@ const VitiscoLanding = () => {
               <p className="text-gray-600 mb-4 text-[20px]">
                 <span className="text-purple-800 font-bold">VITISCO</span>{" "}
                 revolutionizes sign language education through an immersive
-                visual learning experience. Our platform is designed
-                specifically for the deaf community, ensuring that every lesson
-                is presented in a clear, intuitive way that matches how you
-                naturally learn and communicate.
-              </p>
-              <p className="text-gray-600 mb-8 text-[20px]">
-                With our innovative approach, you'll learn through interactive
-                videos, real-time feedback, and practical exercises that
-                simulate real-world conversations.
+                visual learning experience.
               </p>
               <button className="bg-indigo-600 text-white px-8 py-3 rounded-lg hover:bg-indigo-700 transition-all transform hover:scale-105 shadow-lg">
                 Explore Lessons
               </button>
             </div>
-            <div className="order-1 md:order-5 transform hover:scale-105 transition-transform duration-300">
+            <div className="order-1 md:order-2 transform hover:scale-105 transition-transform duration-300">
               <img
                 src="/Images/sgn.jpg"
-                alt="Student learning sign language"
+                alt="Student learning"
                 className="rounded-2xl shadow-2xl w-full max-w-md mx-auto"
               />
             </div>
           </div>
         </div>
 
-        {/* Decorative Separator */}
-        <div className="my-32 relative">
-          <div className="absolute left-0 right-0 h-px bg-gradient-to-r from-transparent via-indigo-200 to-transparent"></div>
-          <div className="flex justify-center">
-            <div className="bg-white p-4 rounded-full shadow-lg relative -mt-6">
-              <svg
-                className="w-12 h-12 text-indigo-500"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M19 9l-7 7-7-7"
-                />
-              </svg>
-            </div>
-          </div>
-        </div>
-
-        {/* Second Section - Image Left */}
-        <div className="px-4">
+        {/* Second Section */}
+        <div className="my-32">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
             <div className="transform hover:scale-105 transition-transform duration-300">
               <img
                 src="/Images/community.jpeg"
-                alt="Community interaction"
+                alt="Community"
                 className="rounded-2xl shadow-2xl w-full max-w-md mx-auto"
               />
             </div>
@@ -164,18 +254,6 @@ const VitiscoLanding = () => {
               <h2 className="text-4xl font-bold text-gray-800 mb-6">
                 Join Our Vibrant Community
               </h2>
-              <p className="text-gray-600 mb-4 text-[20px]">
-                Learning a language is more than just lessons – it's about
-                connection.{" "}
-                <span className="text-purple-800 font-bold">VITISCO</span>{" "}
-                brings together a diverse community of learners, native signers,
-                and educators who share your passion for sign language and deaf
-                culture.
-              </p>
-              <p className="text-gray-600 mb-8 text-[20px]">
-                Participate in group sessions, join discussion forums, and
-                practice with peers in a supportive environment.
-              </p>
               <button className="bg-purple-600 text-white px-8 py-3 rounded-lg hover:bg-purple-700 transition-all transform hover:scale-105 shadow-lg">
                 Join Community
               </button>
@@ -183,29 +261,7 @@ const VitiscoLanding = () => {
           </div>
         </div>
 
-        {/* Another Decorative Separator */}
-        <div className="my-32 relative">
-          <div className="absolute left-0 right-0 h-px bg-gradient-to-r from-transparent via-purple-200 to-transparent"></div>
-          <div className="flex justify-center">
-            <div className="bg-white p-4 rounded-full shadow-lg relative -mt-6">
-              <svg
-                className="w-12 h-12 text-purple-500"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M19 9l-7 7-7-7"
-                />
-              </svg>
-            </div>
-          </div>
-        </div>
-
-        {/* Third Section - Image Right */}
+        {/* Third Section */}
         <div className="w-full px-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
             <div className="order-2 md:order-1">
@@ -213,57 +269,27 @@ const VitiscoLanding = () => {
               <h2 className="text-4xl font-bold text-gray-800 mb-6">
                 Track Your Progress
               </h2>
-              <p className="text-gray-600 mb-4 text-[20px]">
-                Stay motivated with our comprehensive progress tracking system.
-                Watch as your skills grow through interactive assessments,
-                achievement badges, and detailed performance analytics.
-              </p>
-              <p className="text-gray-600 mb-8 text-[20px]">
-                Our adaptive learning technology personalizes your experience,
-                ensuring you're always challenged at the right level.
-              </p>
               <button className="bg-teal-600 text-white px-8 py-3 rounded-lg hover:bg-teal-700 transition-all transform hover:scale-105 shadow-lg">
-                View Progress System
+                View Progress
               </button>
             </div>
             <div className="order-1 md:order-2 transform hover:scale-105 transition-transform duration-300">
               <img
                 src="/Images/dashboard.jpg"
-                alt="Progress tracking dashboard"
+                alt="Dashboard"
                 className="rounded-2xl shadow-2xl w-full max-w-md mx-auto"
               />
             </div>
           </div>
         </div>
 
-        {/* Final Decorative Separator */}
-        <div className="my-32 relative">
-          <div className="absolute left-0 right-0 h-px bg-gradient-to-r from-transparent via-teal-200 to-transparent"></div>
-          <div className="flex justify-center">
-            <div className="bg-white p-4 rounded-full shadow-lg relative -mt-6">
-              <svg
-                className="w-12 h-12 text-teal-500"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M19 9l-7 7-7-7"
-                />
-              </svg>
-            </div>
-          </div>
-        </div>
-
-        <div className="w-full px-4">
+        {/* VR Section */}
+        <div className="my-32">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
             <div className="transform hover:scale-105 transition-transform duration-300">
               <img
                 src="/Images/vr.jpg"
-                alt="Progress tracking dashboard"
+                alt="VR"
                 className="rounded-2xl shadow-2xl w-full max-w-md mx-auto"
               />
             </div>
@@ -272,21 +298,6 @@ const VitiscoLanding = () => {
               <h2 className="text-4xl font-bold text-gray-800 mb-6">
                 Virtual Room
               </h2>
-              <p className="text-gray-600 mb-4 text-[20px]">
-                Connect, collaborate, and thrive with our dynamic Room Match
-                feature. Pair up with learners worldwide in real-time for
-                interactive practice sessions, tailored to your skill level and
-                interests. Whether you're seeking friendly competition or
-                teamwork, find the perfect partner to enhance your learning
-                journey. Earn milestone badges for successful collaborations and
-                track your progress as you grow together in a supportive,
-                inclusive community. Start matching, stay engaged, and achieve
-                fluency faster!
-              </p>
-              <p className="text-gray-600 mb-8 text-[20px]">
-                Many competitions One winner! Lets choose{" "}
-                <span className="text-purple-800 font-bold">VITISCO...</span>
-              </p>
               <button className="bg-green-400 text-white px-8 py-3 rounded-lg hover:bg-green-700 transition-all transform hover:scale-105 shadow-lg">
                 View LeaderBoard
               </button>
@@ -295,11 +306,12 @@ const VitiscoLanding = () => {
         </div>
       </section>
 
+      {/* Pro Section */}
       <section className="bg-[#0E0D2A] py-[250px]">
         <div className="flex justify-center space-x-16 cursor-pointer">
           <div className="transform hover:scale-105 transition-transform duration-300">
             <img
-              src="\Images\vitisco logo PNG.png"
+              src="/Images/vitisco logo PNG.png"
               alt="Pro"
               className="w-[600px] h-[500px]"
             />
@@ -311,7 +323,6 @@ const VitiscoLanding = () => {
             <p className="text-white font-bold text-[70px] italic tracking-[10px]">
               VITISCO PRO
             </p>
-            <br />
             <button className="bg-white px-[30px] py-[20px] tracking-[5px] font-bold italic hover:bg-gray-700 shadow-lg hover:text-white">
               PURCHASE
             </button>
@@ -322,28 +333,23 @@ const VitiscoLanding = () => {
       {/* Features Section */}
       <section className="py-10 bg-gray-200 mt-12">
         <div className="px-4">
-          <h2 className="text-2xl md:text-4xl font-bold text-center text-gray-800 mb-8 md:mb-16">
-            Why Choose{" "}
-            <span className="text-purple-800 tracking-widest italic">
-              VITISCO
-            </span>
-            ?
+          <h2 className="text-4xl font-bold text-center text-gray-800 mb-16">
+            Why Choose <span className="text-purple-800 italic">VITISCO</span>?
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {features.map((feature, index) => (
               <Card
                 key={index}
-                className={`border-none shadow-lg hover:shadow-xl transition-all duration-300 
-                                       transform hover:-translate-y-1 ${feature.bgColor}`}
+                className={`border-none shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 ${feature.bgColor}`}
               >
                 <CardHeader>
                   <div className="flex justify-center mb-4">{feature.icon}</div>
-                  <CardTitle className="text-center text-lg md:text-xl font-semibold text-gray-800">
+                  <CardTitle className="text-center text-xl font-semibold text-gray-800">
                     {feature.title}
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-center text-gray-600 text-sm md:text-base">
+                  <p className="text-center text-gray-600">
                     {feature.description}
                   </p>
                 </CardContent>
@@ -353,80 +359,51 @@ const VitiscoLanding = () => {
         </div>
       </section>
 
-      {/* Decorative Wave Separator */}
-      <div className="relative h-24 bg-gray-200">
-        <div
-          className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-r from-indigo-900 to-purple-900"
-          style={{
-            clipPath: "polygon(0 100%, 100% 100%, 100% 40%, 0 100%)",
-          }}
-        ></div>
-      </div>
-
       {/* Footer */}
       <footer className="bg-gradient-to-r from-indigo-900 to-purple-900 text-white py-20">
-        <div className="w-full px-4">
+        <div className="max-w-7xl mx-auto px-4">
           <h2 className="text-3xl font-bold mb-6 text-center">
             Ready to Start Your Journey With VITISCO?
           </h2>
-          <p className="mb-10 text-[20px] text-indigo-100 text-center">
-            Join thousands of learners in our growing community
-          </p>
-          <div className="flex justify-center space-x-16 cursor-pointer">
+          <div className="grid grid-cols-2 md:grid-cols-6 gap-8 mt-12">
             <div>
-              <p className="text-2xl font-bold">Developers</p>
-              <br />
-              <p className="text-[18px] text-gray-300 mb-3 hover:text-white">
-                Suresh Thaheshan
-              </p>
-              <p className="text-[18px] text-gray-300 mb-3 hover:text-white">
-                Zuhar Ahamed
-              </p>
-              <p className="text-[18px] text-gray-300 mb-3 hover:text-white">
-                Ayman Jaleel
-              </p>
-              <p className="text-[18px] text-gray-300 mb-3 hover:text-white">
-                Mohamed Shazni
-              </p>
-              <p className="text-[18px] text-gray-300 mb-3 hover:text-white">
-                Rifaideen Shilma
-              </p>
-              <p className="text-[18px] text-gray-300 hover:text-white">
-                Muaaza Mazeer
-              </p>
+              <p className="text-xl font-bold mb-4">Developers</p>
+              <p className="text-gray-300 hover:text-white">Suresh Thaheshan</p>
+              <p className="text-gray-300 hover:text-white">Zuhar Ahamed</p>
+              <p className="text-gray-300 hover:text-white">Ayman Jaleel</p>
+              <p className="text-gray-300 hover:text-white">Mohamed Shazni</p>
+              <p className="text-gray-300 hover:text-white">Rifaideen Shilma</p>
+              <p className="text-gray-300 hover:text-white">Muaaza Mazeer</p>
             </div>
             <div>
-              <p className="text-2xl font-bold">Apps</p>
-              <br />
-              <p className="text-[18px] text-gray-300 mb-3">
-                VITISCO for Android
-              </p>
-              <p className="text-[18px] text-gray-300">VITISCO for iOS</p>
+              <p className="text-xl font-bold mb-4">Apps</p>
+              <p className="text-gray-300">Android</p>
+              <p className="text-gray-300">iOS</p>
             </div>
             <div>
-              <p className="text-2xl font-bold">Help & Supports</p>
-              <br />
-              <p className="text-[18px] text-gray-300">VITISCO FAQs</p>
+              <p className="text-xl font-bold mb-4">Support</p>
+              <p className="text-gray-300">FAQs</p>
+              <p className="text-gray-300">Contact</p>
             </div>
             <div>
-              <p className="text-2xl font-bold">Privacy & Terms</p>
-              <br />
-              <p className="text-[18px] text-gray-300 mb-3">Privacy</p>
-              <p className="text-[18px] text-gray-300">Terms</p>
+              <p className="text-xl font-bold mb-4">Legal</p>
+              <p className="text-gray-300">Privacy</p>
+              <p className="text-gray-300">Terms</p>
             </div>
             <div>
-              <p className="text-2xl font-bold">Products</p>
-              <br />
-              <p className="text-[18px] text-gray-300 mb-3">VITISCO</p>
-              <p className="text-[18px] text-gray-300">VITISCO PRO</p>
+              <p className="text-xl font-bold mb-4">Products</p>
+              <p className="text-gray-300">VITISCO</p>
+              <p className="text-gray-300">PRO</p>
             </div>
             <div>
-              <p className="text-2xl font-bold">Social</p>
-              <br />
-              <p className="text-[18px] text-gray-300 mb-3">Instagram</p>
-              <p className="text-[18px] text-gray-300 mb-3">Facebook</p>
-              <p className="text-[18px] text-gray-300">LinkedIn</p>
+              <p className="text-xl font-bold mb-4">Social</p>
+              <p className="text-gray-300">Instagram</p>
+              <p className="text-gray-300">Facebook</p>
+              <p className="text-gray-300">LinkedIn</p>
             </div>
+          </div>
+          <div className="mt-16 text-center text-gray-300">
+            © 2024 VITISCO. All rights reserved.
           </div>
         </div>
       </footer>
