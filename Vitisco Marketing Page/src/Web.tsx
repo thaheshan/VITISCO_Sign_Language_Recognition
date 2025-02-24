@@ -6,7 +6,6 @@ const VitiscoLanding = () => {
   const [scrolled, setScrolled] = useState(false);
   const particleContainerRef = useRef<HTMLDivElement>(null);
   const videoSectionRef = useRef<HTMLDivElement>(null);
- 
 
   const features = [
     {
@@ -54,7 +53,7 @@ const VitiscoLanding = () => {
   }, []);
 
   return (
-    <div className="bg-gray-200 hidden-cursor">
+    <div className="bg-gray-200">
       {/* Custom Cursor Elements */}
       <div
         className="custom-cursor"
@@ -85,12 +84,10 @@ const VitiscoLanding = () => {
             <img
               src="/Images/vitisco logo PNG.png"
               alt="vitisco"
-              className={`w-12 md:w-16 lg:w-20 transition-all duration-300 ${
-                scrolled ? "filter-none" : "filter-none"
-              }`}
+              className={`w-12 md:w-16 lg:w-20 transition-all duration-300`}
             />
             <h1
-              className={`text-lg md:text-2xl font-bold tracking-wider italic ${
+              className={`text-lg md:text-2xl font-bold tracking-wider italic mr-8 ${
                 scrolled ? "text-purple-800" : "text-white"
               }`}
             >
@@ -98,52 +95,96 @@ const VitiscoLanding = () => {
             </h1>
           </div>
 
+          {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-x-16">
-            <h1
-              className={`text-sm font-bold ${
-                scrolled ? "text-gray-600" : "text-white"
+            <a
+              href="#about"
+              onClick={(e) => {
+                e.preventDefault();
+                document
+                  .getElementById("about")
+                  ?.scrollIntoView({ behavior: "smooth" });
+              }}
+              className={`text-sm font-bold cursor-pointer ${
+                scrolled ? "text-purple-800" : "text-white"
               }`}
             >
               About
-            </h1>
-            <h1
-              className={`text-sm font-bold ${
-                scrolled ? "text-gray-600" : "text-white"
+            </a>
+
+            <a
+              href="#contact"
+              onClick={(e) => {
+                e.preventDefault();
+                document
+                  .getElementById("contact")
+                  ?.scrollIntoView({ behavior: "smooth" });
+              }}
+              className={`text-sm font-bold cursor-pointer ${
+                scrolled ? "text-purple-800" : "text-white"
               }`}
             >
               Contact Us
-            </h1>
-            <h1
-              className={`text-sm font-bold ${
-                scrolled ? "text-gray-600" : "text-white"
+            </a>
+
+            <a
+              href="#features"
+              onClick={(e) => {
+                e.preventDefault();
+                document
+                  .getElementById("features")
+                  ?.scrollIntoView({ behavior: "smooth" });
+              }}
+              className={`text-sm font-bold cursor-pointer ${
+                scrolled ? "text-purple-800" : "text-white"
               }`}
             >
               Features
-            </h1>
-            <h1
-              className={`text-sm font-bold ${
-                scrolled ? "text-gray-600" : "text-white"
+            </a>
+
+            <a
+              href="#get-started"
+              onClick={(e) => {
+                e.preventDefault();
+                document
+                  .getElementById("get-started")
+                  ?.scrollIntoView({ behavior: "smooth" });
+              }}
+              className={`text-sm font-bold cursor-pointer ${
+                scrolled ? "text-purple-800" : "text-white"
               }`}
             >
               Get Started!
-            </h1>
-            <h1
-              className={`text-sm font-bold ${
-                scrolled ? "text-gray-600" : "text-white"
-              }`}
-            >
-              SITE LANGUAGE: ENGLISH
-            </h1>
+            </a>
+          </div>
+
+          <div
+            className={`text-sm font-bold cursor-pointer ${
+              scrolled ? "text-gray-600" : "text-white"
+            }`}
+          >
+            SITE LANGUAGE: ENGLISH
           </div>
         </div>
+
         {/* Mobile Menu Button */}
-<div className="md:hidden">
-  <button className="p-2 text-white hover:text-purple-600 transition-colors">
-    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-    </svg>
-  </button>
-</div>
+        <div className="md:hidden">
+          <button className="p-2 text-white hover:text-purple-600 transition-colors hover:border-none">
+            <svg
+              className="w-6 h-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M4 6h16M4 12h16M4 18h16"
+              />
+            </svg>
+          </button>
+        </div>
       </header>
 
       {/* Video Section */}
@@ -172,10 +213,10 @@ const VitiscoLanding = () => {
               Watch How VITISCO Transforms Sign Language Learning
             </h3>
             <div className="flex flex-col md:flex-row justify-center gap-4 px-4">
-              <button className="bg-purple-600 text-white px-8 py-3 rounded-full hover:bg-purple-700 transition-all transform hover:scale-105 shadow-lg">
+              <button className="bg-purple-600 text-white px-8 py-3 rounded-full hover:bg-purple-700 transition-all transform hover:scale-105 shadow-lg hover:border-none">
                 Take Video Tour
               </button>
-              <button className="border-2 border-white text-white px-8 py-3 rounded-full hover:bg-white hover:text-purple-900 transition-all shadow-lg">
+              <button className="border-2 border-white text-white px-8 py-3 rounded-full hover:bg-white hover:text-purple-900 transition-all shadow-lg hover:border-none">
                 See Success Stories
               </button>
             </div>
@@ -184,7 +225,7 @@ const VitiscoLanding = () => {
       </section>
 
       {/* Original Hero Section Enhanced */}
-      <section className="py-20 max-w-7xl mx-auto px-4 mt-16">
+      <section className="py-20 max-w-7xl mx-auto px-4 mt-16" id="about">
         <div className="px-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
             <div className="transform hover:scale-105 transition-transform duration-300">
@@ -210,7 +251,7 @@ const VitiscoLanding = () => {
                   Collect your badges and rewards Now Onwards!!
                 </span>
               </p>
-              <button className="bg-purple-800 text-white text-2xl px-[30px] py-[20px] rounded-lg hover:bg-purple-700 transition-all transform hover:scale-105 shadow-xl">
+              <button className="bg-purple-800 text-white text-2xl px-[30px] py-[20px] rounded-lg hover:bg-purple-700 transition-all transform hover:scale-105 shadow-xl hover:border-none">
                 Let's Begin!
               </button>
             </div>
@@ -219,183 +260,195 @@ const VitiscoLanding = () => {
       </section>
 
       {/* Alternating Content Sections */}
-      <section className="py-20 max-w-7xl mx-auto px-4">
-  {/* First Section */}
-  <div className="w-full px-4">
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
-      <div className="order-2 md:order-1">
-        <div className="bg-gradient-to-r from-indigo-500 to-indigo-600 h-1 w-24 mb-6"></div>
-        <h2 className="text-4xl font-bold text-gray-800 mb-6">
-          Learn Sign Language Naturally
-        </h2>
-        <p className="text-gray-600 mb-4 text-[20px]">
-          <span className="text-purple-800 font-bold">VITISCO</span> revolutionizes 
-          sign language education through an immersive visual learning experience.
-        </p>
-        <p className="text-gray-600 mb-6 text-lg">
-          👐 Our AI-powered platform analyzes your hand movements in real-time, 
-          providing instant feedback on accuracy and fluency. Practice with 
-          interactive 3D demonstrations and slow-motion replays to master 
-          every gesture perfectly.
-        </p>
-        <button className="bg-indigo-600 text-white px-8 py-3 rounded-lg hover:bg-indigo-700 transition-all transform hover:scale-105 shadow-lg">
-          Explore Lessons
-        </button>
-      </div>
-      <div className="order-1 md:order-2 transform hover:scale-105 transition-transform duration-300">
-        <img
-          src="/Images/sgn.jpg"
-          alt="Student learning"
-          className="rounded-2xl shadow-2xl w-full max-w-md mx-auto"
-        />
-      </div>
-    </div>
-  </div>
+      <section className="py-20 max-w-7xl mx-auto px-4" id="features">
+        {/* First Section */}
+        <div className="w-full px-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
+            <div className="order-2 md:order-1">
+              <div className="bg-gradient-to-r from-indigo-500 to-indigo-600 h-1 w-24 mb-6"></div>
+              <h2 className="text-4xl font-bold text-gray-800 mb-6">
+                Learn Sign Language Naturally
+              </h2>
+              <p className="text-gray-600 mb-4 text-[20px]">
+                <span className="text-purple-800 font-bold">VITISCO</span>{" "}
+                revolutionizes sign language education through an immersive
+                visual learning experience.
+              </p>
+              <p className="text-gray-600 mb-6 text-lg">
+                👐 Our AI-powered platform analyzes your hand movements in
+                real-time, providing instant feedback on accuracy and fluency.
+                Practice with interactive 3D demonstrations and slow-motion
+                replays to master every gesture perfectly.
+              </p>
+              <button className="bg-indigo-600 text-white px-8 py-3 rounded-lg hover:bg-indigo-700 transition-all transform hover:scale-105 shadow-lg hover:border-none">
+                Explore Lessons
+              </button>
+            </div>
+            <div className="order-1 md:order-2 transform hover:scale-105 transition-transform duration-300">
+              <img
+                src="/Images/sgn.jpg"
+                alt="Student learning"
+                className="rounded-2xl shadow-2xl w-full max-w-md mx-auto"
+              />
+            </div>
+          </div>
+        </div>
 
-  {/* Second Section */}
-  <div className="my-32">
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
-      <div className="transform hover:scale-105 transition-transform duration-300">
-        <img
-          src="/Images/community.jpeg"
-          alt="Community"
-          className="rounded-2xl shadow-2xl w-full max-w-md mx-auto"
-        />
-      </div>
-      <div>
-        <div className="bg-gradient-to-r from-purple-500 to-purple-600 h-1 w-24 mb-6"></div>
-        <h2 className="text-4xl font-bold text-gray-800 mb-6">
-          Join Our Vibrant Community
-        </h2>
-        <p className="text-gray-600 mb-6 text-lg">
-          🌍 Connect with 250,000+ learners and native signers worldwide in our 
-          interactive community. Participate in live practice sessions, 
-          cultural exchange forums, and collaborative learning challenges.
-        </p>
-        <button className="bg-purple-600 text-white px-8 py-3 rounded-lg hover:bg-purple-700 transition-all transform hover:scale-105 shadow-lg">
-          Join Community
-        </button>
-      </div>
-    </div>
-  </div>
+        {/* Second Section */}
+        <div className="my-32">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
+            <div className="transform hover:scale-105 transition-transform duration-300">
+              <img
+                src="/Images/community.jpeg"
+                alt="Community"
+                className="rounded-2xl shadow-2xl w-full max-w-md mx-auto"
+              />
+            </div>
+            <div>
+              <div className="bg-gradient-to-r from-purple-500 to-purple-600 h-1 w-24 mb-6"></div>
+              <h2 className="text-4xl font-bold text-gray-800 mb-6">
+                Join Our Vibrant Community
+              </h2>
+              <p className="text-gray-600 mb-6 text-lg">
+                🌍 Connect with 250,000+ learners and native signers worldwide
+                in our interactive community. Participate in live practice
+                sessions, cultural exchange forums, and collaborative learning
+                challenges.
+              </p>
+              <button className="bg-purple-600 text-white px-8 py-3 rounded-lg hover:bg-purple-700 transition-all transform hover:scale-105 shadow-lg hover:border-none">
+                Join Community
+              </button>
+            </div>
+          </div>
+        </div>
 
-  {/* Third Section */}
-  <div className="w-full px-4">
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
-      <div className="order-2 md:order-1">
-        <div className="bg-gradient-to-r from-teal-500 to-teal-600 h-1 w-24 mb-6"></div>
-        <h2 className="text-4xl font-bold text-gray-800 mb-6">
-          Track Your Progress
-        </h2>
-        <p className="text-gray-600 mb-6 text-lg">
-          📈 Our smart dashboard tracks your learning journey with detailed 
-          analytics. Monitor your daily streaks, lesson completion rates, 
-          and skill improvement metrics. Earn achievement badges and 
-          share your milestones with the community.
-        </p>
-        <button className="bg-teal-600 text-white px-8 py-3 rounded-lg hover:bg-teal-700 transition-all transform hover:scale-105 shadow-lg">
-          View Progress
-        </button>
-      </div>
-      <div className="order-1 md:order-2 transform hover:scale-105 transition-transform duration-300">
-        <img
-          src="/Images/dashboard.jpg"
-          alt="Dashboard"
-          className="rounded-2xl shadow-2xl w-full max-w-md mx-auto"
-        />
-      </div>
-    </div>
-  </div>
+        {/* Third Section */}
+        <div className="w-full px-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
+            <div className="order-2 md:order-1">
+              <div className="bg-gradient-to-r from-teal-500 to-teal-600 h-1 w-24 mb-6"></div>
+              <h2 className="text-4xl font-bold text-gray-800 mb-6">
+                Track Your Progress
+              </h2>
+              <p className="text-gray-600 mb-6 text-lg">
+                📈 Our smart dashboard tracks your learning journey with
+                detailed analytics. Monitor your daily streaks, lesson
+                completion rates, and skill improvement metrics. Earn
+                achievement badges and share your milestones with the community.
+              </p>
+              <button className="bg-teal-600 text-white px-8 py-3 rounded-lg hover:bg-teal-700 transition-all transform hover:scale-105 shadow-lg hover:border-none">
+                View Progress
+              </button>
+            </div>
+            <div className="order-1 md:order-2 transform hover:scale-105 transition-transform duration-300">
+              <img
+                src="/Images/dashboard.jpg"
+                alt="Dashboard"
+                className="rounded-2xl shadow-2xl w-full max-w-md mx-auto"
+              />
+            </div>
+          </div>
+        </div>
 
-  {/* VR Section */}
-  <div className="my-32">
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
-      <div className="transform hover:scale-105 transition-transform duration-300">
-        <img
-          src="/Images/vr.jpg"
-          alt="VR"
-          className="rounded-2xl shadow-2xl w-full max-w-md mx-auto"
-        />
-      </div>
-      <div>
-        <div className="bg-gradient-to-r from-green-500 to-green-600 h-1 w-24 mb-6"></div>
-        <h2 className="text-4xl font-bold text-gray-800 mb-6">
-          Virtual Practice Rooms
-        </h2>
-        <p className="text-gray-600 mb-6 text-lg">
-          🥽 Immerse yourself in our virtual reality classrooms. Practice 
-          real-world scenarios with AI avatars, join live group sessions, 
-          and participate in global signing competitions. Climb the 
-          leaderboards and showcase your skills!
-        </p>
-        <button className="bg-green-400 text-white px-8 py-3 rounded-lg hover:bg-green-700 transition-all transform hover:scale-105 shadow-lg">
-          View LeaderBoard
-        </button>
-      </div>
-    </div>
-  </div>
+        {/* VR Section */}
+        <div className="my-32">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
+            <div className="transform hover:scale-105 transition-transform duration-300">
+              <img
+                src="/Images/vr.jpg"
+                alt="VR"
+                className="rounded-2xl shadow-2xl w-full max-w-md mx-auto"
+              />
+            </div>
+            <div>
+              <div className="bg-gradient-to-r from-green-500 to-green-600 h-1 w-24 mb-6"></div>
+              <h2 className="text-4xl font-bold text-gray-800 mb-6">
+                Virtual Practice Rooms
+              </h2>
+              <p className="text-gray-600 mb-6 text-lg">
+                🥽 Immerse yourself in our virtual reality classrooms. Practice
+                real-world scenarios with AI avatars, join live group sessions,
+                and participate in global signing competitions. Climb the
+                leaderboards and showcase your skills!
+              </p>
+              <button className="bg-green-400 text-white px-8 py-3 rounded-lg hover:bg-green-700 transition-all transform hover:scale-105 shadow-lg hover:border-none">
+                View LeaderBoard
+              </button>
+            </div>
+          </div>
+        </div>
 
-  {/* Translator Section */}
-<div className="my-32">
-  <div className="grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
-    <div>
-      <div className="bg-gradient-to-r from-orange-500 to-orange-600 h-1 w-24 mb-6"></div>
-      <h2 className="text-4xl font-bold text-gray-800 mb-6">
-        Real-Time Sign Language Translator
-      </h2>
-      <p className="text-gray-600 mb-6 text-lg">
-        <span className="text-purple-800 font-bold">BREAKTHROUGH FEATURE:</span>{" "}
-        Our AI-powered translator converts sign language to text and speech instantly. 
-        Communicate seamlessly with non-signers using our revolutionary 
-        <span className="font-semibold"> motion-to-text technology</span>.
-      </p>
-      <ul className="mb-6 space-y-3 text-gray-600">
-        <li className="flex items-center">
-          <span className="text-orange-500 mr-2">✓</span>
-          Instant translation SSL
-        </li>
-        <li className="flex items-center">
-          <span className="text-orange-500 mr-2">✓</span>
-          Voice output in 3 languages
-        </li>
-        <li className="flex items-center">
-          <span className="text-orange-500 mr-2">✓</span>
-          Conversation mode for two-way communication
-        </li>
-      </ul>
-      <button className="bg-orange-500 text-white px-8 py-3 rounded-lg hover:bg-orange-600 transition-all transform hover:scale-105 shadow-lg">
-        Try Translator Demo
-      </button>
-    </div>
-    <div className="transform hover:scale-105 transition-transform duration-300">
-      <img
-        src="../Images/03.png"
-        alt="Sign language translation interface"
-        className="rounded-2xl shadow-2xl w-full max-w-md mx-auto"
-      />
-    </div>
-  </div>
-</div>
-</section>
+        {/* Translator Section */}
+        <div className="my-32">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
+            <div>
+              <div className="bg-gradient-to-r from-orange-500 to-orange-600 h-1 w-24 mb-6"></div>
+              <h2 className="text-4xl font-bold text-gray-800 mb-6">
+                Real-Time Sign Language Translator
+              </h2>
+              <p className="text-gray-600 mb-6 text-lg">
+                <span className="text-purple-800 font-bold">
+                  BREAKTHROUGH FEATURE:
+                </span>{" "}
+                Our AI-powered translator converts sign language to text and
+                speech instantly. Communicate seamlessly with non-signers using
+                our revolutionary
+                <span className="font-semibold">
+                  {" "}
+                  motion-to-text technology
+                </span>
+                .
+              </p>
+              <ul className="mb-6 space-y-3 text-gray-600">
+                <li className="flex items-center">
+                  <span className="text-orange-500 mr-2">✓</span>
+                  Instant translation SSL
+                </li>
+                <li className="flex items-center">
+                  <span className="text-orange-500 mr-2">✓</span>
+                  Voice output in 3 languages
+                </li>
+                <li className="flex items-center">
+                  <span className="text-orange-500 mr-2">✓</span>
+                  Conversation mode for two-way communication
+                </li>
+              </ul>
+              <button className="bg-orange-500 text-white px-8 py-3 rounded-lg hover:bg-orange-600 transition-all transform hover:scale-105 shadow-lg hover:border-none">
+                Try Translator Demo
+              </button>
+            </div>
+            <div className="transform hover:scale-105 transition-transform duration-300">
+              <img
+                src="../Images/03.png"
+                alt="Sign language translation interface"
+                className="rounded-2xl shadow-2xl w-full max-w-md mx-auto"
+              />
+            </div>
+          </div>
+        </div>
+      </section>
 
       {/* Pro Section */}
-      <section className="bg-[#0E0D2A] py-[250px]">
-        <div className="flex justify-center space-x-16 cursor-pointer">
-          <div className="transform hover:scale-105 transition-transform duration-300">
+      <section
+        className="bg-[#0E0D2A] py-[150px] md:py-[70px] lg:py-[100px]"
+        id="get-started"
+      >
+        <div className="flex flex-col md:flex-row justify-center items-center gap-8 px-4">
+          <div className="transform hover:scale-105 transition-transform duration-300 w-full max-w-xs md:max-w-sm">
             <img
               src="/Images/vitisco logo PNG.png"
-              alt="Pro"
-              className="w-[600px] h-[500px]"
+              alt="Vitisco Pro Logo"
+              className="w-full h-auto"
             />
           </div>
-          <div className="text-center mt-[150px]">
-            <p className="text-white font-bold text-[30px] italic tracking-[10px]">
+          <div className="text-center md:mt-0">
+            <p className="text-white font-bold text-lg sm:text-xl md:text-2xl lg:text-3xl italic tracking-wider md:tracking-[5px] lg:tracking-[10px]">
               POWER UP WITH
             </p>
-            <p className="text-white font-bold text-[70px] italic tracking-[10px]">
+            <p className="text-white font-bold text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl italic tracking-wider md:tracking-[5px] lg:tracking-[10px] mb-6">
               VITISCO PRO
             </p>
-            <button className="bg-white px-[30px] py-[20px] tracking-[5px] font-bold italic hover:bg-gray-700 shadow-lg hover:text-white">
+            <button className="bg-white px-4 py-3 sm:px-6 sm:py-4 md:px-8 md:py-5 lg:px-[30px] lg:py-[20px] tracking-wider md:tracking-[3px] lg:tracking-[5px] font-bold italic hover:bg-purple-800 shadow-lg hover:text-white hover:border-black">
               PURCHASE
             </button>
           </div>
@@ -432,7 +485,10 @@ const VitiscoLanding = () => {
       </section>
 
       {/* Developers Section */}
-      <section className="py-20 bg-gradient-to-r from-purple-50 to-indigo-50">
+      <section
+        className="py-20 bg-gradient-to-r from-purple-50 to-indigo-50"
+        id="contact"
+      >
         <div className="max-w-7xl mx-auto px-4">
           <h2 className="text-4xl font-bold text-center text-gray-800 mb-16">
             Meet Our <span className="text-purple-800">Visionary Team</span>
@@ -520,7 +576,6 @@ const VitiscoLanding = () => {
             </p>
           </div>
         </div>
-        
       </section>
 
       {/* Footer */}
@@ -532,11 +587,21 @@ const VitiscoLanding = () => {
           <div className="grid grid-cols-2 md:grid-cols-6 gap-8 mt-12">
             <div>
               <p className="text-xl font-bold mb-4 mb-5">Developers</p>
-              <p className="text-gray-300 hover:text-white mb-5">Suresh Thaheshan</p>
-              <p className="text-gray-300 hover:text-white mb-5">Zuhar Ahamed</p>
-              <p className="text-gray-300 hover:text-white mb-5">Ayman Jaleel</p>
-              <p className="text-gray-300 hover:text-white mb-5">Mohamed Shazni</p>
-              <p className="text-gray-300 hover:text-white mb-5">Rifaideen Shilma</p>
+              <p className="text-gray-300 hover:text-white mb-5">
+                Suresh Thaheshan
+              </p>
+              <p className="text-gray-300 hover:text-white mb-5">
+                Zuhar Ahamed
+              </p>
+              <p className="text-gray-300 hover:text-white mb-5">
+                Ayman Jaleel
+              </p>
+              <p className="text-gray-300 hover:text-white mb-5">
+                Mohamed Shazni
+              </p>
+              <p className="text-gray-300 hover:text-white mb-5">
+                Rifaideen Shilma
+              </p>
               <p className="text-gray-300 hover:text-white">Muaaza Mazeer</p>
             </div>
             <div>
