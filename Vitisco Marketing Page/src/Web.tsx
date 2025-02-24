@@ -365,6 +365,90 @@ const VitiscoLanding = () => {
         </div>
       </section>
 
+      {/* Developers Section */}
+<section className="py-20 bg-gradient-to-r from-purple-50 to-indigo-50">
+  <div className="max-w-7xl mx-auto px-4">
+    <h2 className="text-4xl font-bold text-center text-gray-800 mb-16">
+      Meet Our <span className="text-purple-800">Visionary Team</span>
+    </h2>
+    
+    <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-8">
+      {/* Developer 1 */}
+      <div className="flex flex-col items-center transform hover:scale-105 transition-transform duration-300">
+        <img
+          src="../Images/thaheshan.jpeg"
+          alt="Suresh Thaheshan"
+          className="w-32 h-32 rounded-full object-cover shadow-lg mb-4 border-4 border-purple-200"
+        />
+        <h3 className="text-xl font-bold text-gray-800">Suresh Thaheshan</h3>
+        <p className="text-sm text-purple-600 font-medium">Founder</p>
+      </div>
+
+      {/* Developer 2 */}
+      <div className="flex flex-col items-center transform hover:scale-105 transition-transform duration-300">
+        <img
+          src="../Images/zuhar.jpeg"
+          alt="Zuhar Ahamed"
+          className="w-32 h-32 rounded-full object-cover shadow-lg mb-4 border-4 border-purple-200"
+        />
+        <h3 className="text-xl font-bold text-gray-800">Zuhar Ahamed</h3>
+        <p className="text-sm text-purple-600 font-medium">Founder</p>
+      </div>
+
+      {/* Developer 3 */}
+      <div className="flex flex-col items-center transform hover:scale-105 transition-transform duration-300">
+        <img
+          src="../Images/Aymandas.jpg"
+          alt="Ayman Jaleel"
+          className="w-32 h-32 rounded-full object-cover shadow-lg mb-4 border-4 border-purple-200"
+        />
+        <h3 className="text-xl font-bold text-gray-800">Ayman Jaleel</h3>
+        <p className="text-sm text-purple-600 font-medium">Founder</p>
+      </div>
+
+      {/* Developer 4 */}
+      <div className="flex flex-col items-center transform hover:scale-105 transition-transform duration-300">
+        <img
+          src="../Images/Shazni-2.jpeg"
+          alt="Mohamed Shazni"
+          className="w-32 h-32 rounded-full object-cover shadow-lg mb-4 border-4 border-purple-200"
+        />
+        <h3 className="text-xl font-bold text-gray-800">Mohamed Shazni</h3>
+        <p className="text-sm text-purple-600 font-medium">Founder</p>
+      </div>
+
+      {/* Developer 5 */}
+      <div className="flex flex-col items-center transform hover:scale-105 transition-transform duration-300">
+        <img
+          src="../Images/Shilma.jpeg"
+          alt="Rifaideen Shilma"
+          className="w-32 h-32 rounded-full object-cover shadow-lg mb-4 border-4 border-purple-200"
+        />
+        <h3 className="text-xl font-bold text-gray-800">Rifaideen Shilma</h3>
+        <p className="text-sm text-purple-600 font-medium">Founder </p>
+      </div>
+
+      {/* Developer 6 */}
+      <div className="flex flex-col items-center transform hover:scale-105 transition-transform duration-300">
+        <img
+          src="../Images/Maaza.jpeg"
+          alt="Muaaza Mazeer"
+          className="w-32 h-32 rounded-full object-cover shadow-lg mb-4 border-4 border-purple-200"
+        />
+        <h3 className="text-xl font-bold text-gray-800">Muaaza Mazeer</h3>
+        <p className="text-sm text-purple-600 font-medium">Founder</p>
+      </div>
+    </div>
+
+    <div className="mt-16 text-center">
+      <p className="text-gray-600 max-w-2xl mx-auto text-lg">
+        Our diverse team of sign language enthusiasts and tech experts is committed to 
+        making sign language learning accessible to everyone worldwide.
+      </p>
+    </div>
+  </div>
+</section>
+
       {/* Footer */}
       <footer className="bg-gradient-to-r from-indigo-900 to-purple-900 text-white py-20">
         <div className="max-w-7xl mx-auto px-4">
