@@ -42,27 +42,6 @@ const VitiscoLanding = () => {
   ];
 
   useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      setCursorPosition({ x: e.clientX, y: e.clientY });
-
-      const now = Date.now();
-      if (now - lastParticleTime.current >= particleInterval) {
-        lastParticleTime.current = now;
-        
-        if (particleContainerRef.current) {
-          const particle = document.createElement('div');
-          particle.className = 'particle';
-          particle.style.left = `${e.clientX}px`;
-          particle.style.top = `${e.clientY}px`;
-          particleContainerRef.current.appendChild(particle);
-
-          setTimeout(() => {
-            particle.remove();
-          }, 1000);
-        }
-      }
-    };
-
     const handleScroll = () => {
       if (videoSectionRef.current) {
         const videoSectionHeight = videoSectionRef.current.offsetHeight;
@@ -70,11 +49,9 @@ const VitiscoLanding = () => {
       }
     };
 
-    window.addEventListener('mousemove', handleMouseMove);
-    window.addEventListener('scroll', handleScroll);
+    window.addEventListener("scroll", handleScroll);
     return () => {
-      window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener("scroll", handleScroll);
     };
   }, []);
 
@@ -84,14 +61,12 @@ const VitiscoLanding = () => {
       <div
         className="custom-cursor"
         style={{
-
-          position: 'fixed',
+          position: "fixed",
           left: cursorPosition.x,
           top: cursorPosition.y,
-          pointerEvents: 'none',
+          pointerEvents: "none",
           zIndex: 9999,
-          transform: 'translate(-50%, -50%)',
-
+          transform: "translate(-50%, -50%)",
         }}
       >
         <img
@@ -103,83 +78,105 @@ const VitiscoLanding = () => {
       <div ref={particleContainerRef} className="particle-container" />
 
       {/* Updated Header Navigation */}
-      <header className={`fixed w-full top-0 z-50 py-1 transition-all duration-300 ${
-        scrolled 
-          ? 'bg-white shadow-lg' 
-          : 'bg-transparent backdrop-blur-sm'
-      }`}>
+      <header
+        className={`fixed w-full top-0 z-50 py-1 transition-all duration-300 ${
+          scrolled ? "bg-white shadow-lg" : "bg-transparent backdrop-blur-sm"
+        }`}
+      >
         <div className="px-4 lg:px-8 flex items-center justify-between cursor-pointer">
           <div className="flex items-center gap-4">
             <img
               src="/Images/vitisco logo PNG.png"
               alt="vitisco"
               className={`w-12 md:w-16 lg:w-20 transition-all duration-300 ${
-                scrolled ? 'filter-none' : 'filter-none'
+                scrolled ? "filter-none" : "filter-none"
               }`}
             />
-            <h1 className={`text-lg md:text-2xl font-bold tracking-wider italic ${
-              scrolled ? 'text-purple-800' : 'text-white'
-            }`}>
+            <h1
+              className={`text-lg md:text-2xl font-bold tracking-wider italic ${
+                scrolled ? "text-purple-800" : "text-white"
+              }`}
+            >
               VITISCO
             </h1>
           </div>
-          
+
           <div className="hidden md:flex items-center gap-x-16">
-            <h1 className={`text-sm font-bold ${
-              scrolled ? 'text-gray-600' : 'text-white'
-            }`}>About</h1>
-            <h1 className={`text-sm font-bold ${
-              scrolled ? 'text-gray-600' : 'text-white'
-            }`}>Contact Us</h1>
-            <h1 className={`text-sm font-bold ${
-              scrolled ? 'text-gray-600' : 'text-white'
-            }`}>Features</h1>
-            <h1 className={`text-sm font-bold ${
-              scrolled ? 'text-gray-600' : 'text-white'
-            }`}>Get Started!</h1>
-            <h1 className={`text-sm font-bold ${
-              scrolled ? 'text-gray-600' : 'text-white'
-            }`}>SITE LANGUAGE: ENGLISH</h1>
+            <h1
+              className={`text-sm font-bold ${
+                scrolled ? "text-gray-600" : "text-white"
+              }`}
+            >
+              About
+            </h1>
+            <h1
+              className={`text-sm font-bold ${
+                scrolled ? "text-gray-600" : "text-white"
+              }`}
+            >
+              Contact Us
+            </h1>
+            <h1
+              className={`text-sm font-bold ${
+                scrolled ? "text-gray-600" : "text-white"
+              }`}
+            >
+              Features
+            </h1>
+            <h1
+              className={`text-sm font-bold ${
+                scrolled ? "text-gray-600" : "text-white"
+              }`}
+            >
+              Get Started!
+            </h1>
+            <h1
+              className={`text-sm font-bold ${
+                scrolled ? "text-gray-600" : "text-white"
+              }`}
+            >
+              SITE LANGUAGE: ENGLISH
+            </h1>
           </div>
         </div>
       </header>
 
       {/* Video Section */}
-{/* Video Section */}
-<section className="relative bg-black py-16" ref={videoSectionRef}>
-  <div className="px-4">
-    <div className="w-full h-[75vh] overflow-hidden relative">
-    <video 
-  autoPlay
-  muted
-  loop
-  playsInline
-  className="w-full h-full object-cover"
-  poster="/Images/video-poster.jpg"
->
-  <source src="../Images/0121.mp4" type="video/mp4" />
-  Your browser does not support the video tag.
-</video>
-      
-      {/* Gradient overlay for better text readability */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-    </div>
+      {/* Video Section */}
+      <section className="relative bg-black py-16" ref={videoSectionRef}>
+        <div className="px-4">
+          <div className="w-full h-[75vh] overflow-hidden relative">
+            <video
+              autoPlay
+              muted
+              loop
+              playsInline
+              className="w-full h-full object-cover"
+              poster="/Images/video-poster.jpg"
+            >
+              <source src="../Images/0121.mp4" type="video/mp4" />
+              Your browser does not support the video tag.
+            </video>
 
-    <div className="mt-8 text-center relative z-10">
-      <h3 className="text-2xl md:text-4xl font-bold text-white mb-4 px-4">
-        Watch How VITISCO Transforms Sign Language Learning
-      </h3>
-      <div className="flex flex-col md:flex-row justify-center gap-4 px-4">
-        <button className="bg-purple-600 text-white px-8 py-3 rounded-full hover:bg-purple-700 transition-all transform hover:scale-105 shadow-lg">
-          Take Video Tour
-        </button>
-        <button className="border-2 border-white text-white px-8 py-3 rounded-full hover:bg-white hover:text-purple-900 transition-all shadow-lg">
-          See Success Stories
-        </button>
-      </div>
-    </div>
-  </div>
-</section>
+            {/* Gradient overlay for better text readability */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+          </div>
+
+          <div className="mt-8 text-center relative z-10">
+            <h3 className="text-2xl md:text-4xl font-bold text-white mb-4 px-4">
+              Watch How VITISCO Transforms Sign Language Learning
+            </h3>
+            <div className="flex flex-col md:flex-row justify-center gap-4 px-4">
+              <button className="bg-purple-600 text-white px-8 py-3 rounded-full hover:bg-purple-700 transition-all transform hover:scale-105 shadow-lg">
+                Take Video Tour
+              </button>
+              <button className="border-2 border-white text-white px-8 py-3 rounded-full hover:bg-white hover:text-purple-900 transition-all shadow-lg">
+                See Success Stories
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
 
       {/* Original Hero Section Enhanced */}
       <section className="py-20 max-w-7xl mx-auto px-4 mt-16">
@@ -366,88 +363,95 @@ const VitiscoLanding = () => {
       </section>
 
       {/* Developers Section */}
-<section className="py-20 bg-gradient-to-r from-purple-50 to-indigo-50">
-  <div className="max-w-7xl mx-auto px-4">
-    <h2 className="text-4xl font-bold text-center text-gray-800 mb-16">
-      Meet Our <span className="text-purple-800">Visionary Team</span>
-    </h2>
-    
-    <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-8">
-      {/* Developer 1 */}
-      <div className="flex flex-col items-center transform hover:scale-105 transition-transform duration-300">
-        <img
-          src="../Images/thaheshan.jpeg"
-          alt="Suresh Thaheshan"
-          className="w-32 h-32 rounded-full object-cover shadow-lg mb-4 border-4 border-purple-200"
-        />
-        <h3 className="text-xl font-bold text-gray-800">Suresh Thaheshan</h3>
-        <p className="text-sm text-purple-600 font-medium">Founder</p>
-      </div>
+      <section className="py-20 bg-gradient-to-r from-purple-50 to-indigo-50">
+        <div className="max-w-7xl mx-auto px-4">
+          <h2 className="text-4xl font-bold text-center text-gray-800 mb-16">
+            Meet Our <span className="text-purple-800">Visionary Team</span>
+          </h2>
 
-      {/* Developer 2 */}
-      <div className="flex flex-col items-center transform hover:scale-105 transition-transform duration-300">
-        <img
-          src="../Images/zuhar.jpeg"
-          alt="Zuhar Ahamed"
-          className="w-32 h-32 rounded-full object-cover shadow-lg mb-4 border-4 border-purple-200"
-        />
-        <h3 className="text-xl font-bold text-gray-800">Zuhar Ahamed</h3>
-        <p className="text-sm text-purple-600 font-medium">Founder</p>
-      </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-8">
+            {/* Developer 1 */}
+            <div className="flex flex-col items-center transform hover:scale-105 transition-transform duration-300">
+              <img
+                src="../Images/thaheshan.jpeg"
+                alt="Suresh Thaheshan"
+                className="w-32 h-32 rounded-full object-cover shadow-lg mb-4 border-4 border-purple-200"
+              />
+              <h3 className="text-xl font-bold text-gray-800">
+                Suresh Thaheshan
+              </h3>
+              <p className="text-sm text-purple-600 font-medium">Founder</p>
+            </div>
 
-      {/* Developer 3 */}
-      <div className="flex flex-col items-center transform hover:scale-105 transition-transform duration-300">
-        <img
-          src="../Images/Aymandas.jpg"
-          alt="Ayman Jaleel"
-          className="w-32 h-32 rounded-full object-cover shadow-lg mb-4 border-4 border-purple-200"
-        />
-        <h3 className="text-xl font-bold text-gray-800">Ayman Jaleel</h3>
-        <p className="text-sm text-purple-600 font-medium">Founder</p>
-      </div>
+            {/* Developer 2 */}
+            <div className="flex flex-col items-center transform hover:scale-105 transition-transform duration-300">
+              <img
+                src="../Images/zuhar.jpeg"
+                alt="Zuhar Ahamed"
+                className="w-32 h-32 rounded-full object-cover shadow-lg mb-4 border-4 border-purple-200"
+              />
+              <h3 className="text-xl font-bold text-gray-800">Zuhar Ahamed</h3>
+              <p className="text-sm text-purple-600 font-medium">Founder</p>
+            </div>
 
-      {/* Developer 4 */}
-      <div className="flex flex-col items-center transform hover:scale-105 transition-transform duration-300">
-        <img
-          src="../Images/Shazni-2.jpeg"
-          alt="Mohamed Shazni"
-          className="w-32 h-32 rounded-full object-cover shadow-lg mb-4 border-4 border-purple-200"
-        />
-        <h3 className="text-xl font-bold text-gray-800">Mohamed Shazni</h3>
-        <p className="text-sm text-purple-600 font-medium">Founder</p>
-      </div>
+            {/* Developer 3 */}
+            <div className="flex flex-col items-center transform hover:scale-105 transition-transform duration-300">
+              <img
+                src="../Images/Aymandas.jpg"
+                alt="Ayman Jaleel"
+                className="w-32 h-32 rounded-full object-cover shadow-lg mb-4 border-4 border-purple-200"
+              />
+              <h3 className="text-xl font-bold text-gray-800">Ayman Jaleel</h3>
+              <p className="text-sm text-purple-600 font-medium">Founder</p>
+            </div>
 
-      {/* Developer 5 */}
-      <div className="flex flex-col items-center transform hover:scale-105 transition-transform duration-300">
-        <img
-          src="../Images/Shilma.jpeg"
-          alt="Rifaideen Shilma"
-          className="w-32 h-32 rounded-full object-cover shadow-lg mb-4 border-4 border-purple-200"
-        />
-        <h3 className="text-xl font-bold text-gray-800">Rifaideen Shilma</h3>
-        <p className="text-sm text-purple-600 font-medium">Founder </p>
-      </div>
+            {/* Developer 4 */}
+            <div className="flex flex-col items-center transform hover:scale-105 transition-transform duration-300">
+              <img
+                src="../Images/Shazni-2.jpeg"
+                alt="Mohamed Shazni"
+                className="w-32 h-32 rounded-full object-cover shadow-lg mb-4 border-4 border-purple-200"
+              />
+              <h3 className="text-xl font-bold text-gray-800">
+                Mohamed Shazni
+              </h3>
+              <p className="text-sm text-purple-600 font-medium">Founder</p>
+            </div>
 
-      {/* Developer 6 */}
-      <div className="flex flex-col items-center transform hover:scale-105 transition-transform duration-300">
-        <img
-          src="../Images/Maaza.jpeg"
-          alt="Muaaza Mazeer"
-          className="w-32 h-32 rounded-full object-cover shadow-lg mb-4 border-4 border-purple-200"
-        />
-        <h3 className="text-xl font-bold text-gray-800">Muaaza Mazeer</h3>
-        <p className="text-sm text-purple-600 font-medium">Founder</p>
-      </div>
-    </div>
+            {/* Developer 5 */}
+            <div className="flex flex-col items-center transform hover:scale-105 transition-transform duration-300">
+              <img
+                src="../Images/Shilma.jpeg"
+                alt="Rifaideen Shilma"
+                className="w-32 h-32 rounded-full object-cover shadow-lg mb-4 border-4 border-purple-200"
+              />
+              <h3 className="text-xl font-bold text-gray-800">
+                Rifaideen Shilma
+              </h3>
+              <p className="text-sm text-purple-600 font-medium">Founder </p>
+            </div>
 
-    <div className="mt-16 text-center">
-      <p className="text-gray-600 max-w-2xl mx-auto text-lg">
-        Our diverse team of sign language enthusiasts and tech experts is committed to 
-        making sign language learning accessible to everyone worldwide.
-      </p>
-    </div>
-  </div>
-</section>
+            {/* Developer 6 */}
+            <div className="flex flex-col items-center transform hover:scale-105 transition-transform duration-300">
+              <img
+                src="../Images/Maaza.jpeg"
+                alt="Muaaza Mazeer"
+                className="w-32 h-32 rounded-full object-cover shadow-lg mb-4 border-4 border-purple-200"
+              />
+              <h3 className="text-xl font-bold text-gray-800">Muaaza Mazeer</h3>
+              <p className="text-sm text-purple-600 font-medium">Founder</p>
+            </div>
+          </div>
+
+          <div className="mt-16 text-center">
+            <p className="text-gray-600 max-w-2xl mx-auto text-lg">
+              Our diverse team of sign language enthusiasts and tech experts is
+              committed to making sign language learning accessible to everyone
+              worldwide.
+            </p>
+          </div>
+        </div>
+      </section>
 
       {/* Footer */}
       <footer className="bg-gradient-to-r from-indigo-900 to-purple-900 text-white py-20">
