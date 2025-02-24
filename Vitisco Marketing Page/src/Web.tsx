@@ -3,12 +3,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, BookOpen, Video, Award } from "lucide-react";
 
 const VitiscoLanding = () => {
-  const [cursorPosition, setCursorPosition] = useState({ x: 0, y: 0 });
   const [scrolled, setScrolled] = useState(false);
   const particleContainerRef = useRef<HTMLDivElement>(null);
   const videoSectionRef = useRef<HTMLDivElement>(null);
-  const lastParticleTime = useRef(0);
-  const particleInterval = 50;
+ 
 
   const features = [
     {
@@ -62,8 +60,7 @@ const VitiscoLanding = () => {
         className="custom-cursor"
         style={{
           position: "fixed",
-          left: cursorPosition.x,
-          top: cursorPosition.y,
+          top: 0,
           pointerEvents: "none",
           zIndex: 9999,
           transform: "translate(-50%, -50%)",
@@ -139,6 +136,14 @@ const VitiscoLanding = () => {
             </h1>
           </div>
         </div>
+        {/* Mobile Menu Button */}
+<div className="md:hidden">
+  <button className="p-2 text-white hover:text-purple-600 transition-colors">
+    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+    </svg>
+  </button>
+</div>
       </header>
 
       {/* Video Section */}
@@ -215,99 +220,163 @@ const VitiscoLanding = () => {
 
       {/* Alternating Content Sections */}
       <section className="py-20 max-w-7xl mx-auto px-4">
-        {/* First Section */}
-        <div className="w-full px-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
-            <div className="order-2 md:order-1">
-              <div className="bg-gradient-to-r from-indigo-500 to-indigo-600 h-1 w-24 mb-6"></div>
-              <h2 className="text-4xl font-bold text-gray-800 mb-6">
-                Learn Sign Language Naturally
-              </h2>
-              <p className="text-gray-600 mb-4 text-[20px]">
-                <span className="text-purple-800 font-bold">VITISCO</span>{" "}
-                revolutionizes sign language education through an immersive
-                visual learning experience.
-              </p>
-              <button className="bg-indigo-600 text-white px-8 py-3 rounded-lg hover:bg-indigo-700 transition-all transform hover:scale-105 shadow-lg">
-                Explore Lessons
-              </button>
-            </div>
-            <div className="order-1 md:order-2 transform hover:scale-105 transition-transform duration-300">
-              <img
-                src="/Images/sgn.jpg"
-                alt="Student learning"
-                className="rounded-2xl shadow-2xl w-full max-w-md mx-auto"
-              />
-            </div>
-          </div>
-        </div>
+  {/* First Section */}
+  <div className="w-full px-4">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
+      <div className="order-2 md:order-1">
+        <div className="bg-gradient-to-r from-indigo-500 to-indigo-600 h-1 w-24 mb-6"></div>
+        <h2 className="text-4xl font-bold text-gray-800 mb-6">
+          Learn Sign Language Naturally
+        </h2>
+        <p className="text-gray-600 mb-4 text-[20px]">
+          <span className="text-purple-800 font-bold">VITISCO</span> revolutionizes 
+          sign language education through an immersive visual learning experience.
+        </p>
+        <p className="text-gray-600 mb-6 text-lg">
+          👐 Our AI-powered platform analyzes your hand movements in real-time, 
+          providing instant feedback on accuracy and fluency. Practice with 
+          interactive 3D demonstrations and slow-motion replays to master 
+          every gesture perfectly.
+        </p>
+        <button className="bg-indigo-600 text-white px-8 py-3 rounded-lg hover:bg-indigo-700 transition-all transform hover:scale-105 shadow-lg">
+          Explore Lessons
+        </button>
+      </div>
+      <div className="order-1 md:order-2 transform hover:scale-105 transition-transform duration-300">
+        <img
+          src="/Images/sgn.jpg"
+          alt="Student learning"
+          className="rounded-2xl shadow-2xl w-full max-w-md mx-auto"
+        />
+      </div>
+    </div>
+  </div>
 
-        {/* Second Section */}
-        <div className="my-32">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
-            <div className="transform hover:scale-105 transition-transform duration-300">
-              <img
-                src="/Images/community.jpeg"
-                alt="Community"
-                className="rounded-2xl shadow-2xl w-full max-w-md mx-auto"
-              />
-            </div>
-            <div>
-              <div className="bg-gradient-to-r from-purple-500 to-purple-600 h-1 w-24 mb-6"></div>
-              <h2 className="text-4xl font-bold text-gray-800 mb-6">
-                Join Our Vibrant Community
-              </h2>
-              <button className="bg-purple-600 text-white px-8 py-3 rounded-lg hover:bg-purple-700 transition-all transform hover:scale-105 shadow-lg">
-                Join Community
-              </button>
-            </div>
-          </div>
-        </div>
+  {/* Second Section */}
+  <div className="my-32">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
+      <div className="transform hover:scale-105 transition-transform duration-300">
+        <img
+          src="/Images/community.jpeg"
+          alt="Community"
+          className="rounded-2xl shadow-2xl w-full max-w-md mx-auto"
+        />
+      </div>
+      <div>
+        <div className="bg-gradient-to-r from-purple-500 to-purple-600 h-1 w-24 mb-6"></div>
+        <h2 className="text-4xl font-bold text-gray-800 mb-6">
+          Join Our Vibrant Community
+        </h2>
+        <p className="text-gray-600 mb-6 text-lg">
+          🌍 Connect with 250,000+ learners and native signers worldwide in our 
+          interactive community. Participate in live practice sessions, 
+          cultural exchange forums, and collaborative learning challenges.
+        </p>
+        <button className="bg-purple-600 text-white px-8 py-3 rounded-lg hover:bg-purple-700 transition-all transform hover:scale-105 shadow-lg">
+          Join Community
+        </button>
+      </div>
+    </div>
+  </div>
 
-        {/* Third Section */}
-        <div className="w-full px-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
-            <div className="order-2 md:order-1">
-              <div className="bg-gradient-to-r from-teal-500 to-teal-600 h-1 w-24 mb-6"></div>
-              <h2 className="text-4xl font-bold text-gray-800 mb-6">
-                Track Your Progress
-              </h2>
-              <button className="bg-teal-600 text-white px-8 py-3 rounded-lg hover:bg-teal-700 transition-all transform hover:scale-105 shadow-lg">
-                View Progress
-              </button>
-            </div>
-            <div className="order-1 md:order-2 transform hover:scale-105 transition-transform duration-300">
-              <img
-                src="/Images/dashboard.jpg"
-                alt="Dashboard"
-                className="rounded-2xl shadow-2xl w-full max-w-md mx-auto"
-              />
-            </div>
-          </div>
-        </div>
+  {/* Third Section */}
+  <div className="w-full px-4">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
+      <div className="order-2 md:order-1">
+        <div className="bg-gradient-to-r from-teal-500 to-teal-600 h-1 w-24 mb-6"></div>
+        <h2 className="text-4xl font-bold text-gray-800 mb-6">
+          Track Your Progress
+        </h2>
+        <p className="text-gray-600 mb-6 text-lg">
+          📈 Our smart dashboard tracks your learning journey with detailed 
+          analytics. Monitor your daily streaks, lesson completion rates, 
+          and skill improvement metrics. Earn achievement badges and 
+          share your milestones with the community.
+        </p>
+        <button className="bg-teal-600 text-white px-8 py-3 rounded-lg hover:bg-teal-700 transition-all transform hover:scale-105 shadow-lg">
+          View Progress
+        </button>
+      </div>
+      <div className="order-1 md:order-2 transform hover:scale-105 transition-transform duration-300">
+        <img
+          src="/Images/dashboard.jpg"
+          alt="Dashboard"
+          className="rounded-2xl shadow-2xl w-full max-w-md mx-auto"
+        />
+      </div>
+    </div>
+  </div>
 
-        {/* VR Section */}
-        <div className="my-32">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
-            <div className="transform hover:scale-105 transition-transform duration-300">
-              <img
-                src="/Images/vr.jpg"
-                alt="VR"
-                className="rounded-2xl shadow-2xl w-full max-w-md mx-auto"
-              />
-            </div>
-            <div>
-              <div className="bg-gradient-to-r from-green-500 to-green-600 h-1 w-24 mb-6"></div>
-              <h2 className="text-4xl font-bold text-gray-800 mb-6">
-                Virtual Room
-              </h2>
-              <button className="bg-green-400 text-white px-8 py-3 rounded-lg hover:bg-green-700 transition-all transform hover:scale-105 shadow-lg">
-                View LeaderBoard
-              </button>
-            </div>
-          </div>
-        </div>
-      </section>
+  {/* VR Section */}
+  <div className="my-32">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
+      <div className="transform hover:scale-105 transition-transform duration-300">
+        <img
+          src="/Images/vr.jpg"
+          alt="VR"
+          className="rounded-2xl shadow-2xl w-full max-w-md mx-auto"
+        />
+      </div>
+      <div>
+        <div className="bg-gradient-to-r from-green-500 to-green-600 h-1 w-24 mb-6"></div>
+        <h2 className="text-4xl font-bold text-gray-800 mb-6">
+          Virtual Practice Rooms
+        </h2>
+        <p className="text-gray-600 mb-6 text-lg">
+          🥽 Immerse yourself in our virtual reality classrooms. Practice 
+          real-world scenarios with AI avatars, join live group sessions, 
+          and participate in global signing competitions. Climb the 
+          leaderboards and showcase your skills!
+        </p>
+        <button className="bg-green-400 text-white px-8 py-3 rounded-lg hover:bg-green-700 transition-all transform hover:scale-105 shadow-lg">
+          View LeaderBoard
+        </button>
+      </div>
+    </div>
+  </div>
+
+  {/* Translator Section */}
+<div className="my-32">
+  <div className="grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
+    <div>
+      <div className="bg-gradient-to-r from-orange-500 to-orange-600 h-1 w-24 mb-6"></div>
+      <h2 className="text-4xl font-bold text-gray-800 mb-6">
+        Real-Time Sign Language Translator
+      </h2>
+      <p className="text-gray-600 mb-6 text-lg">
+        <span className="text-purple-800 font-bold">BREAKTHROUGH FEATURE:</span>{" "}
+        Our AI-powered translator converts sign language to text and speech instantly. 
+        Communicate seamlessly with non-signers using our revolutionary 
+        <span className="font-semibold"> motion-to-text technology</span>.
+      </p>
+      <ul className="mb-6 space-y-3 text-gray-600">
+        <li className="flex items-center">
+          <span className="text-orange-500 mr-2">✓</span>
+          Instant translation SSL
+        </li>
+        <li className="flex items-center">
+          <span className="text-orange-500 mr-2">✓</span>
+          Voice output in 3 languages
+        </li>
+        <li className="flex items-center">
+          <span className="text-orange-500 mr-2">✓</span>
+          Conversation mode for two-way communication
+        </li>
+      </ul>
+      <button className="bg-orange-500 text-white px-8 py-3 rounded-lg hover:bg-orange-600 transition-all transform hover:scale-105 shadow-lg">
+        Try Translator Demo
+      </button>
+    </div>
+    <div className="transform hover:scale-105 transition-transform duration-300">
+      <img
+        src="../Images/03.png"
+        alt="Sign language translation interface"
+        className="rounded-2xl shadow-2xl w-full max-w-md mx-auto"
+      />
+    </div>
+  </div>
+</div>
+</section>
 
       {/* Pro Section */}
       <section className="bg-[#0E0D2A] py-[250px]">
@@ -451,6 +520,7 @@ const VitiscoLanding = () => {
             </p>
           </div>
         </div>
+        
       </section>
 
       {/* Footer */}
