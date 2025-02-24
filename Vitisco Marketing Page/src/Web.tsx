@@ -84,16 +84,18 @@ const VitiscoLanding = () => {
       <div
         className="custom-cursor"
         style={{
+
           position: 'fixed',
           left: cursorPosition.x,
           top: cursorPosition.y,
           pointerEvents: 'none',
           zIndex: 9999,
           transform: 'translate(-50%, -50%)',
+
         }}
       >
         <img
-          src="/Images/vitisco logo PNG.png"
+          src="../Images/logo2.png"
           alt="cursor"
           className="w-24 h-24 transition-transform duration-100 ease-out"
         />
@@ -143,37 +145,41 @@ const VitiscoLanding = () => {
       </header>
 
       {/* Video Section */}
-      <section className="relative bg-black py-16" ref={videoSectionRef}>
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="aspect-video overflow-hidden rounded-3xl shadow-2xl transform hover:scale-[1.01] transition-transform duration-300">
-            <video 
-              controls 
-              autoPlay 
-              muted 
-              loop
-              className="w-full h-full object-cover"
-              poster="/Images/video-poster.jpg"
-            >
-              <source src="/videos/platform-demo.mp4" type="video/mp4" />
-              Your browser does not support the video tag.
-            </video>
-          </div>
-          
-          <div className="mt-8 text-center">
-            <h3 className="text-2xl font-bold text-white mb-4">
-              Watch How VITISCO Transforms Sign Language Learning
-            </h3>
-            <div className="flex justify-center space-x-4">
-              <button className="bg-purple-600 text-white px-8 py-3 rounded-full hover:bg-purple-700 transition-all transform hover:scale-105">
-                Take Video Tour
-              </button>
-              <button className="border-2 border-white text-white px-8 py-3 rounded-full hover:bg-white hover:text-purple-900 transition-all">
-                See Success Stories
-              </button>
-            </div>
-          </div>
-        </div>
-      </section>
+{/* Video Section */}
+<section className="relative bg-black py-16" ref={videoSectionRef}>
+  <div className="px-4">
+    <div className="w-full h-[75vh] overflow-hidden relative">
+    <video 
+  autoPlay
+  muted
+  loop
+  playsInline
+  className="w-full h-full object-cover"
+  poster="/Images/video-poster.jpg"
+>
+  <source src="../Images/0121.mp4" type="video/mp4" />
+  Your browser does not support the video tag.
+</video>
+      
+      {/* Gradient overlay for better text readability */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+    </div>
+
+    <div className="mt-8 text-center relative z-10">
+      <h3 className="text-2xl md:text-4xl font-bold text-white mb-4 px-4">
+        Watch How VITISCO Transforms Sign Language Learning
+      </h3>
+      <div className="flex flex-col md:flex-row justify-center gap-4 px-4">
+        <button className="bg-purple-600 text-white px-8 py-3 rounded-full hover:bg-purple-700 transition-all transform hover:scale-105 shadow-lg">
+          Take Video Tour
+        </button>
+        <button className="border-2 border-white text-white px-8 py-3 rounded-full hover:bg-white hover:text-purple-900 transition-all shadow-lg">
+          See Success Stories
+        </button>
+      </div>
+    </div>
+  </div>
+</section>
 
       {/* Original Hero Section Enhanced */}
       <section className="py-20 max-w-7xl mx-auto px-4 mt-16">
