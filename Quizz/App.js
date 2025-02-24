@@ -128,7 +128,7 @@ const QuizApp = () => {
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" />
       <View style={styles.header}>
-        <Text style={styles.headerText}>Fantasy Quiz #{156}</Text>
+        <Text style={styles.headerText}> Quiz </Text>
         <TouchableOpacity>
           <Text style={styles.closeButton}>×</Text>
         </TouchableOpacity>
