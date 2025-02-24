@@ -531,38 +531,38 @@ const VitiscoLanding = () => {
           </h2>
           <div className="grid grid-cols-2 md:grid-cols-6 gap-8 mt-12">
             <div>
-              <p className="text-xl font-bold mb-4">Developers</p>
-              <p className="text-gray-300 hover:text-white">Suresh Thaheshan</p>
-              <p className="text-gray-300 hover:text-white">Zuhar Ahamed</p>
-              <p className="text-gray-300 hover:text-white">Ayman Jaleel</p>
-              <p className="text-gray-300 hover:text-white">Mohamed Shazni</p>
-              <p className="text-gray-300 hover:text-white">Rifaideen Shilma</p>
+              <p className="text-xl font-bold mb-4 mb-5">Developers</p>
+              <p className="text-gray-300 hover:text-white mb-5">Suresh Thaheshan</p>
+              <p className="text-gray-300 hover:text-white mb-5">Zuhar Ahamed</p>
+              <p className="text-gray-300 hover:text-white mb-5">Ayman Jaleel</p>
+              <p className="text-gray-300 hover:text-white mb-5">Mohamed Shazni</p>
+              <p className="text-gray-300 hover:text-white mb-5">Rifaideen Shilma</p>
               <p className="text-gray-300 hover:text-white">Muaaza Mazeer</p>
             </div>
             <div>
               <p className="text-xl font-bold mb-4">Apps</p>
-              <p className="text-gray-300">Android</p>
+              <p className="text-gray-300 mb-5">Android</p>
               <p className="text-gray-300">iOS</p>
             </div>
             <div>
               <p className="text-xl font-bold mb-4">Support</p>
-              <p className="text-gray-300">FAQs</p>
+              <p className="text-gray-300 mb-5">FAQs</p>
               <p className="text-gray-300">Contact</p>
             </div>
             <div>
-              <p className="text-xl font-bold mb-4">Legal</p>
-              <p className="text-gray-300">Privacy</p>
+              <p className="text-xl font-bold">Legal</p>
+              <p className="text-gray-300 mb-5">Privacy</p>
               <p className="text-gray-300">Terms</p>
             </div>
             <div>
               <p className="text-xl font-bold mb-4">Products</p>
-              <p className="text-gray-300">VITISCO</p>
-              <p className="text-gray-300">PRO</p>
+              <p className="text-gray-300 mb-5">VITISCO</p>
+              <p className="text-gray-300">VITISCO PRO</p>
             </div>
             <div>
               <p className="text-xl font-bold mb-4">Social</p>
-              <p className="text-gray-300">Instagram</p>
-              <p className="text-gray-300">Facebook</p>
+              <p className="text-gray-300 mb-5">Instagram</p>
+              <p className="text-gray-300mb-5">Facebook</p>
               <p className="text-gray-300">LinkedIn</p>
             </div>
           </div>
