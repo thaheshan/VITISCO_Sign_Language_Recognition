@@ -192,7 +192,7 @@ const VirtualRoom = () => {
           <span className="text-gray-500">or</span>
         </div>
         
-        <Button onClick={joinRandomRoom} variant="outline" className="w-full">
+        <Button onClick={joinRandomRoom} variant="outline" className="w-full text-white hover:text-white">
           Join Random Room
         </Button>
       </div>
