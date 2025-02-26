@@ -1,28 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
-import Svg, { Path } from 'react-native-svg';
-
-const HandPointer = () => (
-  <View style={styles.handContainer}>
-    <Svg width={100} height={100} viewBox="0 0 100 100">
-      {/* Hand */}
-      <Path 
-        d="M30 40 C30 35, 35 30, 40 30 C45 30, 50 33, 50 40 L50 70 C50 75, 45 80, 40 80 C35 80, 30 75, 30 70 Z" 
-        fill="#f5d0a9" 
-      />
-      {/* Finger pointing up */}
-      <Path 
-        d="M40 30 C40 25, 43 20, 48 20 C53 20, 56 25, 56 30 L56 40 C56 45, 53 50, 48 50 C43 50, 40 45, 40 40 Z" 
-        fill="#f5d0a9" 
-      />
-      {/* Sleeve */}
-      <Path 
-        d="M30 70 C30 85, 45 85, 50 85 L50 70 Z" 
-        fill="#e74c3c" 
-      />
-    </Svg>
-  </View>
-);
+import { View, Text, StyleSheet, TouchableOpacity, Dimensions, Image } from 'react-native';
 
 const ProgressBar = ({ current, total }) => {
   const progress = (current / total) * 100;
@@ -50,7 +27,12 @@ const AlphabetLearningScreen = () => {
       
       <View style={styles.letterContainer}>
         <Text style={styles.letterText}>A</Text>
-        <HandPointer />
+        <Image 
+          source={require('./assets/image 01.png')} 
+          style={styles.letterImage}
+          resizeMode="contain"
+        />
+
       </View>
       
       <TouchableOpacity style={styles.nextButton}>
@@ -110,17 +92,16 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    position: 'relative',
   },
   letterText: {
     fontSize: 100,
     fontWeight: 'bold',
     color: '#000',
   },
-  handContainer: {
-    position: 'absolute',
-    right: width * 0.1,
-    bottom: height * 0.1,
+  letterImage: {
+    width: 500, // Adjust size accordingly
+    height: 400,
+    marginTop: -60, // Adds spacing below the letter "A"
   },
   nextButton: {
     backgroundColor: '#5d5b8d',
