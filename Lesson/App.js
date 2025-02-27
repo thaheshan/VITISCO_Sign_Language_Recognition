@@ -48,7 +48,7 @@ const LoadingScreen = ({ navigation }) => {
     <SafeAreaView style={styles.container}>
       <View style={styles.loadingContent}>
         <Image
-          source={require('./assets/adaptive-icon.png')}
+          source={require('./assets/icon.png')}
           style={styles.characterImage}
           resizeMode="contain"
         />
@@ -89,7 +89,7 @@ const CustomizationScreen = ({ navigation }) => {
       </View>
       
       <Image
-        source={require('./assets/favicon.png')}
+        source={require('./assets/adaptive-icon.png')}
         style={styles.characterImage}
         resizeMode="contain"
       />
@@ -121,7 +121,7 @@ const ReadyCountdownScreen = ({ navigation }) => {
       </View>
       
       <Image
-        source={require('./assets/image 01.png')}
+        source={require('./assets/favicon.png')}
         style={styles.characterImage}
         resizeMode="contain"
       />
@@ -138,7 +138,7 @@ const GetStartedScreen = ({ navigation }) => {
       <Text style={styles.getStartedTitle}>LET'S{'\n'}GET</Text>
       
       <Image
-        source={require('./assets/adaptive-icon.png')}
+        source={require('./assets/favicon.png')}
         style={styles.characterImage}
         resizeMode="contain"
       />
@@ -160,7 +160,7 @@ const WelcomeLessonsScreen = ({ navigation }) => {
       <Text style={styles.welcomeLessonsTitle}>WELCOME TO THE LESSONS!!!</Text>
       
       <Image
-        source={require('./assets/splash-icon.png')}
+        source={require('./assets/icon.png')}
         style={styles.characterImage}
         resizeMode="contain"
       />
@@ -204,7 +204,7 @@ const LearningPathwayScreen = ({ navigation }) => {
           >
             {index === 4 && (
               <Image
-                source={require('./assets/favicon.png')}
+                source={require('./assets/splash-icon.png')}
                 style={styles.nodeIcon}
                 resizeMode="contain"
               />
@@ -216,7 +216,7 @@ const LearningPathwayScreen = ({ navigation }) => {
   );
 };
 
-// Alphabet Learning Screen (Original Component Updated)
+// Updated Alphabet Learning Screen based on the new code
 const AlphabetLearningScreen = ({ navigation }) => {
   const [currentLesson, setCurrentLesson] = useState(1);
   const totalLessons = 6;
@@ -242,7 +242,7 @@ const AlphabetLearningScreen = ({ navigation }) => {
       <View style={styles.letterContainer}>
         <Text style={styles.letterText}>A</Text>
         <Image
-          source={require('./assets/icon.png')}
+          source={require('./assets/image 01.png')}
           style={styles.letterImage}
           resizeMode="contain"
         />
@@ -342,8 +342,8 @@ const styles = StyleSheet.create({
     color: '#000',
   },
   letterImage: {
-    width: width * 0.8,
-    height: height * 0.4,
+    width: 500,
+    height: 400,
     marginTop: -60,
   },
   nextButton: {
