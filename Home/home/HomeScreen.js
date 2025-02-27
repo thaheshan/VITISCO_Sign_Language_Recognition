@@ -73,7 +73,7 @@ const HomeScreen = () => {
         </TouchableOpacity>
 
         {/* Quizzes Card */}
-        <TouchableOpacity style={styles.lessonCard}>
+        <TouchableOpacity style={styles.QuizzCard}>
           <View>
             <Text style={styles.cardTitle}>Quizzes</Text>
             <Text style={styles.activeText}>Active</Text>
@@ -87,7 +87,7 @@ const HomeScreen = () => {
         </TouchableOpacity>
 
         {/* Virtual Room Card */}
-        <TouchableOpacity style={styles.lessonCard}>
+        <TouchableOpacity style={styles.QuizzCard}>
           <Text style={styles.cardTitle}>Virtual Room</Text>
           <Text style={styles.activeText}>Active</Text>
         </TouchableOpacity>
@@ -185,13 +185,23 @@ const styles = StyleSheet.create({
     color: '#6B5ECD',
   },
   lessonCard: {
-    backgroundColor: '#483D8B',
+    backgroundColor: '#352561',
     padding: 16,
     borderRadius: 16,
     marginBottom: 16,
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
+
+  QuizzCard: {
+    backgroundColor: '#6154EF',
+    padding: 16,
+    borderRadius: 16,
+    marginBottom: 16,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+
   cardTitle: {
     color: '#FFF',
     fontSize: 18,
