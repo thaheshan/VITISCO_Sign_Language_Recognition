@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "Language Learning App",
-    "slug": "language-learning-app",
+    "name": "VitiscoLogin",
+    "slug": "vitiscologin",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -9,7 +9,7 @@
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
-      "backgroundColor": "#d8d5ff"
+      "backgroundColor": "#b3b6e3"
     },
     "assetBundlePatterns": [
       "**/*"
@@ -19,12 +19,12 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#d8d5ff"
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#b3b6e3"
       }
     },
     "web": {
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./assets/favicon.png"
     }
   }
 }
