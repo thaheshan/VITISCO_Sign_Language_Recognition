@@ -35,6 +35,7 @@ const AlphabetLearningScreen = () => {
 
       </View>
       
+      
       <TouchableOpacity style={styles.nextButton}>
         <Text style={styles.nextButtonText}>NEXT</Text>
       </TouchableOpacity>
