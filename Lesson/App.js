@@ -329,11 +329,191 @@ const LearningPathwayCustomizationScreen = ({ navigation }) => {
         disabled={selectedTopics.length === 0}
         onPress={() => {
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-          navigation.navigate('ReadyCountdown');
+          navigation.navigate('GamePreparation');
         }}
       >
         <Text style={styles.nextButtonText}>SAVE & CONTINUE</Text>
       </TouchableOpacity>
+    </SafeAreaView>
+  );
+};
+
+// NEW SCREEN: Game Preparation Screen - Added for better gamification
+const GamePreparationScreen = ({ navigation }) => {
+  const [isLoading, setIsLoading] = useState(true);
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const spinAnim = useRef(new Animated.Value(0)).current;
+  
+  useEffect(() => {
+    // Simulating preparation process
+    setTimeout(() => {
+      setIsLoading(false);
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 800,
+        useNativeDriver: true
+      }).start();
+    }, 2500);
+    
+    // Spinning animation for the gear icon
+    Animated.loop(
+      Animated.timing(spinAnim, {
+        toValue: 1,
+        duration: 2000,
+        easing: Easing.linear,
+        useNativeDriver: true
+      })
+    ).start();
+  }, []);
+  
+  const spin = spinAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '360deg']
+  });
+  
+  return (
+    <SafeAreaView style={styles.container}>
+      <Text style={styles.gamePreparationTitle}>
+        {isLoading ? "Preparing Your Learning Adventure" : "Learning Adventure Ready!"}
+      </Text>
+      
+      {isLoading ? (
+        <View style={styles.preparationLoading}>
+          <Animated.Text style={[styles.gearIcon, { transform: [{ rotate: spin }] }]}>
+            ⚙️
+          </Animated.Text>
+          <Text style={styles.preparationText}>
+            Building your customized path...
+          </Text>
+          <View style={styles.preparationSteps}>
+            <Text style={styles.preparationStep}>✓ Analyzing preferences</Text>
+            <Text style={styles.preparationStep}>✓ Selecting lessons</Text>
+            <Text style={styles.preparationStep}>⋯ Preparing games</Text>
+            <Text style={styles.preparationStep}>⋯ Finalizing pathway</Text>
+          </View>
+        </View>
+      ) : (
+        <Animated.View style={[styles.gameReadyContainer, { opacity: fadeAnim }]}>
+          <Image
+            source={require('./assets/favicon.png')}
+            style={styles.characterImage}
+            resizeMode="contain"
+          />
+          <Text style={styles.gameReadyText}>
+            Your customized learning adventure is ready! 
+            Exciting challenges await on your journey to language mastery.
+          </Text>
+          
+          <TouchableOpacity 
+            style={styles.adventureButton}
+            onPress={() => {
+              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+              navigation.navigate('DailyRewards');
+            }}
+          >
+            <Text style={styles.nextButtonText}>START ADVENTURE</Text>
+          </TouchableOpacity>
+        </Animated.View>
+      )}
+    </SafeAreaView>
+  );
+};
+
+// NEW SCREEN: Daily Rewards Screen - Enhances gamification
+const DailyRewardsScreen = ({ navigation }) => {
+  const scaleAnim = useRef(new Animated.Value(0.5)).current;
+  const rotateAnim = useRef(new Animated.Value(0)).current;
+  const [showReward, setShowReward] = useState(false);
+  
+  useEffect(() => {
+    Animated.sequence([
+      Animated.timing(scaleAnim, {
+        toValue: 1.1,
+        duration: 800,
+        useNativeDriver: true,
+        easing: Easing.elastic(1)
+      }),
+      Animated.timing(scaleAnim, {
+        toValue: 1,
+        duration: 300,
+        useNativeDriver: true
+      })
+    ]).start();
+    
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(rotateAnim, {
+          toValue: 1,
+          duration: 2000,
+          useNativeDriver: true,
+          easing: Easing.linear
+        }),
+        Animated.timing(rotateAnim, {
+          toValue: 0,
+          duration: 2000,
+          useNativeDriver: true,
+          easing: Easing.linear
+        })
+      ])
+    ).start();
+  }, []);
+  
+  const rotation = rotateAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['-5deg', '5deg']
+  });
+  
+  const handleClaimReward = () => {
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    setShowReward(true);
+    
+    // Navigate after a delay to show the reward animation
+    setTimeout(() => {
+      navigation.navigate('ReadyCountdown');
+    }, 2500);
+  };
+  
+  return (
+    <SafeAreaView style={styles.container}>
+      <Text style={styles.dailyRewardTitle}>Daily Reward!</Text>
+      
+      {!showReward ? (
+        <>
+          <Animated.View 
+            style={[
+              styles.rewardChest, 
+              { 
+                transform: [
+                  { scale: scaleAnim },
+                  { rotate: rotation }
+                ] 
+              }
+            ]}
+          >
+            <Text style={styles.chestIcon}>🎁</Text>
+          </Animated.View>
+          
+          <Text style={styles.dailyRewardText}>
+            You've got a surprise reward waiting for you!
+            Claim it to boost your learning journey.
+          </Text>
+          
+          <TouchableOpacity 
+            style={styles.claimButton}
+            onPress={handleClaimReward}
+          >
+            <Text style={styles.nextButtonText}>CLAIM REWARD</Text>
+          </TouchableOpacity>
+        </>
+      ) : (
+        <View style={styles.rewardRevealContainer}>
+          <Confetti show={true} />
+          <Text style={styles.rewardRevealText}>You've earned:</Text>
+          <Text style={styles.rewardItem}>🏆 50 XP Points</Text>
+          <Text style={styles.rewardItem}>⭐ New Avatar Accessory</Text>
+          <Text style={styles.rewardItem}>🔓 Bonus Lesson Unlocked</Text>
+        </View>
+      )}
     </SafeAreaView>
   );
 };
@@ -447,10 +627,94 @@ const GetStartedScreen = ({ navigation }) => {
         style={styles.startButton}
         onPress={() => {
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-          navigation.navigate('WelcomeLessons');
+          navigation.navigate('LessonIntro');
         }}
       >
         <Text style={styles.nextButtonText}>START</Text>
+      </TouchableOpacity>
+    </SafeAreaView>
+  );
+};
+
+// NEW SCREEN: Lesson Introduction
+const LessonIntroScreen = ({ navigation }) => {
+  const fadeInAnim = useRef(new Animated.Value(0)).current;
+  const slideUpAnim = useRef(new Animated.Value(50)).current;
+  
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(fadeInAnim, {
+        toValue: 1,
+        duration: 800,
+        useNativeDriver: true
+      }),
+      Animated.timing(slideUpAnim, {
+        toValue: 0,
+        duration: 800,
+        useNativeDriver: true,
+        easing: Easing.out(Easing.cubic)
+      })
+    ]).start();
+  }, []);
+  
+  return (
+    <SafeAreaView style={styles.container}>
+      <Text style={styles.levelIndicator}>BASIC LEVEL (LEVEL 4)</Text>
+      
+      <Animated.View 
+        style={[
+          styles.lessonIntroContainer,
+          {
+            opacity: fadeInAnim,
+            transform: [{ translateY: slideUpAnim }]
+          }
+        ]}
+      >
+        <Text style={styles.lessonIntroTitle}>Today's Lesson Plan</Text>
+        
+        <View style={styles.lessonInfoCard}>
+          <View style={styles.lessonInfoHeader}>
+            <Text style={styles.lessonInfoTitle}>Sinhala Basics</Text>
+            <Text style={styles.lessonInfoDuration}>Duration: 15 min</Text>
+          </View>
+          
+          <View style={styles.lessonInfoContent}>
+            <Text style={styles.lessonInfoDescription}>
+              In today's lesson, we'll learn the basics of Sinhala alphabet
+              and common greetings through sign language.
+            </Text>
+            
+            <View style={styles.lessonTopics}>
+              <Text style={styles.lessonTopicItem}>• Basic alphabet letters</Text>
+              <Text style={styles.lessonTopicItem}>• Simple greetings</Text>
+              <Text style={styles.lessonTopicItem}>• Common expressions</Text>
+            </View>
+          </View>
+        </View>
+        
+        <View style={styles.rewardsPreview}>
+          <Text style={styles.rewardsTitle}>Completion Rewards:</Text>
+          <View style={styles.rewardsRow}>
+            <View style={styles.rewardItem}>
+              <Text style={styles.rewardIcon}>🏆</Text>
+              <Text style={styles.rewardValue}>+75 XP</Text>
+            </View>
+            <View style={styles.rewardItem}>
+              <Text style={styles.rewardIcon}>⭐</Text>
+              <Text style={styles.rewardValue}>Unlock Level 5</Text>
+            </View>
+          </View>
+        </View>
+      </Animated.View>
+      
+      <TouchableOpacity 
+        style={styles.startLessonButton}
+        onPress={() => {
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+          navigation.navigate('WelcomeLessons');
+        }}
+      >
+        <Text style={styles.nextButtonText}>BEGIN LESSON</Text>
       </TouchableOpacity>
     </SafeAreaView>
   );
@@ -464,7 +728,7 @@ const WelcomeLessonsScreen = ({ navigation }) => {
     // Show confetti after a brief delay
     setTimeout(() => setShowConfetti(true), 500);
   }, []);
-  
+
   return (
     <SafeAreaView style={styles.container}>
       <Confetti show={showConfetti} />
@@ -481,6 +745,7 @@ const WelcomeLessonsScreen = ({ navigation }) => {
         style={styles.continueButton}
         onPress={() => {
           Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+          // CORRECTED: Changed navigation target to 'LearningPathway'
           navigation.navigate('LearningPathway');
         }}
       >
@@ -512,7 +777,7 @@ const LearningPathwayScreen = ({ navigation }) => {
   const handleNodePress = (nodeIndex) => {
     if (nodeIndex <= unlockedLevel) {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-      navigation.navigate('AlphabetLearning');
+      navigation.navigate('AlphabetLearning', { level: nodeIndex + 1 });
     } else {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
       // Show locked level feedback (could add a visual indicator here)
@@ -551,11 +816,6 @@ const LearningPathwayScreen = ({ navigation }) => {
     for (let i = 0; i < 11; i++) {
       const start = getNodePosition(i, 12);
       const end = getNodePosition(i + 1, 12);
-      
-      // Calculate control points for curved lines
-      const controlX = (start.x + end.x) / 2;
-      const controlY1 = start.y + (end.y - start.y) * 0.25;
-      const controlY2 = start.y + (end.y - start.y) * 0.75;
       
       connectors.push(
         <Animated.View 
@@ -634,15 +894,18 @@ const LearningPathwayScreen = ({ navigation }) => {
                     style={styles.nodeIcon}
                     resizeMode="contain"
                   />
-
                 )}
                 
                 {isLocked && (
                   <Text style={styles.lockIcon}>🔒</Text>
                 )}
                 
-                {!isGiftNode && !isLocked && (
-                  <Text style={styles.levelNumber}>{index + 1}</Text>
+                {!isLocked && !isGiftNode && !isLargeNode && (
+                  <Text style={styles.nodeNumber}>{index + 1}</Text>
+                )}
+                
+                {isLargeNode && (
+                  <Text style={styles.largeNodeText}>QUIZ</Text>
                 )}
               </TouchableOpacity>
             </Animated.View>
@@ -650,329 +913,874 @@ const LearningPathwayScreen = ({ navigation }) => {
         })}
       </View>
       
-      <View style={styles.pathwayFooter}>
-        <TouchableOpacity 
-          style={styles.helpButton}
-          onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-            // Show help modal or tooltip
-          }}
-        >
-          <Text style={styles.helpButtonText}>?</Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity 
-          style={styles.settingsButton}
-          onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-            // Navigate to settings
-          }}
-        >
-          <Text style={styles.settingsButtonIcon}>⚙️</Text>
-        </TouchableOpacity>
-      </View>
+      <TouchableOpacity 
+        style={styles.continueButton}
+        onPress={() => {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+          navigation.navigate('AlphabetLearning');
+        }}
+      >
+        <Text style={styles.nextButtonText}>GO TO NEXT LESSON</Text>
+      </TouchableOpacity>
     </SafeAreaView>
   );
 };
 
-// Alphabet Learning Screen with animations
+// Alphabet Learning Screen with interactive elements
 const AlphabetLearningScreen = ({ navigation }) => {
-  const [currentLesson, setCurrentLesson] = useState(1);
-  const totalLessons = 6;
+  const [currentCard, setCurrentCard] = useState(0);
   const [showSuccess, setShowSuccess] = useState(false);
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const letterAnim = useRef(new Animated.Value(0)).current;
+  const cardAnim = useRef(new Animated.Value(0)).current;
   
-  // Alphabet data
-  const alphabetData = [
-    { letter: 'A', image: require('./assets/splash-icon.png') },
-    { letter: 'B', image: require('./assets/splash-icon.png') },
-    { letter: 'C', image: require('./assets/splash-icon.png') },
-    { letter: 'D', image: require('./assets/splash-icon.png') },
-    { letter: 'E', image: require('./assets/splash-icon.png') },
-    { letter: 'F', image: require('./assets/splash-icon.png') },
+  const alphabetCards = [
+    { letter: 'අ', pronunciation: 'a', example: 'apple', sign: require('./assets/adaptive-icon.png') },
+    { letter: 'ආ', pronunciation: 'aa', example: 'art', sign: require('./assets/adaptive-icon.png') },
+    { letter: 'ඇ', pronunciation: 'ae', example: 'ant', sign: require('./assets/adaptive-icon.png') },
+    { letter: 'ඈ', pronunciation: 'aae', example: 'ask', sign: require('./assets/adaptive-icon.png') },
+    { letter: 'ඉ', pronunciation: 'i', example: 'if', sign: require('./assets/adaptive-icon.png') },
   ];
   
   useEffect(() => {
-    // Animate letter appearance
-    Animated.sequence([
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 500,
-        useNativeDriver: true,
-      }),
-      Animated.spring(letterAnim, {
-        toValue: 1,
-        friction: 3,
-        useNativeDriver: true,
-      })
-    ]).start();
-  }, [currentLesson]);
+    // Card flip animation
+    Animated.timing(cardAnim, {
+      toValue: 1,
+      duration: 500,
+      useNativeDriver: true,
+    }).start();
+  }, [currentCard]);
   
-  const goToNextLesson = () => {
-    // Reset animations
-    fadeAnim.setValue(0);
-    letterAnim.setValue(0);
-    
-    if (currentLesson < totalLessons) {
-      setCurrentLesson(currentLesson + 1);
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    } else {
-      // Show success animation before navigating back
-      setShowSuccess(true);
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+  const nextCard = () => {
+    if (currentCard < alphabetCards.length - 1) {
+      // Reset animation value
+      cardAnim.setValue(0);
       
+      // Haptic feedback
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      
+      // Move to next card
+      setCurrentCard(currentCard + 1);
+    } else {
+      // Completed all cards
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      setShowSuccess(true);
+      
+      // Navigate after showing success animation
       setTimeout(() => {
-        navigation.navigate('LearningPathway');
+        navigation.navigate('LessonComplete');
       }, 2000);
     }
   };
   
+  const prevCard = () => {
+    if (currentCard > 0) {
+      // Reset animation value
+      cardAnim.setValue(0);
+      
+      // Haptic feedback
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      
+      // Move to previous card
+      setCurrentCard(currentCard - 1);
+    }
+  };
+  
+  // Card animation values
+  const cardScale = cardAnim.interpolate({
+    inputRange: [0, 0.5, 1],
+    outputRange: [0.8, 0.9, 1]
+  });
+  
+  const cardOpacity = cardAnim.interpolate({
+    inputRange: [0, 0.5, 1],
+    outputRange: [0, 0.5, 1]
+  });
+  
   return (
-    <View style={styles.container}>
-      <Confetti show={showSuccess} />
+    <SafeAreaView style={styles.container}>
+      <Text style={styles.levelIndicator}>ALPHABET LEARNING</Text>
       
-      <View style={styles.header}>
-        <TouchableOpacity 
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
-        >
-          <Text style={styles.backButtonText}>←</Text>
-        </TouchableOpacity>
-        <Text style={styles.basicText}>BASIC LEVEL</Text>
-      </View>
+      <ProgressBar current={currentCard + 1} total={alphabetCards.length} />
       
-      <Text style={styles.levelText}>LEVEL {currentLesson < 10 ? '0' + currentLesson : currentLesson}</Text>
-      
-      <ProgressBar current={currentLesson} total={totalLessons} />
-      
-      <Animated.View 
-        style={[
-          styles.letterContainer,
-          { 
-            opacity: fadeAnim,
-          }
-        ]}
-      >
-        <Animated.Text 
-          style={[
-            styles.letterText,
-            {
-              transform: [
-                { scale: letterAnim },
-                { 
-                  translateY: letterAnim.interpolate({
-                    inputRange: [0, 1],
-                    outputRange: [50, 0]
-                  })
-                }
-              ]
-            }
-          ]}
-        >
-          {alphabetData[currentLesson-1].letter}
-        </Animated.Text>
-        
-        <Animated.Image
-          source={alphabetData[currentLesson-1].image}
-          style={[
-            styles.letterImage,
-            { 
-              opacity: fadeAnim,
-              transform: [
-                { 
-                  translateY: fadeAnim.interpolate({
-                    inputRange: [0, 1],
-                    outputRange: [100, 0]
-                  })
-                }
-              ]
-            }
-          ]}
-          resizeMode="contain" 
-        />
-      </Animated.View>
-      
-      <View style={styles.actionButtons}>
-        <TouchableOpacity 
-          style={styles.practiceButton}
-          onPress={() => {
-            // Navigate to practice screen
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-          }}
-        >
-          <Text style={styles.practiceButtonText}>PRACTICE</Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity 
-          style={styles.nextButton}
-          onPress={goToNextLesson}
-        >
-          <Text style={styles.nextButtonText}>
-            {currentLesson < totalLessons ? 'NEXT' : 'COMPLETE'}
+      {!showSuccess ? (
+        <>
+          <Animated.View 
+            style={[
+              styles.alphabetCard,
+              {
+                opacity: cardOpacity,
+                transform: [{ scale: cardScale }]
+              }
+            ]}
+          >
+            <Text style={styles.alphabetLetter}>{alphabetCards[currentCard].letter}</Text>
+            <Text style={styles.alphabetPronunciation}>
+              Pronounced as: "{alphabetCards[currentCard].pronunciation}"
+            </Text>
+            
+            <Image
+              source={alphabetCards[currentCard].sign}
+              style={styles.signImage}
+              resizeMode="contain"
+            />
+            
+            <Text style={styles.exampleText}>
+              Example: {alphabetCards[currentCard].example}
+            </Text>
+          </Animated.View>
+          
+          <View style={styles.navigationButtons}>
+            <TouchableOpacity
+              style={[styles.navButton, currentCard === 0 && styles.disabledButton]}
+              onPress={prevCard}
+              disabled={currentCard === 0}
+            >
+              <Text style={styles.navButtonText}>Previous</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity
+              style={styles.navButton}
+              onPress={nextCard}
+            >
+              <Text style={styles.navButtonText}>
+                {currentCard < alphabetCards.length - 1 ? 'Next' : 'Complete'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </>
+      ) : (
+        <View style={styles.successContainer}>
+          <Confetti show={true} />
+          <Text style={styles.successTitle}>Great Job!</Text>
+          <Text style={styles.successMessage}>
+            You've learned the basic Sinhala alphabet letters!
           </Text>
-        </TouchableOpacity>
-      </View>
-    </View>
+        </View>
+      )}
+    </SafeAreaView>
   );
 };
 
-// Create the stack navigator
+
+// Lesson Complete Screen with rewards
+const LessonCompleteScreen = ({ navigation }) => {
+  const [showConfetti, setShowConfetti] = useState(false);
+  const scaleAnim = useRef(new Animated.Value(0.2)).current;
+  
+  useEffect(() => {
+    // Show confetti with delay
+    setTimeout(() => setShowConfetti(true), 500);
+    
+    // Trophy animation
+    Animated.spring(scaleAnim, {
+      toValue: 1,
+      friction: 4,
+      tension: 40,
+      useNativeDriver: true
+    }).start();
+  }, []);
+  
+  return (
+    <SafeAreaView style={styles.container}>
+      <Confetti show={showConfetti} />
+      
+      <Text style={styles.lessonCompleteTitle}>LESSON COMPLETE!</Text>
+      
+      <Animated.View 
+        style={[
+          styles.trophyContainer,
+          { transform: [{ scale: scaleAnim }] }
+        ]}
+      >
+        <Text style={styles.trophyIcon}>🏆</Text>
+      </Animated.View>
+      
+      <View style={styles.rewardsContainer}>
+        <Text style={styles.rewardsTitle}>Rewards Earned:</Text>
+        <View style={styles.rewardsList}>
+          <Text style={styles.rewardItem}>🌟 +75 XP Points</Text>
+          <Text style={styles.rewardItem}>🏅 Basic Alphabet Badge</Text>
+          <Text style={styles.rewardItem}>🔓 Unlocked Level 6</Text>
+        </View>
+      </View>
+      
+      <TouchableOpacity 
+        style={styles.continueButton}
+        onPress={() => {
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+          navigation.navigate('LearningPathway');
+        }}
+      >
+        <Text style={styles.nextButtonText}>CONTINUE</Text>
+      </TouchableOpacity>
+    </SafeAreaView>
+  );
+};
+
+
+
+const { width, height } = Dimensions.get('window');
 const Stack = createStackNavigator();
 
-// Main App component with navigation
-const App = () => {
+// Main App Component
+export default function App() {
   return (
     <NavigationContainer>
-      <Stack.Navigator 
+      <Stack.Navigator
         initialRouteName="Welcome"
         screenOptions={{
           headerShown: false,
-          // Add transition animation
-          cardStyleInterpolator: ({ current, layouts }) => {
-            return {
-              cardStyle: {
-                transform: [
-                  {
-                    translateX: current.progress.interpolate({
-                      inputRange: [0, 1],
-                      outputRange: [layouts.screen.width, 0],
-                    }),
-                  },
-                ],
-              },
-            };
-          },
+          cardStyleInterpolator: ({ current }) => ({
+            cardStyle: {
+              opacity: current.progress,
+            },
+          }),
         }}
+
+
       >
         <Stack.Screen name="Welcome" component={WelcomeScreen} />
         <Stack.Screen name="Loading" component={LoadingScreen} />
         <Stack.Screen name="Customization" component={CustomizationScreen} />
         <Stack.Screen name="LearningPathwayCustomization" component={LearningPathwayCustomizationScreen} />
+        <Stack.Screen name="GamePreparation" component={GamePreparationScreen} />
+        <Stack.Screen name="DailyRewards" component={DailyRewardsScreen} />
         <Stack.Screen name="ReadyCountdown" component={ReadyCountdownScreen} />
         <Stack.Screen name="GetStarted" component={GetStartedScreen} />
+        <Stack.Screen name="LessonIntro" component={LessonIntroScreen} />
         <Stack.Screen name="WelcomeLessons" component={WelcomeLessonsScreen} />
-        <Stack.Screen name="LearningPathway" component={LearningPathwayScreen} />
+  <Stack.Screen name="LearningPathway" component={LearningPathwayScreen} />
+
         <Stack.Screen name="AlphabetLearning" component={AlphabetLearningScreen} />
+        <Stack.Screen name="LessonComplete" component={LessonCompleteScreen} />
+        // Add to your Stack.Navigator
+<Stack.Screen name="QuizScreen" component={QuizScreen} />
+<Stack.Screen name="QuizResults" component={QuizResultsScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );
-};
+}
 
-// Enhanced styles with more gamified elements
-const { width, height } = Dimensions.get('window');
-
-
-
+// Styles
+// Styles
 const styles = StyleSheet.create({
-  
-    container: {
-      flex: 1,
-      backgroundColor: '#c5c6e8',
-      padding: 20,
-    },
-    confettiContainer: {
-      position: 'absolute',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      zIndex: 10,
-    },
-    confetti: {
-      width: width,
-      height: height,
-    },
-    header: {
-      marginTop: 30,
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    backButton: {
-      position: 'absolute',
-      left: 0,
-      padding: 10,
-    },
-    backButtonText: {
-      fontSize: 24,
-      fontWeight: 'bold',
-      color: '#383773',
-    },
-    basicText: {
-      fontSize: 16,
-      fontWeight: 'bold',
-      color: '#333',
-    },
-    levelText: {
-      fontSize: 24,
-      fontWeight: 'bold',
-      color: '#383773',
-      marginVertical: 20,
-    },
-    progressContainer: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      marginBottom: 20,
-    },
-    progressBackground: {
-      flex: 1,
-      height: 12,
-      backgroundColor: '#ffffff',
-      borderRadius: 10,
-      overflow: 'hidden',
-    },
-    progressFill: {
-      height: '100%',
-      backgroundColor: '#5d5b8d',
-      borderRadius: 10,
-    },
-    progressText: {
-      marginLeft: 10,
-      fontSize: 14,
-      color: '#333',
-    },
-    letterContainer: {
-      flex: 1,
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
-    letterText: {
-      fontSize: 100,
-      fontWeight: 'bold',
-      color: '#000',
-    },
   container: {
     flex: 1,
     backgroundColor: '#c5c6e8',
-    padding: 20,
-    justifyContent: 'space-between',
-  },
-  header: {
-    marginTop: 30,
     alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 20,
   },
-  basicText: {
+  welcomeTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginTop: 80,
+    marginBottom: 20,
+    color: '#383773',
+  },
+  beginButton: {
+    backgroundColor: '#5d5b8d',
+    paddingVertical: 12,
+    paddingHorizontal: 50,
+    borderRadius: 8,
+    marginTop: 40,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
+    elevation: 5,
+    alignSelf: 'center',
+  },
+  nextButtonText: {
+    color: 'white',
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#333',
+    textAlign: 'center',
   },
-  levelText: {
+  loadingContent: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  characterImage: {
+    width: width * 0.7,
+    height: width * 0.7,
+    marginVertical: 20,
+  },
+  progressCircle: {
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+    borderWidth: 3,
+    borderColor: '#5d5b8d',
+    justifyContent: 'center',
+    alignItems: 'center',
+    margin: 20,
+  },
+  progressPercent: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#383773',
+  },
+  loadingText: {
+    fontSize: 16,
+    textAlign: 'center',
+    marginBottom: 30,
+    color: '#383773',
+  },
+  loadingBarContainer: {
+    width: '80%',
+    height: 10,
+    backgroundColor: '#ffffff',
+    borderRadius: 5,
+    overflow: 'hidden',
+  },
+  loadingBar: {
+    height: '100%',
+    backgroundColor: '#5d5b8d',
+    borderRadius: 5,
+  },
+  customizeTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginTop: 60,
+    marginBottom: 30,
+    color: '#383773',
+    paddingHorizontal: 20,
+  },
+  buttonRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 20,
+    width: '100%',
+    marginBottom: 30,
+  },
+  optionButton: {
+    paddingVertical: 12,
+    paddingHorizontal: 30,
+    borderRadius: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
+    elevation: 5,
+  },
+  yesButton: {
+    backgroundColor: '#5d5b8d',
+  },
+  noButton: {
+    backgroundColor: '#9291b9',
+  },
+  optionButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  customizationHeader: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#383773',
+    marginTop: 40,
+    marginBottom: 20,
+  },
+  levelSelector: {
+    width: '100%',
+    marginBottom: 20,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#383773',
+    marginBottom: 10,
+  },
+  levelOptions: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    flexWrap: 'wrap',
+  },
+  levelOption: {
+    padding: 15,
+    borderRadius: 10,
+    borderWidth: 2,
+    borderColor: '#c5c6e8',
+    marginBottom: 10,
+    minWidth: width / 4.5,
+    alignItems: 'center',
+  },
+  selectedLevel: {
+    borderColor: '#5d5b8d',
+    backgroundColor: 'rgba(93, 91, 141, 0.1)',
+  },
+  levelOptionText: {
+    fontSize: 16,
+    color: '#555',
+  },
+  selectedLevelText: {
+    color: '#5d5b8d',
+    fontWeight: 'bold',
+  },
+  topicsSection: {
+    width: '100%',
+    marginBottom: 20,
+  },
+  topicsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+  },
+  topicItem: {
+    width: width / 2.4,
+    padding: 15,
+    borderRadius: 10,
+    borderWidth: 2,
+    borderColor: '#c5c6e8',
+    marginBottom: 15,
+    alignItems: 'center',
+  },
+  selectedTopic: {
+    borderColor: '#5d5b8d',
+    backgroundColor: 'rgba(93, 91, 141, 0.1)',
+  },
+  topicIcon: {
+    fontSize: 28,
+    marginBottom: 5,
+  },
+  topicName: {
+    fontSize: 16,
+    color: '#555',
+  },
+  selectedTopicText: {
+    color: '#5d5b8d',
+    fontWeight: 'bold',
+  },
+  continueButton: {
+    backgroundColor: '#5d5b8d',
+    paddingVertical: 12,
+    paddingHorizontal: 40,
+    borderRadius: 8,
+    marginTop: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
+    elevation: 5,
+    alignSelf: 'center',
+  },
+  customizationButton: {
+    width: '100%',
+    marginTop: 30,
+  },
+  disabledButton: {
+    backgroundColor: '#c5c6e8',
+    shadowOpacity: 0.1,
+  },
+  gamePreparationTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginTop: 60,
+    color: '#383773',
+  },
+  preparationLoading: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  preparationText: {
+    fontSize: 16,
+    color: '#383773',
+    marginVertical: 20,
+  },
+  preparationSteps: {
+    alignSelf: 'stretch',
+    padding: 20,
+    backgroundColor: 'white',
+    borderRadius: 15,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 3,
+  },
+  preparationStep: {
+    fontSize: 16,
+    color: '#555',
+    marginVertical: 5,
+  },
+  gearIcon: {
+    fontSize: 50,
+  },
+  gameReadyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  gameReadyText: {
+    fontSize: 16,
+    textAlign: 'center',
+    color: '#383773',
+    marginBottom: 30,
+    lineHeight: 26,
+  },
+  adventureButton: {
+    backgroundColor: '#5d5b8d',
+    paddingVertical: 12,
+    paddingHorizontal: 30,
+    borderRadius: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
+    elevation: 5,
+  },
+  dailyRewardTitle: {
     fontSize: 24,
     fontWeight: 'bold',
     color: '#383773',
-    marginVertical: 20,
+    marginTop: 60,
+  },
+  rewardChest: {
+    marginVertical: 30,
+  },
+  chestIcon: {
+    fontSize: 80,
+  },
+  dailyRewardText: {
+    fontSize: 16,
+    textAlign: 'center',
+    color: '#383773',
+    marginBottom: 30,
+    lineHeight: 26,
+  },
+  claimButton: {
+    backgroundColor: '#8e8cc0',
+    paddingVertical: 12,
+    paddingHorizontal: 40,
+    borderRadius: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
+    elevation: 5,
+  },
+  rewardRevealContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  rewardRevealText: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#383773',
+    marginBottom: 20,
+  },
+  rewardItem: {
+    fontSize: 16,
+    color: '#383773',
+    marginVertical: 10,
+  },
+  confettiContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 10,
+  },
+  confetti: {
+    width: width,
+    height: height,
+  },
+  levelIndicator: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#383773',
+    marginTop: 20,
+    alignSelf: 'center',
+  },
+  countdownContainer: {
+    flex: 1,
+    justifyContent: 'flex-start',
+    alignItems: 'center',
+    marginTop: 40,
+  },
+  countdownText: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#383773',
+    marginBottom: 20,
+  },
+  countdownCircle: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    borderWidth: 3,
+    borderColor: '#5d5b8d',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+    elevation: 8,
+  },
+  countdownNumber: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#383773',
+  },
+  countdownUnit: {
+    fontSize: 10,
+    color: '#383773',
+    opacity: 0.8,
+  },
+  getStartedTitle: {
+    fontSize: 40,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    color: '#383773',
+    marginTop: 40,
+    lineHeight: 50,
+  },
+  startButton: {
+    backgroundColor: '#5d5b8d',
+    paddingVertical: 12,
+    paddingHorizontal: 50,
+    borderRadius: 8,
+    marginBottom: 40,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
+    elevation: 5,
+    alignSelf: 'center',
+  },
+  lessonIntroContainer: {
+    flex: 1,
+    width: '100%',
+    justifyContent: 'center',
+    paddingHorizontal: 15,
+  },
+  lessonIntroTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#383773',
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  lessonInfoCard: {
+    backgroundColor: 'white',
+    borderRadius: 15,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+    elevation: 5,
+    marginBottom: 20,
+  },
+  lessonInfoHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: '#EEE',
+    paddingBottom: 10,
+  },
+  lessonInfoTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#383773',
+  },
+  lessonInfoDuration: {
+    fontSize: 14,
+    color: '#5d5b8d',
+    fontWeight: '600',
+  },
+  lessonInfoContent: {
+    marginBottom: 10,
+  },
+  lessonInfoDescription: {
+    fontSize: 16,
+    color: '#555',
+    lineHeight: 22,
+    marginBottom: 15,
+  },
+  lessonTopics: {
+    marginTop: 10,
+  },
+  lessonTopicItem: {
+    fontSize: 15,
+    color: '#555',
+    marginVertical: 3,
+  },
+  rewardsPreview: {
+    backgroundColor: 'rgba(93, 91, 141, 0.1)',
+    borderRadius: 15,
+    padding: 15,
+    borderWidth: 1,
+    borderColor: 'rgba(93, 91, 141, 0.3)',
+  },
+  rewardsTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#383773',
+    marginBottom: 10,
+  },
+  rewardsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+  },
+  rewardItem: {
+    alignItems: 'center',
+  },
+  rewardIcon: {
+    fontSize: 24,
+    marginBottom: 5,
+  },
+  rewardValue: {
+    fontSize: 14,
+    color: '#555',
+  },
+  startLessonButton: {
+    backgroundColor: '#5d5b8d',
+    paddingVertical: 12,
+    paddingHorizontal: 30,
+    borderRadius: 8,
+    marginBottom: 30,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
+    elevation: 5,
+  },
+  welcomeLessonsTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#383773',
+    textAlign: 'center',
+    marginTop: 60,
+    marginBottom: 40,
+  },
+  pathwayHeader: {
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  pathwaySubtitle: {
+    fontSize: 16,
+    color: '#555',
+    marginTop: 5,
+  },
+  pathwayContainer: {
+    flex: 1,
+    width: '100%',
+    position: 'relative',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 20,
+  },
+  pathwayCircle: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: '#5d5b8d',
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'absolute',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+    elevation: 3,
+  },
+  giftNode: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: '#8e8cc0',
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'absolute',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  largeNode: {
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+    backgroundColor: '#383773',
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'absolute',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+    elevation: 6,
+  },
+  lockedNode: {
+    backgroundColor: '#c5c6e8',
+  },
+  nodeButton: {
+    width: '100%',
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  nodeNumber: {
+    color: 'white',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  largeNodeText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  lockIcon: {
+    fontSize: 18,
+    color: 'white',
+  },
+  nodeIcon: {
+    width: 24,
+    height: 24,
+  },
+  pathwayNode: {
+    position: 'absolute',
+    zIndex: 10,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#fff',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  avatarIcon: {
+    width: 30,
+    height: 30,
+  },
+  pathConnector: {
+    position: 'absolute',
+    backgroundColor: '#c5c6e8',
+    zIndex: -1,
   },
   progressContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 20,
+    width: '100%',
+    marginVertical: 20,
   },
   progressBackground: {
     flex: 1,
     height: 12,
     backgroundColor: '#ffffff',
     borderRadius: 10,
+    marginRight: 10,
     overflow: 'hidden',
   },
   progressFill: {
@@ -983,6 +1791,124 @@ const styles = StyleSheet.create({
   progressText: {
     marginLeft: 10,
     fontSize: 14,
+    fontWeight: 'bold',
+    color: '#383773',
+  },
+  alphabetCard: {
+    backgroundColor: 'white',
+    borderRadius: 20,
+    padding: 30,
+    width: '90%',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 5,
+    marginVertical: 20,
+  },
+  alphabetLetter: {
+    fontSize: 80,
+    fontWeight: 'bold',
+    color: '#5d5b8d',
+    marginBottom: 20,
+  },
+  alphabetPronunciation: {
+    fontSize: 18,
+    color: '#555',
+    marginBottom: 20,
+  },
+  signImage: {
+    width: 150,
+    height: 150,
+    marginVertical: 20,
+  },
+  exampleText: {
+    fontSize: 16,
+    color: '#555',
+    marginTop: 10,
+  },
+  navigationButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '90%',
+    marginBottom: 30,
+  },
+  navButton: {
+    backgroundColor: '#5d5b8d',
+    paddingVertical: 12,
+    paddingHorizontal: 30,
+    borderRadius: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+    elevation: 3,
+  },
+  navButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  successContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  successTitle: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#5d5b8d',
+    marginBottom: 20,
+  },
+  successMessage: {
+    fontSize: 16,
+    textAlign: 'center',
+    color: '#555',
+    lineHeight: 26,
+  },
+  lessonCompleteTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#5d5b8d',
+    marginTop: 60,
+  },
+  trophyContainer: {
+    marginVertical: 30,
+  },
+  trophyIcon: {
+    fontSize: 80,
+  },
+  rewardsContainer: {
+    backgroundColor: 'white',
+    borderRadius: 15,
+    padding: 20,
+    width: '90%',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+    elevation: 4,
+  },
+  header: {
+    marginTop: 30,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  backButton: {
+    position: 'absolute',
+    left: 0,
+    padding: 10,
+  },
+  backButtonText: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#383773',
+  },
+  basicText: {
+    fontSize: 16,
+    fontWeight: 'bold',
     color: '#333',
   },
   letterContainer: {
@@ -1007,207 +1933,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 20,
   },
-  nextButtonText: {
-    color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 16,
-  },
-  welcomeTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#383773',
-    textAlign: 'center',
-    marginTop: 100,
-    marginBottom: 50,
-  },
-  beginButton: {
-    backgroundColor: '#5d5b8d',
-    paddingVertical: 12,
-    paddingHorizontal: 50,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginTop: 'auto',
-    marginBottom: 40,
-    alignSelf: 'center',
-  },
-  loadingContent: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  characterImage: {
-    width: width * 0.7,
-    height: width * 0.7,
-    marginBottom: 20,
-  },
-  progressCircle: {
-    width: 70,
-    height: 70,
-    borderRadius: 35,
-    borderWidth: 3,
-    borderColor: '#5d5b8d',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginVertical: 20,
-  },
-  progressPercent: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#383773',
-  },
-  loadingText: {
-    textAlign: 'center',
-    fontSize: 16,
-    color: '#383773',
-    marginVertical: 10,
-  },
   dotLine: {
     width: width * 0.7,
     height: 2,
     borderStyle: 'dotted',
     borderWidth: 1,
     borderColor: '#383773',
-    marginTop: 10,
-  },
-  customizeTitle: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: '#383773',
-    textAlign: 'center',
-    marginTop: 80,
-    marginBottom: 40,
-  },
-  buttonRow: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 20,
-    marginBottom: 30,
-  },
-  optionButton: {
-    backgroundColor: '#5d5b8d',
-    paddingVertical: 12,
-    paddingHorizontal: 30,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  optionButtonText: {
-    color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 16,
-  },
-  levelIndicator: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#333',
-    textAlign: 'center',
-    marginTop: 40,
-  },
-  countdownContainer: {
-    flex: 1,
-    justifyContent: 'flex-start',
-    alignItems: 'center',
-    marginTop: 40,
-  },
-  countdownText: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#383773',
-    marginBottom: 20,
-  },
-  countdownCircle: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    borderWidth: 3,
-    borderColor: '#5d5b8d',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  countdownNumber: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#383773',
-  },
-  countdownUnit: {
-    fontSize: 10,
-    color: '#383773',
-  },
-  getStartedTitle: {
-    fontSize: 40,
-    fontWeight: 'bold',
-    color: '#383773',
-    textAlign: 'center',
-    marginTop: 40,
-  },
-  startButton: {
-    backgroundColor: '#5d5b8d',
-    paddingVertical: 12,
-    paddingHorizontal: 50,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginBottom: 40,
-    alignSelf: 'center',
-  },
-  welcomeLessonsTitle: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: '#383773',
-    textAlign: 'center',
-    marginTop: 60,
-  },
-  continueButton: {
-    backgroundColor: '#5d5b8d',
-    paddingVertical: 12,
-    paddingHorizontal: 40,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginBottom: 40,
-    alignSelf: 'center',
-  },
-  pathwayContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 20,
-    position: 'relative',
-  },
-  pathwayNode: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#fff',
-    justifyContent: 'center',
-    alignItems: 'center',
-    position: 'absolute',
-    top: 20,
-    left: 40,
-  },
-  pathwayCircle: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: '#4a86e8',
-    margin: 10,
-    position: 'absolute',
-  },
-  giftNode: {
-    backgroundColor: '#4a86e8',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  largeNode: {
-    width: 70,
-    height: 70,
-    borderRadius: 35,
-  },
-  avatarIcon: {
-    width: 30,
-    height: 30,
-  },
-  nodeIcon: {
-    width: 24,
-    height: 24,
+    marginTop: 12,
   },
 });
-
-export default App;
