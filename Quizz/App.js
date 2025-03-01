@@ -8,6 +8,7 @@ import {
   SafeAreaView,
   StatusBar,
   ScrollView,
+  Alert
 } from 'react-native';
 
 const QuizApp = () => {
@@ -15,18 +16,9 @@ const QuizApp = () => {
   const [selectedAnswer, setSelectedAnswer] = useState(null);
 
   const questions = [
-    /*{
-      id: 1,
-      title: 'Time Consuming',
-      options: [
-        { id: 'A', text: 'A', icon: require('./assets/zu1.jpg') },
-        { id: 'B', text: 'B', icon: require('./assets/zu2.jpg') },
-        { id: 'C', text: 'C', icon: require('./assets/zu3.jpg') },
-      ],
-    },*/
     {
-      id: 2,
-      title: '',
+      id: 1,
+      title: 'Question 01',
       image: require('./assets/download.jpeg'),
       options: [
         { id: 'A', text: 'A' },
@@ -35,15 +27,36 @@ const QuizApp = () => {
       ],
     },
     {
-      id: 3,
-      title: 'select the correct sign for B',
+      id: 2,
+      title: 'Select the correct sign for B',
       options: [
-        { image: require('./assets/zu2.jpg') },
-        { image: require('./assets/zu1.jpg') },
-        { image: require('./assets/zu3.jpg') },
-        { image: require('./assets/zu1.jpg') },
+        { image: require('./assets/image 01.png') },
+        { image: require('./assets/image 01.png') },
+        { image: require('./assets/image 01.png') },
+        { image: require('./assets/image 01.png') },
       ],
       gridView: true,
+    },
+    {
+      id: 3,
+      title: 'Select the correct sign for C',
+      options: [
+        { image: require('./assets/image 01.png') },
+        { image: require('./assets/image 01.png') },
+        { image: require('./assets/image 01.png') },
+        { image: require('./assets/image 01.png') },
+      ],
+      gridView: true,
+    },
+    {
+      id: 4,
+      title: 'Question 4',
+      image: require('./assets/download.jpeg'),
+      options: [
+        { id: 'A', text: 'A' },
+        { id: 'B', text: 'C' },
+        { id: 'C', text: 'B' },
+      ],
     },
   ];
 
@@ -52,6 +65,24 @@ const QuizApp = () => {
       setCurrentQuestion(currentQuestion + 1);
       setSelectedAnswer(null);
     }
+  };
+
+  const handleBack = () => {
+    if (currentQuestion > 0) {
+      setCurrentQuestion(currentQuestion - 1);
+      setSelectedAnswer(null);
+    }
+  };
+
+  const handleQuit = () => {
+    Alert.alert(
+      "Quit Quiz",
+      "Are you sure you want to quit?",
+      [
+        { text: "Cancel", style: "cancel" },
+        { text: "Yes", onPress: () => console.log("User quit the quiz!") }
+      ]
+    );
   };
 
   const renderProgressBar = () => (
@@ -73,53 +104,50 @@ const QuizApp = () => {
 
     return (
       <ScrollView contentContainerStyle={styles.scrollContainer}>
-      <View style={styles.questionContainer}>
-        {question.title && (
-          <Text style={styles.questionTitle}>{question.title}</Text>
-        )}
-        {question.image && (
-          <Image source={question.image} style={styles.questionImage} />
-        )}
-        
-        {question.gridView ? (
-          <View style={styles.gridContainer}>
-            {question.options.map((option, index) => (
-              <TouchableOpacity
-                key={index}
-                style={styles.gridItem}
-                onPress={() => setSelectedAnswer(index)}
-              >
-                <Image source={option.image} style={styles.optionImage} />
-              </TouchableOpacity>
-            ))}
-          </View>
-        ) : (
-          <View style={styles.optionsContainer}>
-            {question.options.map((option, index) => (
-              <TouchableOpacity
-                key={index}
-                style={[
-                  styles.optionButton,
-                  selectedAnswer === index && styles.selectedOption,
-                ]}
-                onPress={() => setSelectedAnswer(index)}
-              >
-                <View style={styles.optionContent}>
-                  {option.id && (
-                    <Text style={styles.optionId}>{option.id}</Text>
-                  )}
-                  {option.text && (
-                    <Text style={styles.optionText}>{option.text}</Text>
-                  )}
-                  {option.icon && (
-                    <Image source={option.icon} style={styles.optionIcon} />
-                  )}
-                </View>
-              </TouchableOpacity>
-            ))}
-          </View>
-        )}
-      </View>
+        <View style={styles.questionContainer}>
+          {question.title && (
+            <Text style={styles.questionTitle}>{question.title}</Text>
+          )}
+          {question.image && (
+            <Image source={question.image} style={styles.questionImage} />
+          )}
+          
+          {question.gridView ? (
+            <View style={styles.gridContainer}>
+              {question.options.map((option, index) => (
+                <TouchableOpacity
+                  key={index}
+                  style={styles.gridItem}
+                  onPress={() => setSelectedAnswer(index)}
+                >
+                  <Image source={option.image} style={styles.optionImage} />
+                </TouchableOpacity>
+              ))}
+            </View>
+          ) : (
+            <View style={styles.optionsContainer}>
+              {question.options.map((option, index) => (
+                <TouchableOpacity
+                  key={index}
+                  style={[
+                    styles.optionButton,
+                    selectedAnswer === index && styles.selectedOption,
+                  ]}
+                  onPress={() => setSelectedAnswer(index)}
+                >
+                  <View style={styles.optionContent}>
+                    {option.id && (
+                      <Text style={styles.optionId}>{option.id}</Text>
+                    )}
+                    {option.text && (
+                      <Text style={styles.optionText}>{option.text}</Text>
+                    )}
+                  </View>
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
+        </View>
       </ScrollView>
     );
   };
@@ -129,12 +157,28 @@ const QuizApp = () => {
       <StatusBar barStyle="dark-content" />
       <View style={styles.header}>
         <Text style={styles.headerText}> Quiz </Text>
-        <TouchableOpacity>
+
+        {/* Back Button */}
+      {/* <TouchableOpacity
+        style={[
+          styles.backButton,
+          currentQuestion === 0 && styles.disabledButton]}
+        onPress={handleBack}
+        disabled={currentQuestion === 0}>
+        <Text style={styles.backButton}>BACK</Text>
+      </TouchableOpacity> */}
+
+          {/* close button */}
+        <TouchableOpacity onPress={handleQuit}>
           <Text style={styles.closeButton}>×</Text>
         </TouchableOpacity>
       </View>
       {renderProgressBar()}
       {renderQuestion()}
+
+        
+
+
       <TouchableOpacity
         style={[
           styles.continueButton,
@@ -156,7 +200,7 @@ const styles = StyleSheet.create({
   },
   scrollContainer: {
     flexGrow: 1,
-    paddingBottom: 100, // Ensures space for the continue button
+    paddingBottom: 100,
   },
   header: {
     flexDirection: 'row',
@@ -165,12 +209,18 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   headerText: {
-    fontSize: 18,
+    fontSize: 25,
     fontWeight: '600',
+  },
+  backButton:{
+    fontSize: 24,
+    fontWeight: '600',
+    color: 'black',
   },
   closeButton: {
     fontSize: 24,
     fontWeight: '600',
+    color: 'black',
   },
   progressContainer: {
     padding: 16,
@@ -232,10 +282,6 @@ const styles = StyleSheet.create({
   optionText: {
     flex: 1,
     fontSize: 16,
-  },
-  optionIcon: {
-    width: 32,
-    height: 32,
   },
   gridContainer: {
     flexDirection: 'row',
