@@ -758,68 +758,119 @@ const WelcomeLessonsScreen = ({ navigation }) => {
 
 // Enhanced Learning Pathway Screen with gamified elements
 const LearningPathwayScreen = ({ navigation, route }) => {
-
-  // Animation refs for path nodes
+  const [unlockedLevel, setUnlockedLevel] = useState(route.params?.initialLevel || 5);
+  const [currentPosition, setCurrentPosition] = useState(0);
+  const avatarAnim = useRef(new Animated.Value(0)).current;
   const nodeAnimations = useRef(Array(12).fill().map(() => new Animated.Value(0))).current;
-  
-  const [unlockedLevel, setUnlockedLevel] = useState(route.params?.initialLevel || 5); // Levels 1-5 are unlocked
-  
+  const milestoneAnim = useRef(new Animated.Value(0)).current;
+  const pathwayScale = useRef(new Animated.Value(1)).current;
+
+  // 3D Perspective Animation
+  const perspective = useRef(new Animated.Value(0)).current;
+
   useEffect(() => {
-    // Animate nodes sequentially
-    nodeAnimations.forEach((anim, index) => {
-      Animated.timing(anim, {
+
+    
+    // Animate pathway entrance
+    Animated.parallel([
+      Animated.spring(pathwayScale, {
         toValue: 1,
-        duration: 300,
-        delay: index * 100,
+        speed: 10,
+        bounciness: 8,
         useNativeDriver: true,
-        easing: Easing.bounce,
-      }).start();
-    });
+      }),
+      Animated.timing(perspective, {
+        toValue: 1,
+        duration: 2000,
+        easing: Easing.bezier(0.4, 0, 0.2, 1),
+        useNativeDriver: true,
+      }),
+      
+    ]).start();
   }, []);
   
-  const handleNodePress = (nodeIndex) => {
-    if (nodeIndex <= unlockedLevel) {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-      navigation.navigate('AlphabetLearning', { level: nodeIndex + 1 });
-    } else {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-      // Show locked level feedback (could add a visual indicator here)
-    }
-  };
-  
-  // Create a curved pathway for nodes
+
+
+
   const getNodePosition = (index, totalNodes) => {
     const containerWidth = width - 80;
     const containerHeight = height - 200;
-    
-    // Create an S-shaped path
     const progress = index / (totalNodes - 1);
     
-    // Math to create S-curve
-    let x, y;
-    if (progress < 0.5) {
-      // First half of S-curve
-      const localProgress = progress * 2; // Normalize to 0-1 for first half
-      x = 40 + (containerWidth * 0.4) * Math.sin(localProgress * Math.PI);
-      y = 100 + containerHeight * localProgress;
-    } else {
-      // Second half of S-curve
-      const localProgress = (progress - 0.5) * 2; // Normalize to 0-1 for second half
-      x = 40 + containerWidth * 0.6 + (containerWidth * 0.4) * Math.sin(localProgress * Math.PI);
-      y = 100 + containerHeight * (0.5 + localProgress * 0.5);
-    }
+    // Enhanced S-curve with 3D effect
+    const angle = progress * Math.PI * 2;
+    const x = 40 + (containerWidth * 0.4) * Math.sin(angle);
+    const y = 100 + containerHeight * (0.5 + 0.4 * Math.cos(angle));
     
     return { x, y };
   };
-  
-  // Generate connector lines between nodes
+
+  const handleNodePress = (nodeIndex) => {
+    if (nodeIndex <= unlockedLevel) {
+      Animated.sequence([
+        Animated.timing(milestoneAnim, {
+          toValue: 1,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+        Animated.spring(avatarAnim, {
+          toValue: nodeIndex,
+          speed: 12,
+          bounciness: 8,
+          useNativeDriver: true,
+        }),
+      ]).start(() => {
+        navigation.navigate('AlphabetLearning', { level: nodeIndex + 1 });
+      });
+    }
+  };
+
+  const moveToNextNode = () => {
+    if (currentPosition < unlockedLevel) {
+      Animated.spring(avatarAnim, {
+        toValue: currentPosition + 1,
+        speed: 12,
+        bounciness: 8,
+        useNativeDriver: true,
+      }).start(() => {
+        setCurrentPosition(prev => prev + 1);
+      });
+    }
+  };
+
+  const renderMilestoneFlags = (index) => {
+    if ((index + 1) % 4 === 0) { // Every 4 nodes is a milestone
+      return (
+        <Animated.View 
+          style={[
+            styles.milestoneFlag,
+            {
+              opacity: milestoneAnim,
+              transform: [
+                { translateY: milestoneAnim.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [20, 0]
+                })}
+              ]
+            }
+          ]}
+        >
+          <Text style={styles.milestoneText}>Milestone {(index + 1)/4}</Text>
+          <Image
+            source={require('./assets/favicon.png')}
+            style={styles.flagIcon}
+          />
+        </Animated.View>
+      );
+    }
+    return null;
+  };
+
   const renderPathConnectors = () => {
     const connectors = [];
-    
     for (let i = 0; i < 11; i++) {
       const start = getNodePosition(i, 12);
       const end = getNodePosition(i + 1, 12);
-      
       connectors.push(
         <Animated.View 
           key={`connector-${i}`}
@@ -830,100 +881,145 @@ const LearningPathwayScreen = ({ navigation, route }) => {
               top: start.y + 25,
               width: 2,
               height: end.y - start.y,
-              opacity: nodeAnimations[i],
               transform: [
-                { translateY: (end.y - start.y) / 2 },
-                { scaleY: nodeAnimations[i] }
+                { 
+                  rotate: perspective.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: ['0deg', `${i % 2 === 0 ? 5 : -5}deg`]
+                  })
+                },
+                { 
+                  translateX: perspective.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [0, i * 2]
+                  })
+                }
               ]
             }
           ]}
         />
       );
     }
-    
     return connectors;
   };
-  
+
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.pathwayHeader}>
-        <Text style={styles.levelIndicator}>LESSON (BASIC LEVEL)</Text>
-        <Text style={styles.pathwaySubtitle}>Complete lessons to unlock new content!</Text>
-      </View>
-      
-      <View style={styles.pathwayContainer}>
-        {/* Path connectors */}
+      <Animated.View 
+        style={[
+          styles.pathwayHeader,
+          {
+            transform: [
+              { scale: pathwayScale },
+              { perspective: 1000 },
+            ]
+          }
+        ]}
+      >
+        <Text style={styles.levelIndicator}>LEARNING PATHWAY</Text>
+        <Text style={styles.pathwaySubtitle}>Complete lessons to unlock new worlds!</Text>
+      </Animated.View>
+
+      <Animated.View 
+        style={[
+          styles.pathwayContainer,
+          {
+            transform: [
+              { perspective: 1000 },
+              {
+                rotateY: perspective.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: ['0deg', '5deg']
+                })
+              },
+              {
+                rotateX: perspective.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: ['0deg', '3deg']
+                })
+              }
+            ]
+          }
+        ]}
+      >
         {renderPathConnectors()}
         
-        {/* Avatar starting position */}
-        <View style={[styles.pathwayNode, { left: 40, top: 80 }]}>
-          <Image
-            source={require('./assets/image 01.png')}
-            style={styles.avatarIcon}
-            resizeMode="contain"
-          />
-        </View>
-        
-        {/* Learning pathway nodes */}
         {Array(12).fill().map((_, index) => {
           const { x, y } = getNodePosition(index, 12);
           const isLocked = index > unlockedLevel;
-          const isGiftNode = index === 4;
-          const isLargeNode = index === 5;
+          const isCurrent = index === currentPosition;
           
           return (
             <Animated.View 
               key={index}
               style={[
-                index === 4 ? styles.giftNode : 
-                index === 5 ? styles.largeNode : 
-                styles.pathwayCircle,
+                styles.pathwayNode,
                 {
                   left: x,
                   top: y,
-                  opacity: nodeAnimations[index],
-                  transform: [{ scale: nodeAnimations[index] }]
-                },
-                isLocked && styles.lockedNode
+                  zIndex: index,
+                  transform: [
+                    { 
+                      translateY: nodeAnimations[index].interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [50, 0]
+                      })
+                    },
+                    {
+                      rotateZ: nodeAnimations[index].interpolate({
+                        inputRange: [0, 1],
+                        outputRange: ['-15deg', '0deg']
+                      })
+                    }
+                  ]
+                }
               ]}
             >
               <TouchableOpacity
-                style={styles.nodeButton}
+                style={[
+                  styles.nodeButton,
+                  isCurrent && styles.currentNode,
+                  isLocked && styles.lockedNode
+                ]}
                 onPress={() => handleNodePress(index)}
               >
-                {isGiftNode && (
-                  <Image
-                    source={require('./assets/splash-icon.png')}
-                    style={styles.nodeIcon}
-                    resizeMode="contain"
+                {renderMilestoneFlags(index)}
+                {isCurrent && (
+                  <Animated.Image
+                    source={require('./assets/image 01.png')}
+                    style={[
+                      styles.avatarIcon,
+                      {
+                        transform: [
+                          { 
+                            translateX: avatarAnim.interpolate({
+                              inputRange: [0, 12],
+                              outputRange: [40, width - 100]
+                            })
+                          }
+                        ]
+                      }
+                    ]}
                   />
                 )}
-                
-                {isLocked && (
-                  <Text style={styles.lockIcon}>🔒</Text>
-                )}
-                
-                {!isLocked && !isGiftNode && !isLargeNode && (
-                  <Text style={styles.nodeNumber}>{index + 1}</Text>
-                )}
-                
-                {isLargeNode && (
-                  <Text style={styles.largeNodeText}>QUIZ</Text>
-                )}
+                <Text style={styles.nodeNumber}>{index + 1}</Text>
               </TouchableOpacity>
             </Animated.View>
           );
         })}
-      </View>
-      
+      </Animated.View>
+
       <TouchableOpacity 
         style={styles.continueButton}
-        onPress={() => {
-          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-          navigation.navigate('AlphabetLearning');
-        }}
+        onPress={moveToNextNode}
       >
-        <Text style={styles.nextButtonText}>GO TO NEXT LESSON</Text>
+        <Text style={styles.nextButtonText}>CONTINUE JOURNEY</Text>
+        <LottieView
+          source={require('./assets/image 01.png')}
+          autoPlay
+          loop
+          style={styles.buttonParticles}
+        />
       </TouchableOpacity>
     </SafeAreaView>
   );
@@ -1103,9 +1199,11 @@ const LessonCompleteScreen = ({ navigation }) => {
         <View style={styles.rewardsList}>
           <Text style={styles.rewardItem}>🌟 +75 XP Points</Text>
           <Text style={styles.rewardItem}>🏅 Basic Alphabet Badge</Text>
-          <Text style={styles.rewardItem}>🔓 Unlocked Level 6</Text>
+          <Text style={styles.rewardItem}>🔓 Unlocked Level 8</Text>
         </View>
       </View>
+
+      
       
       <TouchableOpacity 
         style={styles.continueButton}
@@ -1115,8 +1213,11 @@ const LessonCompleteScreen = ({ navigation }) => {
         }}
       >
         <Text style={styles.nextButtonText}>CONTINUE</Text>
+
       </TouchableOpacity>
     </SafeAreaView>
+
+    
   );
 };
 
@@ -1171,6 +1272,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     padding: 20,
   },
+
   welcomeTitle: {
     fontSize: 24,
     fontWeight: 'bold',
@@ -1933,6 +2035,71 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     alignItems: 'center',
     marginBottom: 20,
+  },
+  pathwayNode: {
+    position: 'absolute',
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: '#fff',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+    elevation: 8,
+  },
+  currentNode: {
+    transform: [{ scale: 1.2 }],
+    backgroundColor: '#5d5b8d',
+  },
+  milestoneFlag: {
+    position: 'absolute',
+    top: -40,
+    left: -20,
+    backgroundColor: '#ffd700',
+    padding: 8,
+    borderRadius: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  flagIcon: {
+    width: 24,
+    height: 24,
+    marginLeft: 5,
+  },
+  milestoneText: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: '#383773',
+  },
+  buttonParticles: {
+    position: 'absolute',
+    width: 200,
+    height: 200,
+    zIndex: -1,
+  },
+  pathwayContainer: {
+    transform: [{ perspective: 1000 }],
+    flex: 1,
+    width: '100%',
+    marginTop: 20,
+  },
+  pathConnector: {
+    backgroundColor: '#fff',
+    position: 'absolute',
+    zIndex: -1,
+    shadowColor: '#fff',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
+  },
+  avatarIcon: {
+    position: 'absolute',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
   },
   dotLine: {
     width: width * 0.7,
