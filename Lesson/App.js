@@ -8,18 +8,29 @@ import {
   Image, 
   SafeAreaView, 
   Animated, 
-  Easing 
+  Easing,
+  ScrollView
 } from 'react-native';
+
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
+
+
+import { BlurView } from 'expo-blur';
+
 import * as Haptics from 'expo-haptics';
 import LottieView from 'lottie-react-native';
+import Svg, { Path, Circle } from 'react-native-svg';
+import { LinearGradient } from 'expo-linear-gradient';
+
+
+
 
 // Progress Bar Component with animation
-const ProgressBar = ({ current, total }) => {
+function ProgressBar({ current, total }) {
   const progressAnim = useRef(new Animated.Value(0)).current;
   const progress = (current / total) * 100;
-  
+
   useEffect(() => {
     Animated.timing(progressAnim, {
       toValue: progress,
@@ -33,7 +44,7 @@ const ProgressBar = ({ current, total }) => {
     inputRange: [0, 100],
     outputRange: ['0%', '100%']
   });
-  
+
   return (
     <View style={styles.progressContainer}>
       <View style={styles.progressBackground}>
@@ -42,7 +53,7 @@ const ProgressBar = ({ current, total }) => {
       <Text style={styles.progressText}>{current}/{total}</Text>
     </View>
   );
-};
+}
 
 // Confetti Animation Component
 const Confetti = ({ show }) => {
@@ -168,7 +179,7 @@ const LoadingScreen = ({ navigation }) => {
           <Text style={styles.progressPercent}>{progress}%</Text>
         </View>
         <Text style={styles.loadingText}>
-          Hi User Name,{'\n'}
+          Hi Thaheshan,{'\n'}
           Our Assistants Are Preparing{'\n'}
           a lesson plan for your learning
         </Text>
@@ -756,220 +767,360 @@ const WelcomeLessonsScreen = ({ navigation }) => {
   );
 };
 
+
+
 // Enhanced Learning Pathway Screen with gamified elements
 const LearningPathwayScreen = ({ navigation, route }) => {
   const [unlockedLevel, setUnlockedLevel] = useState(route.params?.initialLevel || 5);
   const [currentPosition, setCurrentPosition] = useState(0);
-  const avatarAnim = useRef(new Animated.Value(0)).current;
-  const nodeAnimations = useRef(Array(12).fill().map(() => new Animated.Value(0))).current;
-  const milestoneAnim = useRef(new Animated.Value(0)).current;
-  const pathwayScale = useRef(new Animated.Value(1)).current;
-
-  // 3D Perspective Animation
-  const perspective = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-
-    
-    // Animate pathway entrance
-    Animated.parallel([
-      Animated.spring(pathwayScale, {
-        toValue: 1,
-        speed: 10,
-        bounciness: 8,
-        useNativeDriver: true,
-      }),
-      Animated.timing(perspective, {
-        toValue: 1,
-        duration: 2000,
-        easing: Easing.bezier(0.4, 0, 0.2, 1),
-        useNativeDriver: true,
-      }),
-      
-    ]).start();
-  }, []);
+  const [viewMode, setViewMode] = useState('top'); // 'top' or 'side'
+  const [showPathDetails, setShowPathDetails] = useState(true);
   
+  // Animated values
+  const scrollX = useRef(new Animated.Value(0)).current;
+  const avatarAnim = useRef(new Animated.Value(0)).current;
+  const viewTransition = useRef(new Animated.Value(0)).current;
+  const nodeAnimations = useRef(Array(12).fill().map(() => new Animated.Value(0))).current;
+  const pathRevealAnim = useRef(new Animated.Value(1)).current;
+  const scrollViewRef = useRef(null);
 
-
-
-  const getNodePosition = (index, totalNodes) => {
-    const containerWidth = width - 80;
-    const containerHeight = height - 200;
-    const progress = index / (totalNodes - 1);
+  // Map terrain elements
+  const cloudAnimations = useRef(Array(5).fill().map(() => ({
+    position: new Animated.Value(Math.random() * width),
+    opacity: new Animated.Value(Math.random() * 0.5 + 0.2),
+  }))).current;
+  
+  // Map coordinate calculations
+  const totalPathLength = width * 2;
+  const nodeSpacing = totalPathLength / 12;
+  
+  // Get node position based on view mode
+  const getNodePosition = (index, mode) => {
+    // Base positions (same in both views)
+    const baseX = nodeSpacing * index;
     
-    // Enhanced S-curve with 3D effect
-    const angle = progress * Math.PI * 2;
-    const x = 40 + (containerWidth * 0.4) * Math.sin(angle);
-    const y = 100 + containerHeight * (0.5 + 0.4 * Math.cos(angle));
-    
-    return { x, y };
+    if (mode === 'top') {
+      // For top view, nodes follow a winding path
+      const yOffset = Math.sin(index * 0.8) * 60;
+      return {
+        x: baseX,
+        y: height * 0.3 + yOffset,
+        elevation: 0,
+        rotateX: '0deg'
+      };
+    } else {
+      // For side view, create elevation profile like a mountain journey
+      const elevationProfile = [0, 20, 40, 30, 60, 80, 70, 90, 100, 80, 60, 40];
+      return {
+        x: baseX,
+        y: height * 0.4,
+        elevation: elevationProfile[index],
+        rotateX: '-60deg'
+      };
+    }
   };
 
+  // Calculate the path between nodes
+  const getPathPoints = () => {
+    const points = Array(12).fill().map((_, i) => {
+      const { x, y } = getNodePosition(i, viewMode);
+      return { x, y };
+    });
+    
+    // Create SVG path from points
+    let pathD = `M ${points[0].x} ${points[0].y}`;
+    for (let i = 1; i < points.length; i++) {
+      // Add bezier curve control points for natural path flow
+      const prevPoint = points[i-1];
+      const currPoint = points[i];
+      const cpX1 = prevPoint.x + (currPoint.x - prevPoint.x) * 0.5;
+      pathD += ` C ${cpX1},${prevPoint.y} ${cpX1},${currPoint.y} ${currPoint.x},${currPoint.y}`;
+    }
+    return pathD;
+  };
+
+  // Initialize animations
+  useEffect(() => {
+    // Animate all nodes appearing with staggered delay
+    Animated.stagger(120, 
+      nodeAnimations.map(anim => 
+        Animated.spring(anim, {
+          toValue: 1,
+          friction: 5,
+          useNativeDriver: true
+        })
+      )
+    ).start();
+    
+    // Animate clouds floating
+    cloudAnimations.forEach((cloud, index) => {
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(cloud.position, {
+            toValue: -100 + Math.random() * width * 1.5,
+            duration: 15000 + Math.random() * 10000,
+            easing: Easing.inOut(Easing.ease),
+            useNativeDriver: true
+          }),
+          Animated.timing(cloud.position, {
+            toValue: Math.random() * width,
+            duration: 15000 + Math.random() * 10000,
+            easing: Easing.inOut(Easing.ease),
+            useNativeDriver: true
+          })
+        ])
+      ).start();
+      
+      // Also animate cloud opacity
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(cloud.opacity, {
+            toValue: Math.random() * 0.3 + 0.5,
+            duration: 4000 + Math.random() * 3000,
+            easing: Easing.inOut(Easing.ease),
+            useNativeDriver: true
+          }),
+          Animated.timing(cloud.opacity, {
+            toValue: Math.random() * 0.3 + 0.1,
+            duration: 4000 + Math.random() * 3000,
+            easing: Easing.inOut(Easing.ease),
+            useNativeDriver: true
+          })
+        ])
+      ).start();
+    });
+  }, []);
+
+  // Handle scroll events to update UI elements
+  useEffect(() => {
+    scrollX.addListener(({ value }) => {
+      // Check if user has scrolled to end to hide path details
+      if (value > totalPathLength - width) {
+        Animated.timing(pathRevealAnim, {
+          toValue: 0,
+          duration: 1000,
+          useNativeDriver: true
+        }).start(() => setShowPathDetails(false));
+      } else if (!showPathDetails) {
+        setShowPathDetails(true);
+        Animated.timing(pathRevealAnim, {
+          toValue: 1,
+          duration: 500,
+          useNativeDriver: true
+        }).start();
+      }
+    });
+    
+    return () => {
+      scrollX.removeAllListeners();
+    };
+  }, [showPathDetails]);
+
+  // Handle node press - travel to node and navigate to lesson
   const handleNodePress = (nodeIndex) => {
     if (nodeIndex <= unlockedLevel) {
-      Animated.sequence([
-        Animated.timing(milestoneAnim, {
-          toValue: 1,
-          duration: 300,
-          useNativeDriver: true,
-        }),
-        Animated.spring(avatarAnim, {
-          toValue: nodeIndex,
-          speed: 12,
-          bounciness: 8,
-          useNativeDriver: true,
-        }),
-      ]).start(() => {
-        navigation.navigate('AlphabetLearning', { level: nodeIndex + 1 });
+      // Scroll to node position
+      scrollViewRef.current?.scrollTo({
+        x: nodeIndex * nodeSpacing - width / 4,
+        animated: true
       });
-    }
-  };
-
-  const moveToNextNode = () => {
-    if (currentPosition < unlockedLevel) {
+      
+      // Animate avatar to node position
       Animated.spring(avatarAnim, {
-        toValue: currentPosition + 1,
-        speed: 12,
-        bounciness: 8,
-        useNativeDriver: true,
+        toValue: nodeIndex,
+        tension: 30,
+        friction: 7,
+        useNativeDriver: true
       }).start(() => {
-        setCurrentPosition(prev => prev + 1);
-      });
-    }
-  };
-
-  const renderMilestoneFlags = (index) => {
-    if ((index + 1) % 4 === 0) { // Every 4 nodes is a milestone
-      return (
-        <Animated.View 
-          style={[
-            styles.milestoneFlag,
-            {
-              opacity: milestoneAnim,
-              transform: [
-                { translateY: milestoneAnim.interpolate({
-                  inputRange: [0, 1],
-                  outputRange: [20, 0]
-                })}
-              ]
-            }
-          ]}
-        >
-          <Text style={styles.milestoneText}>Milestone {(index + 1)/4}</Text>
-          <Image
-            source={require('./assets/favicon.png')}
-            style={styles.flagIcon}
-          />
-        </Animated.View>
-      );
-    }
-    return null;
-  };
-
-  const renderPathConnectors = () => {
-    const connectors = [];
-    for (let i = 0; i < 11; i++) {
-      const start = getNodePosition(i, 12);
-      const end = getNodePosition(i + 1, 12);
-      connectors.push(
-        <Animated.View 
-          key={`connector-${i}`}
-          style={[
-            styles.pathConnector,
-            {
-              left: start.x + 25,
-              top: start.y + 25,
-              width: 2,
-              height: end.y - start.y,
-              transform: [
-                { 
-                  rotate: perspective.interpolate({
-                    inputRange: [0, 1],
-                    outputRange: ['0deg', `${i % 2 === 0 ? 5 : -5}deg`]
-                  })
-                },
-                { 
-                  translateX: perspective.interpolate({
-                    inputRange: [0, 1],
-                    outputRange: [0, i * 2]
-                  })
-                }
-              ]
-            }
-          ]}
-        />
-      );
-    }
-    return connectors;
-  };
-
-  return (
-    <SafeAreaView style={styles.container}>
-      <Animated.View 
-        style={[
-          styles.pathwayHeader,
-          {
-            transform: [
-              { scale: pathwayScale },
-              { perspective: 1000 },
-            ]
-          }
-        ]}
-      >
-        <Text style={styles.levelIndicator}>LEARNING PATHWAY</Text>
-        <Text style={styles.pathwaySubtitle}>Complete lessons to unlock new worlds!</Text>
-      </Animated.View>
-
-      <Animated.View 
-        style={[
-          styles.pathwayContainer,
-          {
-            transform: [
-              { perspective: 1000 },
-              {
-                rotateY: perspective.interpolate({
-                  inputRange: [0, 1],
-                  outputRange: ['0deg', '5deg']
-                })
-              },
-              {
-                rotateX: perspective.interpolate({
-                  inputRange: [0, 1],
-                  outputRange: ['0deg', '3deg']
-                })
-              }
-            ]
-          }
-        ]}
-      >
-        {renderPathConnectors()}
+        // Show node completion animation
+        setCurrentPosition(nodeIndex);
         
+        // Navigate to lesson after short delay
+        setTimeout(() => {
+          navigation.navigate('AlphabetLearning', { level: nodeIndex + 1 });
+        }, 500);
+      });
+    } else {
+      // Shake animation for locked node
+      Animated.sequence([
+        Animated.timing(nodeAnimations[nodeIndex], {
+          toValue: 1.2,
+          duration: 100,
+          useNativeDriver: true
+        }),
+        Animated.timing(nodeAnimations[nodeIndex], {
+          toValue: 0.8,
+          duration: 100,
+          useNativeDriver: true
+        }),
+        Animated.timing(nodeAnimations[nodeIndex], {
+          toValue: 1.1,
+          duration: 100,
+          useNativeDriver: true
+        }),
+        Animated.spring(nodeAnimations[nodeIndex], {
+          toValue: 1,
+          friction: 5,
+          useNativeDriver: true
+        })
+      ]).start();
+    }
+  };
+
+  // Toggle between top and side view
+  const toggleViewMode = () => {
+    const newMode = viewMode === 'top' ? 'side' : 'top';
+    
+    // Animate view transition
+    Animated.timing(viewTransition, {
+      toValue: newMode === 'top' ? 0 : 1,
+      duration: 800,
+      useNativeDriver: true,
+      easing: Easing.inOut(Easing.cubic)
+    }).start(() => {
+      setViewMode(newMode);
+    });
+  };
+
+  // Create a custom cloud component (no BlurView dependency)
+  const CustomCloud = ({ style, intensity = 0.7 }) => (
+    <View style={[learningPathwayStyles.pathwayCustomCloud, style]}>
+      <View style={[learningPathwayStyles.pathwayCloudPuff, { left: 10, top: 5 }]} />
+      <View style={[learningPathwayStyles.pathwayCloudPuff, { left: 5, top: 10 }]} />
+      <View style={[learningPathwayStyles.pathwayCloudPuff, { left: 15, top: 8 }]} />
+      <View style={[learningPathwayStyles.pathwayCloudPuff, { left: 25, top: 4 }]} />
+      <View style={[learningPathwayStyles.pathwayCloudPuff, { left: 35, top: 9 }]} />
+      <View style={[learningPathwayStyles.pathwayCloudPuff, { left: 45, top: 6 }]} />
+      <View style={[learningPathwayStyles.pathwayCloudBase, { opacity: intensity }]} />
+    </View>
+  );
+
+  // Render decorative terrain elements
+  const renderTerrainElements = () => {
+    return (
+      <>
+        {/* Render clouds */}
+        {cloudAnimations.map((cloud, index) => (
+          <Animated.View 
+            key={`cloud-${index}`}
+            style={[
+              {
+                position: 'absolute',
+                transform: [{ translateX: cloud.position }],
+                opacity: cloud.opacity,
+                top: 50 + (index * 30),
+                width: 80 + (index % 3) * 40,
+                height: 50 + (index % 2) * 20,
+              }
+            ]}
+          >
+            <CustomCloud 
+              style={{ 
+                width: 80 + (index % 3) * 40, 
+                height: 50 + (index % 2) * 20 
+              }} 
+              intensity={0.7 + (index % 3) * 0.1}
+            />
+          </Animated.View>
+        ))}
+
+        {/* Terrain details based on view mode */}
+        {viewMode === 'side' && (
+          <View style={learningPathwayStyles.pathwayTerrainBase}>
+            <View style={learningPathwayStyles.pathwayTerrainGradient} />
+          </View>
+        )}
+      </>
+    );
+  };
+
+  // Render the path nodes and connecting line
+  const renderPathway = () => {
+    return (
+      <Animated.View style={[
+        learningPathwayStyles.pathwayMapContainer,
+        {
+          opacity: pathRevealAnim,
+          transform: [
+            { 
+              rotateX: viewTransition.interpolate({
+                inputRange: [0, 1],
+                outputRange: ['0deg', '-60deg']
+              })
+            },
+            { 
+              scale: viewTransition.interpolate({
+                inputRange: [0, 1],
+                outputRange: [1, 0.7]
+              })
+            },
+            { 
+              translateY: viewTransition.interpolate({
+                inputRange: [0, 1],
+                outputRange: [0, -50]
+              })
+            }
+          ]
+        }
+      ]}>
+        {/* Path SVG */}
+        <Svg height="100%" width={totalPathLength} style={learningPathwayStyles.pathwaySvg}>
+          <Path
+            d={getPathPoints()}
+            stroke="#5d5b8d"
+            strokeWidth="4"
+            fill="none"
+            strokeDasharray="6,3"
+          />
+          
+          {/* Progress indicator on the path */}
+          <Path
+            d={getPathPoints()}
+            stroke="#383773"
+            strokeWidth="6"
+            fill="none"
+            strokeDasharray={[totalPathLength, totalPathLength]}
+            strokeDashoffset={avatarAnim.interpolate({
+              inputRange: [0, 11],
+              outputRange: [totalPathLength, 0]
+            })}
+          />
+        </Svg>
+        
+        {/* Render all nodes */}
         {Array(12).fill().map((_, index) => {
-          const { x, y } = getNodePosition(index, 12);
+          const { x, y, elevation } = getNodePosition(index, viewMode);
           const isLocked = index > unlockedLevel;
+          const isCompleted = index < currentPosition;
           const isCurrent = index === currentPosition;
           
+          // Different node designs based on state
+          const nodeSize = isCurrent ? 50 : 40;
+          
+          // Determine node colors based on state
+          const nodeColor = isLocked ? '#c5c6e8' : 
+                           isCompleted ? '#8e8cc0' : 
+                           isCurrent ? '#383773' : '#5d5b8d';
+          
           return (
-            <Animated.View 
-              key={index}
+            <Animated.View
+              key={`node-${index}`}
               style={[
-                styles.pathwayNode,
+                learningPathwayStyles.pathwayNodeContainer,
                 {
-                  left: x,
-                  top: y,
-                  zIndex: index,
+                  left: x - nodeSize/2,
+                  top: y - nodeSize/2 - (viewMode === 'side' ? elevation : 0),
+                  width: nodeSize,
+                  height: nodeSize,
+                  opacity: nodeAnimations[index],
                   transform: [
+                    { scale: nodeAnimations[index] },
                     { 
-                      translateY: nodeAnimations[index].interpolate({
-                        inputRange: [0, 1],
-                        outputRange: [50, 0]
-                      })
-                    },
-                    {
-                      rotateZ: nodeAnimations[index].interpolate({
-                        inputRange: [0, 1],
-                        outputRange: ['-15deg', '0deg']
-                      })
+                      translateY: viewMode === 'side' ? 
+                        viewTransition.interpolate({
+                          inputRange: [0, 1],
+                          outputRange: [0, -elevation]
+                        }) : 0
                     }
                   ]
                 }
@@ -977,68 +1128,227 @@ const LearningPathwayScreen = ({ navigation, route }) => {
             >
               <TouchableOpacity
                 style={[
-                  styles.nodeButton,
-                  isCurrent && styles.currentNode,
-                  isLocked && styles.lockedNode
+                  learningPathwayStyles.pathwayNodeButton,
+                  { 
+                    width: nodeSize, 
+                    height: nodeSize,
+                    backgroundColor: nodeColor,
+                  },
+                  isCurrent && learningPathwayStyles.pathwayCurrentNode,
+                  isCompleted && learningPathwayStyles.pathwayCompletedNode,
+                  isLocked && learningPathwayStyles.pathwayLockedNode,
                 ]}
                 onPress={() => handleNodePress(index)}
+                disabled={isLocked}
               >
-                {renderMilestoneFlags(index)}
-                {isCurrent && (
-                  <Animated.Image
-                    source={require('./assets/image 01.png')}
-                    style={[
-                      styles.avatarIcon,
-                      {
-                        transform: [
-                          { 
-                            translateX: avatarAnim.interpolate({
-                              inputRange: [0, 12],
-                              outputRange: [40, width - 100]
-                            })
-                          }
-                        ]
-                      }
-                    ]}
-                  />
+                {isCompleted ? (
+                  <Text style={learningPathwayStyles.pathwayNodeIcon}>✓</Text>
+                ) : isLocked ? (
+                  <Text style={learningPathwayStyles.pathwayNodeIcon}>🔒</Text>
+                ) : (
+                  <Text style={learningPathwayStyles.pathwayNodeNumber}>{index + 1}</Text>
                 )}
-                <Text style={styles.nodeNumber}>{index + 1}</Text>
+                
+                {/* Small terrain indicator for side view */}
+                {viewMode === 'side' && (
+                  <View style={[
+                    learningPathwayStyles.pathwayElevationIndicator,
+                    { 
+                      height: elevation / 2,
+                      backgroundColor: nodeColor
+                    }
+                  ]} />
+                )}
               </TouchableOpacity>
+              
+              {/* Node labels (only visible in certain conditions) */}
+              {(isCurrent || index % 3 === 0) && (
+                <View style={learningPathwayStyles.pathwayNodeLabel}>
+                  <Text style={learningPathwayStyles.pathwayNodeLabelText}>Level {index + 1}</Text>
+                </View>
+              )}
             </Animated.View>
           );
         })}
+        
+        {/* Animated character avatar */}
+        <Animated.View
+          style={[
+            learningPathwayStyles.pathwayAvatarContainer,
+            {
+              transform: [
+                { 
+                  translateX: avatarAnim.interpolate({
+                    inputRange: [0, 11],
+                    outputRange: [getNodePosition(0, viewMode).x - 30, getNodePosition(11, viewMode).x - 30]
+                  })
+                },
+                { 
+                  translateY: viewMode === 'side' ? 
+                    Animated.add(
+                      -30,
+                      avatarAnim.interpolate({
+                        inputRange: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
+                        outputRange: Array(12).fill().map((_, i) => -getNodePosition(i, 'side').elevation)
+                      })
+                    ) : -30
+                }
+              ]
+            }
+          ]}
+        >
+          <Image
+            source={require('./assets/image 01.png')}
+            style={learningPathwayStyles.pathwayAvatarImage}
+          />
+          
+          {/* Character shadow */}
+          <View style={learningPathwayStyles.pathwayAvatarShadow} />
+        </Animated.View>
       </Animated.View>
+    );
+  };
 
+  return (
+    <SafeAreaView style={learningPathwayStyles.pathwayContainer}>
+      <View style={learningPathwayStyles.pathwayHeader}>
+        <Text style={learningPathwayStyles.pathwayHeaderTitle}>LEARNING ADVENTURE</Text>
+        <Text style={learningPathwayStyles.pathwayHeaderSubtitle}>
+          Navigate your journey through the knowledge landscape!
+        </Text>
+      </View>
+      
+      {/* View mode toggle */}
       <TouchableOpacity 
-        style={styles.continueButton}
-        onPress={moveToNextNode}
+        style={learningPathwayStyles.pathwayViewToggleButton}
+        onPress={toggleViewMode}
       >
-        <Text style={styles.nextButtonText}>CONTINUE JOURNEY</Text>
-        <LottieView
-          source={require('./assets/image 01.png')}
-          autoPlay
-          loop
-          style={styles.buttonParticles}
-        />
+        <Text style={learningPathwayStyles.pathwayViewToggleText}>
+          {viewMode === 'top' ? '🗺️ MAP VIEW' : '⛰️ TERRAIN VIEW'}
+        </Text>
       </TouchableOpacity>
+      
+      {/* Main scrollable map area */}
+      <ScrollView
+        ref={scrollViewRef}
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        onScroll={Animated.event(
+          [{ nativeEvent: { contentOffset: { x: scrollX } } }],
+          { useNativeDriver: false }
+        )}
+        scrollEventThrottle={16}
+        contentContainerStyle={{ width: totalPathLength, height: height * 0.7 }}
+      >
+        {renderTerrainElements()}
+        {renderPathway()}
+        
+        {/* Cloud cover at the end of the map */}
+        <Animated.View 
+          style={[
+            learningPathwayStyles.pathwayMapEndClouds,
+            {
+              opacity: scrollX.interpolate({
+                inputRange: [totalPathLength - width * 1.5, totalPathLength - width],
+                outputRange: [0, 1],
+                extrapolate: 'clamp'
+              })
+            }
+          ]}
+        >
+          <View style={learningPathwayStyles.pathwayCloudCover}>
+            <Text style={learningPathwayStyles.pathwayMysteryText}>The journey continues...</Text>
+          </View>
+        </Animated.View>
+      </ScrollView>
+      
+      {/* Navigation button */}
+      <View style={learningPathwayStyles.pathwayButtonContainer}>
+        <TouchableOpacity 
+          style={learningPathwayStyles.pathwayContinueButton}
+          onPress={() => {
+            // Navigate to current node's level
+            handleNodePress(Math.min(currentPosition + 1, unlockedLevel));
+          }}
+        >
+          <View style={learningPathwayStyles.pathwayButtonGradient}>
+            <Text style={learningPathwayStyles.pathwayContinueButtonText}>CONTINUE ADVENTURE</Text>
+          </View>
+        </TouchableOpacity>
+      </View>
     </SafeAreaView>
   );
 };
 
-// Alphabet Learning Screen with interactive elements
-const AlphabetLearningScreen = ({ route , navigation }) => {
-  const { level } = route.params || { level: 1 };
+// Enhanced Alphabet Learning Screen with lesson data
+const AlphabetLearningScreen = ({ route, navigation }) => {
+  const { lessonId, onComplete } = route.params || { lessonId: 1 };
   const [currentCard, setCurrentCard] = useState(0);
   const [showSuccess, setShowSuccess] = useState(false);
   const cardAnim = useRef(new Animated.Value(0)).current;
   
-  const alphabetCards = [
-    { letter: 'අ', pronunciation: 'a', example: 'apple', sign: require('./assets/adaptive-icon.png') },
-    { letter: 'ආ', pronunciation: 'aa', example: 'art', sign: require('./assets/adaptive-icon.png') },
-    { letter: 'ඇ', pronunciation: 'ae', example: 'ant', sign: require('./assets/adaptive-icon.png') },
-    { letter: 'ඈ', pronunciation: 'aae', example: 'ask', sign: require('./assets/adaptive-icon.png') },
-    { letter: 'ඉ', pronunciation: 'i', example: 'if', sign: require('./assets/adaptive-icon.png') },
-  ];
+  // Lesson content based on lesson ID
+  const lessonContent = {
+    1: {
+      title: "Basic Alphabet (අ-ඉ)",
+      cards: [
+        { letter: 'අ', pronunciation: 'a', example: 'apple', sign: require('./assets/adaptive-icon.png') },
+        { letter: 'ආ', pronunciation: 'aa', example: 'art', sign: require('./assets/adaptive-icon.png') },
+        { letter: 'ඇ', pronunciation: 'ae', example: 'ant', sign: require('./assets/adaptive-icon.png') },
+        { letter: 'ඈ', pronunciation: 'aae', example: 'ask', sign: require('./assets/adaptive-icon.png') },
+        { letter: 'ඉ', pronunciation: 'i', example: 'if', sign: require('./assets/adaptive-icon.png') },
+      ],
+      xpReward: 75
+    },
+    2: {
+      title: "More Vowels (ඊ-ඖ)",
+      cards: [
+        { letter: 'ඊ', pronunciation: 'ii', example: 'eel', sign: require('./assets/adaptive-icon.png') },
+        { letter: 'උ', pronunciation: 'u', example: 'put', sign: require('./assets/adaptive-icon.png') },
+        { letter: 'ඌ', pronunciation: 'uu', example: 'food', sign: require('./assets/adaptive-icon.png') },
+        { letter: 'ඍ', pronunciation: 'ru', example: 'rhythm', sign: require('./assets/adaptive-icon.png') },
+        { letter: 'ඎ', pronunciation: 'ruu', example: 'root', sign: require('./assets/adaptive-icon.png') },
+      ],
+      xpReward: 75
+    },
+    3: {
+      title: "Basic Consonants",
+      cards: [
+        { letter: 'ක', pronunciation: 'ka', example: 'cat', sign: require('./assets/adaptive-icon.png') },
+        { letter: 'ග', pronunciation: 'ga', example: 'gun', sign: require('./assets/adaptive-icon.png') },
+        { letter: 'ච', pronunciation: 'cha', example: 'chair', sign: require('./assets/adaptive-icon.png') },
+        { letter: 'ජ', pronunciation: 'ja', example: 'jar', sign: require('./assets/adaptive-icon.png') },
+        { letter: 'ට', pronunciation: 'ta', example: 'top', sign: require('./assets/adaptive-icon.png') },
+      ],
+      xpReward: 100
+    },
+    4: {
+      title: "Simple Greetings",
+      cards: [
+        { phrase: 'ආයුබෝවන්', meaning: 'Hello/Greetings', usage: 'Formal greeting', sign: require('./assets/adaptive-icon.png') },
+        { phrase: 'සුභ උදෑසනක්', meaning: 'Good morning', usage: 'Morning greeting', sign: require('./assets/adaptive-icon.png') },
+        { phrase: 'කොහොමද', meaning: 'How are you?', usage: 'Asking about wellbeing', sign: require('./assets/adaptive-icon.png') },
+        { phrase: 'හොඳින්', meaning: 'Well/Good', usage: 'Response to "How are you?"', sign: require('./assets/adaptive-icon.png') },
+        { phrase: 'ස්තුතියි', meaning: 'Thank you', usage: 'Expressing gratitude', sign: require('./assets/adaptive-icon.png') },
+      ],
+      xpReward: 100
+    },
+    5: {
+      title: "Numbers 1-10",
+      cards: [
+        { number: '1', sinhala: 'එක', pronunciation: 'eka', sign: require('./assets/adaptive-icon.png') },
+        { number: '2', sinhala: 'දෙක', pronunciation: 'deka', sign: require('./assets/adaptive-icon.png') },
+        { number: '3', sinhala: 'තුන', pronunciation: 'thuna', sign: require('./assets/adaptive-icon.png') },
+        { number: '4', sinhala: 'හතර', pronunciation: 'hathara', sign: require('./assets/adaptive-icon.png') },
+        { number: '5', sinhala: 'පහ', pronunciation: 'paha', sign: require('./assets/adaptive-icon.png') },
+      ],
+      xpReward: 125
+    }
+  };
+  
+  // If lesson content doesn't exist, use default lesson 1
+  const currentLesson = lessonContent[lessonId] || lessonContent[1];
+  const alphabetCards = currentLesson.cards;
   
   useEffect(() => {
     // Card flip animation
@@ -1066,7 +1376,12 @@ const AlphabetLearningScreen = ({ route , navigation }) => {
       
       // Navigate after showing success animation
       setTimeout(() => {
-        navigation.navigate('LessonComplete');
+        navigation.navigate('LessonComplete', {
+          lessonId,
+          xpEarned: currentLesson.xpReward,
+          lessonTitle: currentLesson.title,
+          onComplete
+        });
       }, 2000);
     }
   };
@@ -1095,9 +1410,72 @@ const AlphabetLearningScreen = ({ route , navigation }) => {
     outputRange: [0, 0.5, 1]
   });
   
+  // Render card content based on lesson type
+  const renderCardContent = (card) => {
+    // For alphabet lessons
+    if (card.letter) {
+      return (
+        <>
+          <Text style={styles.alphabetLetter}>{card.letter}</Text>
+          <Text style={styles.alphabetPronunciation}>
+            Pronounced as: "{card.pronunciation}"
+          </Text>
+          <Image
+            source={card.sign}
+            style={styles.signImage}
+            resizeMode="contain"
+          />
+          <Text style={styles.exampleText}>
+            Example: {card.example}
+          </Text>
+        </>
+      );
+    }
+    
+    // For greeting lessons
+    if (card.phrase) {
+      return (
+        <>
+          <Text style={styles.phraseLetter}>{card.phrase}</Text>
+          <Text style={styles.phraseMeaning}>
+            Meaning: "{card.meaning}"
+          </Text>
+          <Image
+            source={card.sign}
+            style={styles.signImage}
+            resizeMode="contain"
+          />
+          <Text style={styles.usageText}>
+            Usage: {card.usage}
+          </Text>
+        </>
+      );
+    }
+    
+    // For number lessons
+    if (card.number) {
+      return (
+        <>
+          <Text style={styles.numberDigit}>{card.number}</Text>
+          <Text style={styles.numberSinhala}>{card.sinhala}</Text>
+          <Text style={styles.numberPronunciation}>
+            Pronounced as: "{card.pronunciation}"
+          </Text>
+          <Image
+            source={card.sign}
+            style={styles.signImage}
+            resizeMode="contain"
+          />
+        </>
+      );
+    }
+    
+    return null;
+  };
+  
   return (
     <SafeAreaView style={styles.container}>
-      <Text style={styles.levelIndicator}>ALPHABET LEARNING</Text>
+      <Text style={styles.levelIndicator}>{currentLesson.title}</Text>
       
       <ProgressBar current={currentCard + 1} total={alphabetCards.length} />
       
@@ -1112,20 +1490,7 @@ const AlphabetLearningScreen = ({ route , navigation }) => {
               }
             ]}
           >
-            <Text style={styles.alphabetLetter}>{alphabetCards[currentCard].letter}</Text>
-            <Text style={styles.alphabetPronunciation}>
-              Pronounced as: "{alphabetCards[currentCard].pronunciation}"
-            </Text>
-            
-            <Image
-              source={alphabetCards[currentCard].sign}
-              style={styles.signImage}
-              resizeMode="contain"
-            />
-            
-            <Text style={styles.exampleText}>
-              Example: {alphabetCards[currentCard].example}
-            </Text>
+            {renderCardContent(alphabetCards[currentCard])}
           </Animated.View>
           
           <View style={styles.navigationButtons}>
@@ -1152,7 +1517,7 @@ const AlphabetLearningScreen = ({ route , navigation }) => {
           <Confetti show={true} />
           <Text style={styles.successTitle}>Great Job!</Text>
           <Text style={styles.successMessage}>
-            You've learned the basic Sinhala alphabet letters!
+            You've completed the {currentLesson.title} lesson!
           </Text>
         </View>
       )}
@@ -1160,9 +1525,9 @@ const AlphabetLearningScreen = ({ route , navigation }) => {
   );
 };
 
-
-// Lesson Complete Screen with rewards
-const LessonCompleteScreen = ({ navigation }) => {
+// Enhanced Lesson Complete Screen with rewards and lesson tracking
+const LessonCompleteScreen = ({ route, navigation }) => {
+  const { lessonId, xpEarned, lessonTitle, onComplete } = route.params || {};
   const [showConfetti, setShowConfetti] = useState(false);
   const scaleAnim = useRef(new Animated.Value(0.2)).current;
   
@@ -1177,13 +1542,63 @@ const LessonCompleteScreen = ({ navigation }) => {
       tension: 40,
       useNativeDriver: true
     }).start();
+    
+    // Call the onComplete callback
+    if (onComplete) {
+      onComplete(xpEarned);
+    }
   }, []);
+  
+  // Determine rewards based on lesson
+  const getRewards = (id) => {
+    switch (id) {
+      case 1:
+        return [
+          `🌟 +${xpEarned} XP Points`,
+          '🏅 Basic Alphabet Badge',
+          '🔓 Unlocked More Vowels lesson'
+        ];
+      case 2:
+        return [
+          `🌟 +${xpEarned} XP Points`,
+          '🏅 Vowels Master Badge',
+          '🔓 Unlocked Basic Consonants lesson'
+        ];
+      case 3:
+        return [
+          `🌟 +${xpEarned} XP Points`,
+          '🏅 Consonants Badge',
+          '🔓 Unlocked Simple Greetings lesson'
+        ];
+      case 4:
+        return [
+          `🌟 +${xpEarned} XP Points`,
+          '🏅 Greetings Expert Badge',
+          '🔓 Unlocked Numbers 1-10 lesson'
+        ];
+      case 5:
+        return [
+          `🌟 +${xpEarned} XP Points`,
+          '🏅 Numbers Novice Badge',
+          '🔓 Unlocked Family Members lesson'
+        ];
+      default:
+        return [
+          `🌟 +${xpEarned} XP Points`,
+          '🏅 Learning Badge',
+          '🔓 Unlocked next lesson'
+        ];
+    }
+  };
+  
+  const rewards = getRewards(lessonId);
   
   return (
     <SafeAreaView style={styles.container}>
       <Confetti show={showConfetti} />
       
       <Text style={styles.lessonCompleteTitle}>LESSON COMPLETE!</Text>
+      <Text style={styles.lessonCompleteName}>{lessonTitle}</Text>
       
       <Animated.View 
         style={[
@@ -1197,29 +1612,234 @@ const LessonCompleteScreen = ({ navigation }) => {
       <View style={styles.rewardsContainer}>
         <Text style={styles.rewardsTitle}>Rewards Earned:</Text>
         <View style={styles.rewardsList}>
-          <Text style={styles.rewardItem}>🌟 +75 XP Points</Text>
-          <Text style={styles.rewardItem}>🏅 Basic Alphabet Badge</Text>
-          <Text style={styles.rewardItem}>🔓 Unlocked Level 8</Text>
+          {rewards.map((reward, index) => (
+            <Text key={index} style={styles.rewardItem}>{reward}</Text>
+          ))}
         </View>
       </View>
-
       
-      
-      <TouchableOpacity 
-        style={styles.continueButton}
-        onPress={() => {
-          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-          navigation.navigate('LearningPathway');
-        }}
-      >
-        <Text style={styles.nextButtonText}>CONTINUE</Text>
-
-      </TouchableOpacity>
+      <View style={styles.buttonContainer}>
+        <TouchableOpacity 
+          style={styles.practiceButton}
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+            navigation.navigate('PracticeQuiz', { lessonId });
+          }}
+        >
+          <Text style={styles.practiceButtonText}>PRACTICE</Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity 
+          style={styles.continueButton}
+          onPress={() => {
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            navigation.navigate('LearningPathway');
+          }}
+        >
+          <Text style={styles.nextButtonText}>CONTINUE</Text>
+        </TouchableOpacity>
+      </View>
     </SafeAreaView>
-
-    
   );
 };
+
+// Practice Quiz Screen (new addition)
+const PracticeQuizScreen = ({ route, navigation }) => {
+  const { lessonId } = route.params || { lessonId: 1 };
+  const [currentQuestion, setCurrentQuestion] = useState(0);
+  const [score, setScore] = useState(0);
+  const [showResult, setShowResult] = useState(false);
+  const [selectedAnswer, setSelectedAnswer] = useState(null);
+  const [isCorrect, setIsCorrect] = useState(false);
+  
+  // Quiz questions based on lesson content
+  const quizContent = {
+    1: [
+      {
+        question: "What is the pronunciation of 'අ'?",
+        options: ["a", "aa", "ae", "i"],
+        correctAnswer: 0
+      },
+      {
+        question: "Which letter is pronounced as 'aa'?",
+        options: ["අ", "ආ", "ඇ", "ඉ"],
+        correctAnswer: 1
+      },
+      {
+        question: "Match the letter 'ඇ' with its pronunciation:",
+        options: ["a", "aa", "ae", "i"],
+        correctAnswer: 2
+      }
+    ],
+    2: [
+      {
+        question: "What is the pronunciation of 'ඊ'?",
+        options: ["i", "ii", "u", "uu"],
+        correctAnswer: 1
+      },
+      {
+        question: "Which letter is pronounced as 'u'?",
+        options: ["ඊ", "උ", "ඌ", "ඍ"],
+        correctAnswer: 1
+      },
+      {
+        question: "Match the letter 'ඌ' with its pronunciation:",
+        options: ["u", "uu", "ru", "ruu"],
+        correctAnswer: 1
+      }
+    ],
+    3: [
+      {
+        question: "What is the pronunciation of 'ක'?",
+        options: ["ka", "ga", "cha", "ja"],
+        correctAnswer: 0
+      },
+      {
+        question: "Which letter is pronounced as 'ga'?",
+        options: ["ක", "ග", "ච", "ජ"],
+        correctAnswer: 1
+      },
+      {
+        question: "Match the letter 'ජ' with its pronunciation:",
+        options: ["ka", "ga", "cha", "ja"],
+        correctAnswer: 3
+      }
+    ]
+  };
+  
+  // Default to lesson 1 if no content exists
+  const questions = quizContent[lessonId] || quizContent[1];
+  
+  const handleAnswer = (index) => {
+    setSelectedAnswer(index);
+    const correct = index === questions[currentQuestion].correctAnswer;
+    setIsCorrect(correct);
+    
+    // Update score if correct
+    if (correct) {
+      setScore(score + 1);
+    }
+    
+    // Wait before moving to next question
+    setTimeout(() => {
+      if (currentQuestion < questions.length - 1) {
+        setCurrentQuestion(currentQuestion + 1);
+        setSelectedAnswer(null);
+      } else {
+        setShowResult(true);
+      }
+    }, 1000);
+  };
+  
+  return (
+    <SafeAreaView style={styles.container}>
+      {!showResult ? (
+        <>
+          <Text style={styles.quizTitle}>Practice Quiz</Text>
+          <ProgressBar current={currentQuestion + 1} total={questions.length} />
+          
+          <View style={styles.questionContainer}>
+            <Text style={styles.questionText}>{questions[currentQuestion].question}</Text>
+            
+            <View style={styles.optionsContainer}>
+              {questions[currentQuestion].options.map((option, index) => (
+                <TouchableOpacity
+                  key={index}
+                  style={[
+                    styles.optionButton,
+                    selectedAnswer === index && (
+                      index === questions[currentQuestion].correctAnswer 
+                        ? styles.correctOption 
+                        : styles.incorrectOption
+                    )
+                  ]}
+                  onPress={() => selectedAnswer === null && handleAnswer(index)}
+                  disabled={selectedAnswer !== null}
+                >
+                  <Text style={styles.optionText}>{option}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+        </>
+      ) : (
+        <View style={styles.resultContainer}>
+          <Text style={styles.resultTitle}>Quiz Complete!</Text>
+          <Text style={styles.resultScore}>Score: {score}/{questions.length}</Text>
+          
+          <View style={styles.resultFeedback}>
+            {score === questions.length && (
+              <Text style={styles.perfectScore}>Perfect! You've mastered this lesson!</Text>
+            )}
+            {score >= questions.length / 2 && score < questions.length && (
+              <Text style={styles.goodScore}>Good job! Keep practicing to improve.</Text>
+            )}
+            {score < questions.length / 2 && (
+              <Text style={styles.needsPractice}>You need more practice with this lesson.</Text>
+            )}
+          </View>
+          
+          <View style={styles.resultButtons}>
+            <TouchableOpacity
+              style={styles.retryButton}
+              onPress={() => {
+                setCurrentQuestion(0);
+                setScore(0);
+                setShowResult(false);
+                setSelectedAnswer(null);
+              }}
+            >
+              <Text style={styles.retryButtonText}>RETRY QUIZ</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity
+              style={styles.pathwayButton}
+              onPress={() => navigation.navigate('LearningPathway')}
+            >
+              <Text style={styles.pathwayButtonText}>BACK TO PATHWAY</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
+    </SafeAreaView>
+  );
+};
+
+// App Navigation Configuration
+const AppNavigator = () => {
+  return (
+    <NavigationContainer>
+      <Stack.Navigator initialRouteName="LearningPathway">
+        <Stack.Screen 
+          name="LearningPathway" 
+          component={LearningPathwayScreen}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen 
+          name="AlphabetLearning" 
+          component={AlphabetLearningScreen}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen 
+          name="LessonComplete" 
+          component={LessonCompleteScreen}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen 
+          name="PracticeQuiz" 
+          component={PracticeQuizScreen}
+          options={{ headerShown: false }}
+        />
+      </Stack.Navigator>
+    </NavigationContainer>
+  );
+};
+
+
+
+
+
+
 
 
 
@@ -2101,12 +2721,486 @@ const styles = StyleSheet.create({
     height: 40,
     borderRadius: 20,
   },
-  dotLine: {
-    width: width * 0.7,
-    height: 2,
-    borderStyle: 'dotted',
-    borderWidth: 1,
-    borderColor: '#383773',
-    marginTop: 12,
+  pathwayHeader: {
+    alignItems: 'center',
+    padding: 20,
   },
+  pathwaySubtitle: {
+    fontSize: 16,
+    color: '#555',
+    marginTop: 5,
+  },
+  pathwayContainer: {
+    flex: 1,
+    width: '100%',
+    marginTop: 40,
+  },
+
+  pathSvg: {
+    position: 'absolute',
+  },
+  nodeContainer: {
+    position: 'absolute',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 5,
+  },
+  nodeButton: {
+    borderRadius: 25,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  nodeGradient: {
+    width: '100%',
+    height: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  currentNode: {
+    shadowColor: '#383773',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.4,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  completedNode: {
+    shadowOpacity: 0.15,
+  },
+  lockedNode: {
+    shadowOpacity: 0.1,
+  },
+  nodeNumber: {
+    color: 'white',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  nodeIcon: {
+    fontSize: 18,
+    color: 'white',
+  },
+  nodeLabel: {
+    position: 'absolute',
+    top: 45,
+    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  nodeLabelText: {
+    fontSize: 12,
+    color: '#383773',
+    fontWeight: '600',
+  },
+  avatarContainer: {
+    position: 'absolute',
+    width: 60,
+    height: 60,
+    zIndex: 10,
+  },
+  avatarImage: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    borderWidth: 2,
+    borderColor: 'white',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  avatarShadow: {
+    position: 'absolute',
+    bottom: -5,
+    left: 15,
+    width: 30,
+    height: 10,
+    borderRadius: 10,
+    backgroundColor: 'rgba(0, 0, 0, 0.2)',
+    transform: [{ scaleX: 1.5 }],
+  },
+  cloud: {
+    position: 'absolute',
+    borderRadius: 20,
+    overflow: 'hidden',
+  },
+  cloudBlur: {
+    flex: 1,
+    borderRadius: 20,
+  },
+  cloudInner: {
+    flex: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.7)',
+  },
+  terrainBase: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: height * 0.3,
+  },
+  terrainGradient: {
+    flex: 1,
+  },
+  mapEndClouds: {
+    position: 'absolute',
+    right: 0,
+    width: width,
+    height: '100%',
+  },
+  cloudCover: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  mysteryText: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#383773',
+    textShadowColor: 'rgba(255, 255, 255, 0.7)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 2,
+  },
+  buttonContainer: {
+    alignItems: 'center',
+    paddingVertical: 20,
+  },
+  continueButton: {
+    width: width * 0.8,
+    height: 50,
+    borderRadius: 25,
+    overflow: 'hidden',
+    shadowColor: '#383773',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+    elevation: 6,
+  },
+  buttonGradient: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  elevationIndicator: {
+    position: 'absolute',
+    bottom: -5,
+    width: 2,
+    backgroundColor: 'rgba(93, 91, 141, 0.5)',
+  },
+  elevationGradient: {
+    flex: 1,
+  },
+  container: {
+    flex: 1,
+    backgroundColor: '#c5c6e8',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 20,
+  },
+  welcomeLessonsTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#383773',
+    textAlign: 'center',
+    marginTop: 60,
+    marginBottom: 40,
+  },
+  characterImage: {
+    width: width * 0.7,
+    height: width * 0.7,
+    marginVertical: 20,
+  },
+  continueButton: {
+    backgroundColor: '#5d5b8d',
+    paddingVertical: 12,
+    paddingHorizontal: 40,
+    borderRadius: 8,
+    marginTop: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
+    elevation: 5,
+    alignSelf: 'center',
+  },
+  nextButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  confettiContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 10,
+  },
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+  
 });
+
+
+const learningPathwayStyles = StyleSheet.create({
+  pathwayContainer: {
+    flex: 1,
+    backgroundColor: '#c5c6e8',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 20,
+  },
+  pathwayHeader: {
+    width: '100%',
+    alignItems: 'center',
+    marginBottom: 15,
+  },
+  pathwayHeaderTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    color: '#383773',
+  },
+  pathwayHeaderSubtitle: {
+    fontSize: 16,
+    textAlign: 'center',
+    color: '#5d5b8d',
+    marginTop: 5,
+  },
+  pathwayViewToggleButton: {
+    backgroundColor: 'rgba(93, 91, 141, 0.2)',
+    paddingVertical: 8,
+    paddingHorizontal: 15,
+    borderRadius: 20,
+    alignSelf: 'center',
+    marginBottom: 15,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  pathwayViewToggleText: {
+    color: '#383773',
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  pathwayScrollContainer: {
+    width: '100%',
+    height: '70%',
+  },
+  pathwayContentContainer: {
+    paddingBottom: 20,
+  },
+  pathwayMapContainer: {
+    position: 'relative',
+    width: '100%',
+    height: '100%',
+  },
+  pathwaySvg: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+  },
+  pathwayNodeContainer: {
+    position: 'absolute',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 5,
+  },
+  pathwayNodeButton: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 25,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
+    elevation: 5,
+  },
+  pathwayCurrentNode: {
+    borderWidth: 3,
+    borderColor: '#fff',
+  },
+  pathwayCompletedNode: {
+    borderWidth: 1,
+    borderColor: '#fff',
+  },
+  pathwayLockedNode: {
+    shadowOpacity: 0.1,
+    elevation: 2,
+  },
+  pathwayNodeIcon: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  pathwayNodeNumber: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  pathwayNodeLabel: {
+    position: 'absolute',
+    top: -25,
+    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 1,
+    elevation: 2,
+  },
+  pathwayNodeLabelText: {
+    fontSize: 12,
+    color: '#383773',
+    fontWeight: '600',
+  },
+  pathwayElevationIndicator: {
+    position: 'absolute',
+    bottom: -3,
+    width: 2,
+    backgroundColor: 'rgba(255, 255, 255, 0.5)',
+  },
+  pathwayAvatarContainer: {
+    position: 'absolute',
+    zIndex: 10,
+    alignItems: 'center',
+  },
+  pathwayAvatarImage: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    borderWidth: 2,
+    borderColor: '#fff',
+    backgroundColor: '#8e8cc0',
+  },
+  pathwayAvatarShadow: {
+    position: 'absolute',
+    bottom: -5,
+    width: 40,
+    height: 10,
+    borderRadius: 20,
+    backgroundColor: 'rgba(0, 0, 0, 0.2)',
+    zIndex: -1,
+  },
+  pathwayTerrainBase: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: '40%',
+    backgroundColor: 'rgba(93, 91, 141, 0.1)',
+    borderTopLeftRadius: 100,
+    borderTopRightRadius: 100,
+  },
+  pathwayTerrainGradient: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: '100%',
+    backgroundColor: 'transparent',
+    borderTopWidth: 2,
+    borderTopColor: 'rgba(93, 91, 141, 0.3)',
+  },
+  pathwayCustomCloud: {
+    position: 'relative',
+    borderRadius: 20,
+    overflow: 'hidden',
+  },
+  pathwayCloudBase: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'white',
+  },
+  pathwayCloudPuff: {
+    position: 'absolute',
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: 'white',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+  },
+  pathwayMapEndClouds: {
+    position: 'absolute',
+    right: 0,
+    top: 0,
+    bottom: 0,
+    width: 300,
+    zIndex: 15,
+  },
+  pathwayCloudCover: {
+    flex: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  pathwayMysteryText: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#383773',
+    textAlign: 'center',
+    opacity: 0.7,
+  },
+  pathwayButtonContainer: {
+    width: '100%',
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+    alignItems: 'center',
+  },
+  pathwayContinueButton: {
+    backgroundColor: '#5d5b8d',
+    paddingVertical: 12,
+    paddingHorizontal: 30,
+    borderRadius: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
+    elevation: 5,
+    alignSelf: 'center',
+  },
+  pathwayButtonGradient: {
+    width: '100%',
+    alignItems: 'center',
+  },
+  pathwayContinueButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: 'bold',
+  }
+});
+
+
