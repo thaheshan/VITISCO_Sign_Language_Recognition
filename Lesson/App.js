@@ -1134,10 +1134,7 @@ export default function App() {
               opacity: current.progress,
             },
           }),
-        }}
-
-
-      >
+        }}>
         <Stack.Screen name="Welcome" component={WelcomeScreen} />
         <Stack.Screen name="Loading" component={LoadingScreen} />
         <Stack.Screen name="Customization" component={CustomizationScreen} />
@@ -1148,14 +1145,14 @@ export default function App() {
         <Stack.Screen name="GetStarted" component={GetStartedScreen} />
         <Stack.Screen name="LessonIntro" component={LessonIntroScreen} />
         <Stack.Screen name="WelcomeLessons" component={WelcomeLessonsScreen} />
-  <Stack.Screen name="LearningPathway" component={LearningPathwayScreen} />
-
+        <Stack.Screen name="LearningPathway" component={LearningPathwayScreen} />
         <Stack.Screen name="AlphabetLearning" component={AlphabetLearningScreen} />
         <Stack.Screen name="LessonComplete" component={LessonCompleteScreen} />
-        // Add to your Stack.Navigator
-<Stack.Screen name="QuizScreen" component={QuizScreen} />
-<Stack.Screen name="QuizResults" component={QuizResultsScreen} />
-      </Stack.Navigator>
+         {/* <Stack.Screen name="QuizScreen"Screen={QuizScreen} />
+        < Stack.Screen name="QuizResults" Screen={QuizResultsScreen} /> */}
+
+    </Stack.Navigator>
+
     </NavigationContainer>
   );
 }
