@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 
 const QuizApp = () => {
+  const [showStartScreen, setShowStartScreen] = useState(true);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState(null);
 
@@ -22,18 +23,18 @@ const QuizApp = () => {
       image: require('./assets/download.jpeg'),
       options: [
         { id: 'A', text: 'A' },
-        { id: 'B', text: 'C' },
-        { id: 'C', text: 'B' },
+        { id: 'B', text: 'B' },
+        { id: 'C', text: 'C' },
       ],
     },
     {
       id: 2,
       title: 'Select the correct sign for B',
       options: [
-        { image: require('./assets/image 01.png') },
-        { image: require('./assets/image 01.png') },
-        { image: require('./assets/image 01.png') },
-        { image: require('./assets/image 01.png') },
+        { image: require('./assets/image01.png') },
+        { image: require('./assets/image01.png') },
+        { image: require('./assets/image01.png') },
+        { image: require('./assets/image01.png') },
       ],
       gridView: true,
     },
@@ -41,10 +42,10 @@ const QuizApp = () => {
       id: 3,
       title: 'Select the correct sign for C',
       options: [
-        { image: require('./assets/image 01.png') },
-        { image: require('./assets/image 01.png') },
-        { image: require('./assets/image 01.png') },
-        { image: require('./assets/image 01.png') },
+        { image: require('./assets/image01.png') },
+        { image: require('./assets/image01.png') },
+        { image: require('./assets/image01.png') },
+        { image: require('./assets/image01.png') },
       ],
       gridView: true,
     },
@@ -80,10 +81,31 @@ const QuizApp = () => {
       "Are you sure you want to quit?",
       [
         { text: "Cancel", style: "cancel" },
-        { text: "Yes", onPress: () => console.log("User quit the quiz!") }
+        { text: "Yes", onPress: () => setShowStartScreen(true) }
       ]
     );
   };
+
+  // ** Welcome Screen **
+  if (showStartScreen) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <StatusBar barStyle="dark-content" />
+        <View style={styles.welcomeContainer}>
+          <Text style={styles.welcomeText}>Welcome to the Quiz!</Text>
+          <Image source={require('./assets/image01.png')} style={styles.welcomeImage} />
+          </View>
+        {/* button container */}
+        <View style={styles.startButtonContainer}>
+          <TouchableOpacity 
+            style={styles.startButton} 
+            onPress={() => setShowStartScreen(false)}>
+            <Text style={styles.startButtonText}>Start Quiz</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   const renderProgressBar = () => (
     <View style={styles.progressContainer}>
@@ -101,6 +123,8 @@ const QuizApp = () => {
 
   const renderQuestion = () => {
     const question = questions[currentQuestion];
+
+   
 
     return (
       <ScrollView contentContainerStyle={styles.scrollContainer}>
@@ -155,23 +179,24 @@ const QuizApp = () => {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" />
-      <View style={styles.header}>
-        <Text style={styles.headerText}> Quiz </Text>
-
-        {/* Back Button */}
-      {/* <TouchableOpacity
+      <View style={styles.headerContainer}>
+      {/* Back Button */}
+      {<TouchableOpacity
         style={[
           styles.backButton,
           currentQuestion === 0 && styles.disabledButton]}
         onPress={handleBack}
         disabled={currentQuestion === 0}>
-        <Text style={styles.backButton}>BACK</Text>
-      </TouchableOpacity> */}
-
-          {/* close button */}
-        <TouchableOpacity onPress={handleQuit}>
+        <Text style={styles.backButton}> {'<'} </Text>
+      </TouchableOpacity>}
+      {/* close button */}
+      <TouchableOpacity onPress={handleQuit}>
           <Text style={styles.closeButton}>×</Text>
         </TouchableOpacity>
+      </View>
+
+      <View style={styles.header}>
+        <Text style={styles.headerText}> Quiz </Text> 
       </View>
       {renderProgressBar()}
       {renderQuestion()}
@@ -194,10 +219,56 @@ const QuizApp = () => {
 };
 
 const styles = StyleSheet.create({
+  headerContainer:{
+    flexDirection: 'row', 
+    justifyContent: 'space-between',  
+    alignItems: 'center', 
+    paddingHorizontal: 16, 
+    paddingVertical: 10, 
+  },
+
   container: {
     flex: 1,
     backgroundColor: '#E6E6FA',
   },
+// Welcome page style 
+  welcomeText: {
+    fontSize: 28,
+    fontWeight: '700',
+    marginBottom: 100,
+    marginStart: 70,
+  },
+
+  welcomeImage: {
+    width: 150,
+    height: 150,
+    resizeMode: 'contain',
+    marginBottom: 30,
+    marginStart: 70,
+  },
+
+  startButtonContainer: {
+    flex: 1,
+    justifyContent: 'flex-end',  
+    alignItems: 'center',        
+    paddingBottom: 30,           
+  },
+
+  startButton: {
+    backgroundColor: '#6A5ACD',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+  },
+
+  startButtonText: {
+    color: 'white',
+    fontSize: 18,
+    fontWeight: '600',
+    margin: 5,
+    padding: 5,
+  },
+
   scrollContainer: {
     flexGrow: 1,
     paddingBottom: 100,
@@ -213,14 +284,17 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   backButton:{
-    fontSize: 24,
+    fontSize: 30,
     fontWeight: '600',
     color: 'black',
   },
+
   closeButton: {
-    fontSize: 24,
+    fontSize: 30,
     fontWeight: '600',
     color: 'black',
+    marginLeft: 'auto',
+    marginTop:'auto',
   },
   progressContainer: {
     padding: 16,
