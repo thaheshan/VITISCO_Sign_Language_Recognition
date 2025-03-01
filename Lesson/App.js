@@ -750,16 +750,19 @@ const WelcomeLessonsScreen = ({ navigation }) => {
         }}
       >
         <Text style={styles.nextButtonText}>CONTINUE</Text>
+
       </TouchableOpacity>
     </SafeAreaView>
   );
 };
 
 // Enhanced Learning Pathway Screen with gamified elements
-const LearningPathwayScreen = ({ navigation }) => {
+const LearningPathwayScreen = ({ navigation, route }) => {
+
   // Animation refs for path nodes
   const nodeAnimations = useRef(Array(12).fill().map(() => new Animated.Value(0))).current;
-  const [unlockedLevel, setUnlockedLevel] = useState(5); // Levels 1-5 are unlocked
+  
+  const [unlockedLevel, setUnlockedLevel] = useState(route.params?.initialLevel || 5); // Levels 1-5 are unlocked
   
   useEffect(() => {
     // Animate nodes sequentially
@@ -927,7 +930,8 @@ const LearningPathwayScreen = ({ navigation }) => {
 };
 
 // Alphabet Learning Screen with interactive elements
-const AlphabetLearningScreen = ({ navigation }) => {
+const AlphabetLearningScreen = ({ route , navigation }) => {
+  const { level } = route.params || { level: 1 };
   const [currentCard, setCurrentCard] = useState(0);
   const [showSuccess, setShowSuccess] = useState(false);
   const cardAnim = useRef(new Animated.Value(0)).current;
