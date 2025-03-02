@@ -46,7 +46,7 @@ const Logo = ({ small = false }) => {
   return (
     <View style={small ? styles.smallLogoContainer : styles.logoContainer}>
       <Animated.Image
-        source={require('./assets/vitisco logo PNG.png')}
+        source={require('./assets/image 01.png')}
         style={[
           small ? styles.smallLogo : styles.logo,
           { transform: [{ scale: scaleAnim }] },
