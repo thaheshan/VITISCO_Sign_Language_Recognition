@@ -1,0 +1,29 @@
+{
+  "name": "learning-app",
+  "version": "1.0.0",
+  "main": "node_modules/expo/AppEntry.js",
+  "scripts": {
+    "start": "expo start",
+    "android": "expo start --android",
+    "ios": "expo start --ios",
+    "web": "expo start --web"
+  },
+  "dependencies": {
+    "@react-native-community/datetimepicker": "8.2.0",
+    "@types/react": "~18.3.12",
+    "expo": "^52.0.0",
+    "expo-haptics": "~14.0.1",
+    "expo-status-bar": "~2.0.1",
+    "react": "18.3.1",
+    "react-native": "0.76.7",
+    "react-native-calendar-picker": "^8.0.5",
+    "react-native-dropdown-picker": "5.4.2",
+    "react-native-gesture-handler": "~2.20.2",
+    "react-native-modal-datetime-picker": "^18.0.0",
+    "react-native-reanimated": "~3.16.1"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.25.2"
+  },
+  "private": true
+}

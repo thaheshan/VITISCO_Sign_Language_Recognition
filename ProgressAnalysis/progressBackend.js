@@ -63,6 +63,76 @@ module.exports = (pool) => {
     }
   });
   
+  // New endpoint: Get quiz performance stats for a user
+  router.get('/quiz-stats/:userId', async (req, res, next) => {
+    try {
+      const userId = req.params.userId;
+      
+      // Get quiz performance statistics
+      const [quizStats] = await pool.query(`
+        SELECT 
+          AVG(score) AS average_score,
+          AVG(time_spent_seconds) / 60 AS average_time_minutes
+        FROM user_lesson_progress
+        WHERE user_id = ? 
+        AND score IS NOT NULL
+      `, [userId]);
+      
+      // Calculate correct answer percentage
+      let correctPercentage = 0;
+      let avgTimeMinutes = 0;
+      
+      if (quizStats.length > 0) {
+        correctPercentage = Math.round(quizStats[0].average_score || 0);
+        avgTimeMinutes = parseFloat((quizStats[0].average_time_minutes || 0).toFixed(1));
+      }
+      
+      res.json({
+        correctAnswersPercentage: correctPercentage,
+        averageTimePerQuiz: avgTimeMinutes
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
+  
+  // New endpoint: Get rewards data for a user
+  router.get('/rewards/:userId', async (req, res, next) => {
+    try {
+      const userId = req.params.userId;
+      
+      // Get all rewards with user completion status
+      const [rewards] = await pool.query(`
+        SELECT 
+          r.id,
+          r.title,
+          r.description,
+          r.xp_value,
+          ur.id AS user_reward_id,
+          ur.date_awarded
+        FROM rewards r
+        LEFT JOIN user_rewards ur ON r.id = ur.reward_id AND ur.user_id = ?
+        ORDER BY r.display_order
+      `, [userId]);
+      
+      // Format the rewards data
+      const formattedRewards = rewards.map(reward => ({
+        id: reward.id,
+        title: reward.title,
+        description: reward.description,
+        xp: reward.xp_value,
+        completed: reward.user_reward_id !== null,
+        date: reward.date_awarded ? new Date(reward.date_awarded).toLocaleDateString() : null
+      }));
+      
+      res.json({
+        rewards: formattedRewards
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
+  
   // Update lesson progress
   router.post('/lesson', async (req, res, next) => {
     try {
@@ -169,6 +239,78 @@ module.exports = (pool) => {
     }
   });
   
+  // New endpoint: Switch active language for a user
+  router.post('/switch-language', async (req, res, next) => {
+    try {
+      const { userId, languageId } = req.body;
+      
+      if (!userId || !languageId) {
+        return res.status(400).json({ error: 'Missing required parameters' });
+      }
+      
+      const connection = await pool.getConnection();
+      
+      try {
+        await connection.beginTransaction();
+        
+        // Update user's active language
+        await connection.query(
+          'UPDATE users SET active_language_id = ? WHERE id = ?',
+          [languageId, userId]
+        );
+        
+        // Get the language name
+        const [languageData] = await connection.query(
+          'SELECT name FROM languages WHERE id = ?',
+          [languageId]
+        );
+        
+        const languageName = languageData[0]?.name || 'Unknown';
+        
+        // Log the language switch
+        await connection.query(
+          `INSERT INTO user_activity_logs 
+           (user_id, activity_type, activity_details, activity_date) 
+           VALUES (?, 'LANGUAGE_SWITCH', ?, NOW())`,
+          [userId, `Switched to ${languageName}`]
+        );
+        
+        await connection.commit();
+        
+        res.status(200).json({
+          success: true,
+          language: languageName,
+          message: `Successfully switched to ${languageName}`
+        });
+      } catch (error) {
+        await connection.rollback();
+        throw error;
+      } finally {
+        connection.release();
+      }
+    } catch (error) {
+      next(error);
+    }
+  });
+  
+  // New endpoint: Get available languages
+  router.get('/languages', async (req, res, next) => {
+    try {
+      const [languages] = await pool.query(`
+        SELECT id, name, code, is_active 
+        FROM languages 
+        WHERE is_active = 1
+        ORDER BY name
+      `);
+      
+      res.json({
+        languages
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
+  
   // Helper function to check and award rewards
   async function checkAndAwardRewards(connection, userId) {
     try {
@@ -209,7 +351,24 @@ module.exports = (pool) => {
         await awardReward(connection, userId, weekStreakReward[0].id);
       }
       
-      // Other reward checks can be added here
+      // Check for vocabulary master reward
+      const [vocabMasterReward] = await connection.query(`
+        SELECT r.id 
+        FROM rewards r 
+        WHERE r.title = 'Vocabulary Master' 
+        AND NOT EXISTS (
+          SELECT 1 FROM user_rewards ur WHERE ur.user_id = ? AND ur.reward_id = r.id
+        )
+        AND (
+          SELECT COUNT(*) 
+          FROM user_word_progress 
+          WHERE user_id = ? AND mastered = 1
+        ) >= 100
+      `, [userId, userId]);
+      
+      if (vocabMasterReward.length > 0) {
+        await awardReward(connection, userId, vocabMasterReward[0].id);
+      }
     } catch (error) {
       throw error;
     }
@@ -220,7 +379,7 @@ module.exports = (pool) => {
     try {
       // Insert the user reward
       await connection.query(
-        'INSERT INTO user_rewards (user_id, reward_id) VALUES (?, ?)',
+        'INSERT INTO user_rewards (user_id, reward_id, date_awarded) VALUES (?, ?, NOW())',
         [userId, rewardId]
       );
       
