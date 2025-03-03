@@ -134,7 +134,7 @@ module.exports = (pool) => {
   });
   
   // Update lesson progress
-  router.post('/lesson', async (req, res, next) => {
+  router.post('/lessons', async (req, res, next) => {
     try {
       const { userId, lessonId, completed, score, timeSpent } = req.body;
       
@@ -240,7 +240,7 @@ module.exports = (pool) => {
   });
   
   // New endpoint: Switch active language for a user
-  router.post('/switch-language', async (req, res, next) => {
+  router.post('/switchlanguage', async (req, res, next) => {
     try {
       const { userId, languageId } = req.body;
       
@@ -294,7 +294,7 @@ module.exports = (pool) => {
   });
   
   // New endpoint: Get available languages
-  router.get('/languages', async (req, res, next) => {
+  router.get('/language', async (req, res, next) => {
     try {
       const [languages] = await pool.query(`
         SELECT id, name, code, is_active 
