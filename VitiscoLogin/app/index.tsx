@@ -130,14 +130,15 @@ export default function App() {
   }, [currentScreen, createAccountStep]);
 
   // OTP input handler
-  const handleOtpChange = (text, index) => {
+  const handleOtpChange = (text: string, index: number) => {
     const newOtp = [...otp];
     newOtp[index] = text;
     setOtp(newOtp);
     
     // Auto focus next input
     if (text && index < 3) {
-      document.querySelector(`#otp-${index + 1}`).focus();
+      const nextInput = document.querySelector(`#otp-${index + 1}`);
+      if (nextInput) (nextInput as HTMLInputElement).focus();
     }
   };
 

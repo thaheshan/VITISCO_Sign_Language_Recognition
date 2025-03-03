@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 
 import {
+    AppRegistry,
   StyleSheet,
   Text,
   View,
@@ -54,7 +55,7 @@ const Logo = ({ small = false }) => {
   return (
     <View style={small ? styles.smallLogoContainer : styles.logoContainer}>
       <Animated.Image
-        source={require('./assets/splash-icon.png')}
+        source={require('./assets/images/splash-icon.png')}
         style={[
           small ? styles.smallLogo : styles.logo,
           { transform: [{ scale: scaleAnim }] },
@@ -243,28 +244,28 @@ export default function App() {
           <TouchableOpacity style={styles.socialButton} activeOpacity={0.8}>
             <Image 
               // Fix 2: Corrected path for google icon
-              source={require('./assets/google.png')} 
+              source={require('./assets/images/adaptive-icon.png')} 
               style={styles.socialIcon} 
             />
           </TouchableOpacity>
           <TouchableOpacity style={styles.socialButton} activeOpacity={0.8}>
             <Image 
               // Fix 3: Corrected path for adaptive icon
-              source={require('./assets/adaptive-icon.png')} 
+              source={require('./assets/images/adaptive-icon.png')} 
               style={styles.socialIcon} 
             />
           </TouchableOpacity>
           <TouchableOpacity style={styles.socialButton} activeOpacity={0.8}>
             <Image 
               // Fix 4: Corrected path for twitter icon
-              source={require('./assets/facebook.png')} 
+              source={require('./assets/images/adaptive-icon.png')} 
               style={styles.socialIcon} 
             />
           </TouchableOpacity>
           <TouchableOpacity style={styles.socialButton} activeOpacity={0.8}>
             <Image 
               // Fix 5: Corrected path for linkedin icon
-              source={require('./assets/linkedins.png')} 
+              source={require('./assets/images/adaptive-icon.png')} 
               
               style={styles.socialIcon} 
             />
@@ -431,7 +432,7 @@ export default function App() {
           <TouchableOpacity style={styles.countryCodeButton}>
             <Image 
               // Fix 6: Corrected path for favicon
-              source={require('./assets/facebook.png')} 
+              source={require('./assets/images/favicon.png')} 
 
 
               style={styles.flagIcon} 
@@ -1103,6 +1104,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: 14,
     textDecorationLine: 'underline',
-  }
+  },
+  
 });
 
