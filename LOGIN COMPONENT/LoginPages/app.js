@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 
 import {
-    AppRegistry,
+  AppRegistry,
   StyleSheet,
   Text,
   View,
@@ -20,9 +20,6 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 
 import axios from 'axios';
-
-// Remove the incorrect import statement
-// import App, { AnotherComponent } from './App';
 
 // Logo component with animation
 const Logo = ({ small = false }) => {
@@ -66,7 +63,7 @@ const Logo = ({ small = false }) => {
   );
 };
 
-export default function App() {
+function App() {
   // Screen state management
   const [currentScreen, setCurrentScreen] = useState('welcome');
   const [createAccountStep, setCreateAccountStep] = useState(1);
@@ -433,8 +430,6 @@ export default function App() {
             <Image 
               // Fix 6: Corrected path for favicon
               source={require('./assets/images/favicon.png')} 
-
-
               style={styles.flagIcon} 
             />
             <Text style={styles.countryCodeText}>+</Text>
@@ -1108,3 +1103,5 @@ const styles = StyleSheet.create({
   
 });
 
+
+AppRegistry.registerComponent('VITISCO', () => App);
