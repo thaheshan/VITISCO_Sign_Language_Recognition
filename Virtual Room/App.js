@@ -19,30 +19,18 @@ import Video from "react-native-video";
 // Mock socket.io client - Replace with actual socket.io implementation
 const mockSocket = {
   id: "mock-user-1",
-  emit: (event: any, data = {}) => console.log("Socket emit:", event, data),
-  on: (event: any) => console.log("Socket on:", event),
+  emit: (event, data = {}) => console.log("Socket emit:", event, data),
+  on: (event) => console.log("Socket on:", event),
 };
-
-interface Question {
-  id: number;
-  question: string;
-  options: string[];
-  videoUrl: string;
-}
-
-interface Notification {
-  message: string;
-  type: "success" | "error";
-}
 
 const VirtualRoom = () => {
   const [gameState, setGameState] = useState({
     phase: "initial", // initial, creating, joining, waiting, playing, finished
-    roomCode: null as string | null,
-    players: [] as any[],
-    currentQuestion: null as Question | null,
-    scores: {} as Record<string, number>,
-    messages: [] as any[],
+    roomCode: null,
+    players: [],
+    currentQuestion: null,
+    scores: {},
+    messages: [],
     timeLeft: 0,
     questionNumber: 0,
     totalQuestions: 5,
@@ -51,13 +39,13 @@ const VirtualRoom = () => {
   const [userInput, setUserInput] = useState({
     roomCode: "",
     message: "",
-    selectedAnswer: null as string | null,
+    selectedAnswer: null,
   });
 
-  const [notification, setNotification] = useState<Notification | null>(null);
+  const [notification, setNotification] = useState(null);
 
   // Notification component
-  const NotificationComponent = ({ message, type, onClose }: any) => (
+  const NotificationComponent = ({ message, type, onClose }) => (
     <View
       style={[
         styles.notification,
@@ -76,7 +64,7 @@ const VirtualRoom = () => {
   );
 
   // Chat Message component
-  const ChatMessage = ({ message, sender }: any) => (
+  const ChatMessage = ({ message, sender }) => (
     <View style={styles.messageContainer}>
       <Text style={styles.messageSender}>{sender}</Text>
       <View style={styles.messageContent}>
@@ -86,8 +74,8 @@ const VirtualRoom = () => {
   );
 
   const showNotification = (
-    message: string,
-    type: "success" | "error" = "success"
+    message,
+    type = "success"
   ) => {
     setNotification({ message, type });
     setTimeout(() => setNotification(null), 3000);
@@ -192,7 +180,7 @@ const VirtualRoom = () => {
     setUserInput((prev) => ({ ...prev, message: "" }));
   };
 
-  const copyToClipboard = (text: string) => {
+  const copyToClipboard = (text) => {
     Clipboard.setString(text);
     showNotification("Room code copied!");
   };
