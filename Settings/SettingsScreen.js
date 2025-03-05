@@ -1,127 +1,158 @@
 import React, { useState } from 'react';
 import { 
-  View, Text, TouchableOpacity, SafeAreaView, StyleSheet, Switch } from 'react-native';
-import Icon from 'react-native-vector-icons/Ionicons';
+  View, 
+  Text, 
+  StyleSheet, 
+  Switch, 
+  TouchableOpacity, 
+  SafeAreaView,
+  StatusBar
+} from 'react-native';
 
 const SettingsScreen = () => {
+  const [isDarkMode, setIsDarkMode] = useState(true);
   const [pushNotifications, setPushNotifications] = useState(false);
-  const [darkMode, setDarkMode] = useState(false);
 
-  const renderSettingsItem = (label, onPress, hasChevron = true) => (
-    <TouchableOpacity 
-      style={styles.settingsItem} 
-      onPress={onPress}
-    >
-      <Text style={styles.settingsItemText}>{label}</Text>
-      {hasChevron && <Icon name="chevron-forward" size={20} color="#888" />}
-    </TouchableOpacity>
-  );
+  // Color scheme based on mode
+  const colors = {
+    dark: {
+      background: '#121212',
+      cardBackground: '#1E1E1E',
+      text: '#FFFFFF',
+      switchTrack: '#4A4A4A',
+      switchThumb: '#FFFFFF',
+      border: '#4A4A4A'
+    },
+    light: {
+      background: '#F0F0F0',
+      cardBackground: '#FFFFFF',
+      text: '#000000',
+      switchTrack: '#C0C0C0',
+      switchThumb: '#FFFFFF',
+      border: '#E0E0E0'
+    }
+  };
+
+  const currentColors = isDarkMode ? colors.dark : colors.light;
+
+  const styles = StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: currentColors.background
+    },
+    headerContainer: {
+      backgroundColor: isDarkMode ? '#2C2C2C' : '#E0E0E0',
+      paddingTop: StatusBar.currentHeight || 20,
+      paddingBottom: 15,
+      paddingHorizontal: 15
+    },
+    headerText: {
+      color: currentColors.text,
+      fontSize: 20,
+      fontWeight: 'bold'
+    },
+    settingsCard: {
+      backgroundColor: currentColors.cardBackground,
+      borderRadius: 10,
+      marginHorizontal: 15,
+      marginTop: 15,
+      borderWidth: 1,
+      borderColor: currentColors.border
+    },
+    settingsItem: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingVertical: 15,
+      paddingHorizontal: 15,
+      borderBottomWidth: 1,
+      borderBottomColor: currentColors.border
+    },
+    lastItem: {
+      borderBottomWidth: 0
+    },
+    settingsText: {
+      color: currentColors.text,
+      fontSize: 16
+    },
+    actionText: {
+      color: '#888888'
+    }
+  });
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Settings</Text>
+      <View style={styles.headerContainer}>
+        <Text style={styles.headerText}>Settings</Text>
+      </View>
+      
+      <View style={styles.settingsCard}>
+        <View style={styles.settingsItem}>
+          <Text style={styles.settingsText}>User Name </Text>
+        </View>
       </View>
 
-      <View style={styles.profileSection}>
-        <Text style={styles.profileName}>AYMAN DAS</Text>
-      </View>
-
-      <View style={styles.settingsSection}>
-        <Text style={styles.sectionTitle}>Account Settings</Text>
-        {renderSettingsItem('Edit profile', () => {/* handle edit profile */})}
-        {renderSettingsItem('Change password', () => {/* handle change password */})}
-        {renderSettingsItem('Add a payment method', () => {/* handle payment method */}, true)}
-        
-        <View style={styles.toggleItem}>
-          <Text style={styles.settingsItemText}>Push notifications</Text>
-          <Switch 
+      <View style={styles.settingsCard}>
+        <TouchableOpacity style={styles.settingsItem}>
+          <Text style={styles.settingsText}>Account Settings</Text>
+          <Text style={styles.actionText}>{'>'}</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.settingsItem}>
+          <Text style={styles.settingsText}>Edit profile</Text>
+          <Text style={styles.actionText}>{'>'}</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.settingsItem}>
+          <Text style={styles.settingsText}>Change password</Text>
+          <Text style={styles.actionText}>{'>'}</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.settingsItem}>
+          <Text style={styles.settingsText}>Add a payment method</Text>
+          <Text style={styles.actionText}>{'+'}</Text>
+        </TouchableOpacity>
+        <View style={styles.settingsItem}>
+          <Text style={styles.settingsText}>Push notifications</Text>
+          <Switch
+            trackColor={{ 
+              false: colors.light.switchTrack, 
+              true: colors.dark.switchTrack 
+            }}
+            thumbColor={currentColors.switchThumb}
+            ios_backgroundColor={currentColors.switchTrack}
+            onValueChange={() => setPushNotifications(!pushNotifications)}
             value={pushNotifications}
-            onValueChange={setPushNotifications}
-            trackColor={{false: '#767577', true: '#81b0ff'}}
-            thumbColor={pushNotifications ? '#f5dd4b' : '#f4f3f4'}
           />
         </View>
-        
-        <View style={styles.toggleItem}>
-          <Text style={styles.settingsItemText}>Dark mode</Text>
-          <Switch 
-            value={darkMode}
-            onValueChange={setDarkMode}
-            trackColor={{false: '#767577', true: '#81b0ff'}}
-            thumbColor={darkMode ? '#f5dd4b' : '#f4f3f4'}
+        <View style={styles.settingsItem}>
+          <Text style={styles.settingsText}>Dark mode</Text>
+          <Switch
+            trackColor={{ 
+              false: colors.light.switchTrack, 
+              true: colors.dark.switchTrack 
+            }}
+            thumbColor={currentColors.switchThumb}
+            ios_backgroundColor={currentColors.switchTrack}
+            onValueChange={() => setIsDarkMode(!isDarkMode)}
+            value={isDarkMode}
           />
         </View>
       </View>
 
-      <View style={styles.moreSection}>
-        <Text style={styles.sectionTitle}>More</Text>
-        {renderSettingsItem('About us', () => {/* handle about us */})}
-        {renderSettingsItem('Privacy policy', () => {/* handle privacy policy */})}
-        {renderSettingsItem('Terms and conditions', () => {/* handle terms */})}
+      <View style={styles.settingsCard}>
+        <TouchableOpacity style={styles.settingsItem}>
+          <Text style={styles.settingsText}>About us</Text>
+          <Text style={styles.actionText}>{'>'}</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.settingsItem}>
+          <Text style={styles.settingsText}>Privacy policy</Text>
+          <Text style={styles.actionText}>{'>'}</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={[styles.settingsItem, styles.lastItem]}>
+          <Text style={styles.settingsText}>Terms and conditions</Text>
+          <Text style={styles.actionText}>{'>'}</Text>
+        </TouchableOpacity>
       </View>
     </SafeAreaView>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#121212',
-  },
-  header: {
-    paddingHorizontal: 15,
-    paddingVertical: 10,
-  },
-  headerTitle: {
-    color: 'white',
-    fontSize: 20,
-    fontWeight: 'bold',
-  },
-  profileSection: {
-    backgroundColor: '#1E1E1E',
-    paddingVertical: 15,
-    paddingHorizontal: 15,
-  },
-  profileName: {
-    color: 'white',
-    fontWeight: 'bold',
-    fontSize: 16,
-  },
-  settingsSection: {
-    backgroundColor: '#1E1E1E',
-    marginTop: 10,
-    paddingVertical: 10,
-  },
-  moreSection: {
-    backgroundColor: '#1E1E1E',
-    marginTop: 10,
-    paddingVertical: 10,
-  },
-  sectionTitle: {
-    color: '#888',
-    paddingHorizontal: 15,
-    paddingBottom: 10,
-    fontSize: 12,
-  },
-  settingsItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 15,
-  },
-  settingsItemText: {
-    color: 'white',
-    fontSize: 16,
-  },
-  toggleItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 15,
-  },
-});
 
 export default SettingsScreen;
