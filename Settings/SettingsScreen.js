@@ -1,13 +1,6 @@
 import React, { useState } from 'react';
 import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  Switch, 
-  TouchableOpacity, 
-  SafeAreaView,
-  StatusBar
-} from 'react-native';
+  View, Text, StyleSheet, Switch, TouchableOpacity, SafeAreaView,StatusBar} from 'react-native';
 
 const SettingsScreen = () => {
   const [isDarkMode, setIsDarkMode] = useState(true);
@@ -88,7 +81,7 @@ const SettingsScreen = () => {
       
       <View style={styles.settingsCard}>
         <View style={styles.settingsItem}>
-          <Text style={styles.settingsText}>User Name </Text>
+          <Text style={styles.settingsText}>User Name</Text>
         </View>
       </View>
 
