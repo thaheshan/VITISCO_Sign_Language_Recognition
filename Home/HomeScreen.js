@@ -147,11 +147,16 @@ const styles = StyleSheet.create({
   logo: {
     width: 40,
     height: 40,
+    paddingTop: 40,
+   
+
   },
   headerTitle: {
     fontSize: 20,
     fontWeight: 'bold',
     color: '#FFFFFF',
+    paddingTop: 40,
+   
   },
   userButton: {
     backgroundColor: '#FFFFFF',
