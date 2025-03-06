@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, Image } from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, Image, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 const HomeScreen = () => {
@@ -17,98 +17,115 @@ const HomeScreen = () => {
         </TouchableOpacity>
       </View>
 
-      {/* Daily Tasks Section */}
-      <View style={styles.section}>
-        <View style={styles.tasksHeader}>
-          <Ionicons name="grid" size={24} color="#000" />
-          <Text style={styles.sectionTitle}>DAILY TASKS</Text>
-          <Text style={styles.sectionTitle}>CHALLENGES</Text>
+      {/* Main Content - Scrollable */}
+      <ScrollView style={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        {/* Daily Tasks Section */}
+        <View style={styles.section}>
+          <View style={styles.tasksHeader}>
+            <TouchableOpacity style={styles.tabIndicator}>
+              <Ionicons name="grid-outline" size={20} color="#FFF" />
+            </TouchableOpacity>
+            <Text style={styles.tabText}>DAILY TASKS</Text>
+            <Text style={[styles.tabText, styles.inactiveTab]}>CHALLENGES</Text>
+          </View>
+
+          <View style={styles.taskCards}>
+            <TouchableOpacity style={styles.taskCard}>
+              <Ionicons name="flame-outline" size={24} color="#4A86FF" />
+              <Text style={styles.taskTitle}>Lesson Time</Text>
+              <Text style={styles.taskSubtitle}>TASK 01</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.taskCard}>
+              <Ionicons name="shield-outline" size={24} color="#4A86FF" />
+              <Text style={styles.taskTitle}>Coursework</Text>
+              <Text style={styles.taskSubtitle}>TASK 02</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.taskCard}>
+              <Ionicons name="apps-outline" size={24} color="#4A86FF" />
+              <Text style={styles.taskTitle}>Do Quiz</Text>
+              <Text style={styles.taskSubtitle}>TASK 03</Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
-        <View style={styles.taskCards}>
-          <TouchableOpacity style={styles.taskCard}>
-            <Ionicons name="time" size={24} color="#6B5ECD" />
-            <Text style={styles.taskTitle}>Lesson Time</Text>
-            <Text style={styles.taskSubtitle}>TASK 01</Text>
-          </TouchableOpacity>
+        {/* Ongoing Lessons Section */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Ongoing Lessons</Text>
+            <TouchableOpacity>
+              <Text style={styles.seeAll}>See all</Text>
+            </TouchableOpacity>
+          </View>
 
-          <TouchableOpacity style={styles.taskCard}>
-            <Ionicons name="book" size={24} color="#6B5ECD" />
-            <Text style={styles.taskTitle}>Coursework</Text>
-            <Text style={styles.taskSubtitle}>TASK 02</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.taskCard}>
-            <Ionicons name="help-circle" size={24} color="#6B5ECD" />
-            <Text style={styles.taskTitle}>Do Quiz</Text>
-            <Text style={styles.taskSubtitle}>TASK 03</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-
-      {/* Ongoing Lessons Section */}
-      <View style={styles.section}>
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Ongoing Lessons</Text>
-          <TouchableOpacity>
-            <Text style={styles.seeAll}>See all</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Lessons Card */}
-        <TouchableOpacity style={styles.lessonCard}>
-          <View>
-            <Text style={styles.cardTitle}>Lessons</Text>
-            <Text style={styles.activeText}>Active</Text>
-            <View style={styles.avatarRow}>
-              <View style={styles.avatar} />
-              <View style={styles.avatar} />
-              <View style={styles.avatar} />
+          {/* Lessons Card */}
+          <TouchableOpacity style={styles.lessonCard}>
+            <View>
+              <Text style={styles.cardTitle}>Lessons</Text>
+              <Text style={styles.activeText}>Active</Text>
+              <View style={styles.avatarRow}>
+                <View style={[styles.avatar, { backgroundColor: '#FFC107' }]} />
+                <View style={[styles.avatar, { backgroundColor: '#FF9800' }]} />
+                <View style={[styles.avatar, { backgroundColor: '#FF5722' }]} />
+              </View>
+              <Text style={styles.dueDate}>Due on : 21 March</Text>
             </View>
-            <Text style={styles.dueDate}>Due on : 21 March</Text>
-          </View>
-          <View style={styles.progressCircle}>
-            <Text style={styles.progressText}>75%</Text>
-          </View>
-        </TouchableOpacity>
-
-        {/* Quizzes Card */}
-        <TouchableOpacity style={styles.QuizzCard}>
-          <View>
-            <Text style={styles.cardTitle}>Quizzes</Text>
-            <Text style={styles.activeText}>Active</Text>
-            <View style={styles.avatarRow}>
-              <View style={styles.avatar} />
-              <View style={styles.avatar} />
-              <View style={styles.avatar} />
+            <View style={styles.progressCircle}>
+              <Text style={styles.progressText}>75%</Text>
             </View>
-            <Text style={styles.dueDate}>Due on : 04 April</Text>
-          </View>
-        </TouchableOpacity>
+          </TouchableOpacity>
 
-        {/* Virtual Room Card */}
-        <TouchableOpacity style={styles.QuizzCard}>
-          <Text style={styles.cardTitle}>Virtual Room</Text>
-          <Text style={styles.activeText}>Active</Text>
-        </TouchableOpacity>
-      </View>
+          {/* Quizzes Card */}
+          <TouchableOpacity style={styles.lessonCard}>
+            <View>
+              <Text style={styles.cardTitle}>Quizzes</Text>
+              <Text style={styles.activeText}>Active</Text>
+              <View style={styles.avatarRow}>
+                <View style={[styles.avatar, { backgroundColor: '#FFC107' }]} />
+                <View style={[styles.avatar, { backgroundColor: '#FF9800' }]} />
+                <View style={[styles.avatar, { backgroundColor: '#FF5722' }]} />
+              </View>
+              <Text style={styles.dueDate}>Due on : 04 April</Text>
+            </View>
+          </TouchableOpacity>
+
+          {/* Virtual Room Card */}
+          <TouchableOpacity style={styles.lessonCard}>
+            <View>
+              <Text style={styles.cardTitle}>Virtual Room</Text>
+              <Text style={styles.activeText}>Active</Text>
+              <View style={styles.avatarRow}>
+                <View style={[styles.avatar, { backgroundColor: '#FFC107' }]} />
+                <View style={[styles.avatar, { backgroundColor: '#FF9800' }]} />
+                <View style={[styles.avatar, { backgroundColor: '#FF5722' }]} />
+              </View>
+              <Text style={styles.dueDate}>Due on : 06 June</Text>
+            </View>
+          </TouchableOpacity>
+        </View>
+        
+        {/* Add extra padding at bottom for scrolling past the nav bar */}
+        <View style={styles.bottomPadding} />
+      </ScrollView>
 
       {/* Bottom Navigation */}
       <View style={styles.bottomNav}>
         <TouchableOpacity style={styles.navItem}>
-          <Ionicons name="grid" size={24} color="#6B5ECD" />
+          <Ionicons name="grid-outline" size={24} color="#352561" />
+          <View style={styles.activeNavIndicator} />
         </TouchableOpacity>
         <TouchableOpacity style={styles.navItem}>
-          <Ionicons name="time" size={24} color="#6B5ECD" />
+          <Ionicons name="time-outline" size={24} color="#9E9AA7" />
         </TouchableOpacity>
         <TouchableOpacity style={styles.addButton}>
           <Ionicons name="add" size={32} color="#FFF" />
         </TouchableOpacity>
         <TouchableOpacity style={styles.navItem}>
-          <Ionicons name="notifications" size={24} color="#6B5ECD" />
+          <Ionicons name="notifications-outline" size={24} color="#9E9AA7" />
         </TouchableOpacity>
         <TouchableOpacity style={styles.navItem}>
-          <Ionicons name="person" size={24} color="#6B5ECD" />
+          <Ionicons name="person-outline" size={24} color="#9E9AA7" />
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -125,6 +142,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     padding: 16,
+    paddingTop: 8,
   },
   logo: {
     width: 40,
@@ -133,46 +151,73 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 20,
     fontWeight: 'bold',
+    color: '#FFFFFF',
   },
   userButton: {
-    backgroundColor: '#FFF',
+    backgroundColor: '#FFFFFF',
     padding: 8,
     borderRadius: 20,
   },
   userText: {
     color: '#6B5ECD',
+    fontSize: 12,
+  },
+  scrollContent: {
+    flex: 1,
   },
   section: {
     padding: 16,
+    paddingTop: 8,
   },
   tasksHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 16,
   },
+  tabIndicator: {
+    backgroundColor: '#352561',
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 8,
+  },
+  tabText: {
+    fontSize: 15,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    marginRight: 16,
+  },
+  inactiveTab: {
+    opacity: 0.7,
+  },
   sectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    marginLeft: 8,
+    color: '#FFFFFF',
   },
   taskCards: {
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
   taskCard: {
-    backgroundColor: '#FFF',
+    backgroundColor: '#FFFFFF',
     padding: 16,
     borderRadius: 16,
     alignItems: 'center',
     width: '30%',
+    paddingVertical: 20,
   },
   taskTitle: {
     marginTop: 8,
     fontWeight: '600',
+    fontSize: 13,
+    textAlign: 'center',
   },
   taskSubtitle: {
     color: '#666',
-    fontSize: 12,
+    fontSize: 11,
     marginTop: 4,
   },
   sectionHeader: {
@@ -180,9 +225,11 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 16,
+    marginTop: 8,
   },
   seeAll: {
-    color: '#6B5ECD',
+    color: '#FFFFFF',
+    fontSize: 14,
   },
   lessonCard: {
     backgroundColor: '#352561',
@@ -192,68 +239,68 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
-
-  QuizzCard: {
-    backgroundColor: '#6154EF',
-    padding: 16,
-    borderRadius: 16,
-    marginBottom: 16,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-
   cardTitle: {
-    color: '#FFF',
+    color: '#FFFFFF',
     fontSize: 18,
     fontWeight: 'bold',
   },
   activeText: {
-    color: '#FFF',
+    color: '#FFFFFF',
     opacity: 0.7,
     marginTop: 4,
+    fontSize: 13,
   },
   avatarRow: {
     flexDirection: 'row',
-    marginTop: 8,
+    marginTop: 12,
   },
   avatar: {
     width: 24,
     height: 24,
-    backgroundColor: '#FFF',
     borderRadius: 12,
     marginRight: 4,
   },
   dueDate: {
-    color: '#FFF',
-    marginTop: 8,
+    color: '#FFFFFF',
+    marginTop: 12,
+    fontSize: 13,
   },
   progressCircle: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: '#FFF',
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
+    alignSelf: 'center',
   },
   progressText: {
-    color: '#483D8B',
+    color: '#352561',
     fontWeight: 'bold',
+    fontSize: 15,
   },
   bottomNav: {
     flexDirection: 'row',
     justifyContent: 'space-around',
     alignItems: 'center',
-    backgroundColor: '#FFF',
+    backgroundColor: '#FFFFFF',
     padding: 16,
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
+    paddingBottom: 20,
   },
   navItem: {
     alignItems: 'center',
+    justifyContent: 'center',
+    height: 40,
+  },
+  activeNavIndicator: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: '#352561',
+    position: 'absolute',
+    bottom: -6,
   },
   addButton: {
     backgroundColor: '#6B5ECD',
@@ -262,7 +309,11 @@ const styles = StyleSheet.create({
     borderRadius: 28,
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: -28,
+    marginBottom: 20,
+    bottom: 10,
+  },
+  bottomPadding: {
+    height: 80, // Add padding at the bottom to allow scrolling past the nav bar
   },
 });
 
