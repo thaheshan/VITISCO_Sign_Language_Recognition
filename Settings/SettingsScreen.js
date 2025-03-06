@@ -5,7 +5,7 @@ import {
 
 const SettingsScreen = () => {
   const [isDarkMode, setIsDarkMode] = useState(true);
-  const [pushNotifications, setPushNotifications] = useState(false);
+  const [pushNotifications, setPushNotifications] = useState(true);
 
   // Color scheme based on mode
   const colors = {
@@ -13,17 +13,21 @@ const SettingsScreen = () => {
       background: '#121212',
       cardBackground: '#1E1E1E',
       text: '#FFFFFF',
-      switchTrack: '#4A4A4A',
+      secondaryText: '#AAAAAA',
+      switchTrack: '#4A3F69',
       switchThumb: '#FFFFFF',
-      border: '#4A4A4A'
+      border: '#333333',
+      headerBackground: '#4A3F69'
     },
     light: {
       background: '#F0F0F0',
       cardBackground: '#FFFFFF',
       text: '#000000',
+      secondaryText: '#888888',
       switchTrack: '#C0C0C0',
       switchThumb: '#FFFFFF',
-      border: '#E0E0E0'
+      border: '#E0E0E0',
+      headerBackground: '#4A3F69'
     }
   };
 
@@ -35,7 +39,7 @@ const SettingsScreen = () => {
       backgroundColor: currentColors.background
     },
     headerContainer: {
-      backgroundColor: '#4A3F69',
+      backgroundColor: currentColors.headerBackground,
       paddingTop: StatusBar.currentHeight || 20,
       paddingBottom: 15,
       paddingHorizontal: 15,
@@ -49,25 +53,30 @@ const SettingsScreen = () => {
     },
     settingsSection: {
       backgroundColor: currentColors.cardBackground,
-      borderRadius: 10,
+      marginTop: 1,
+      paddingVertical: 8
+    },
+    profileSection: {
+      backgroundColor: currentColors.cardBackground,
+      marginTop: 20,
       marginHorizontal: 15,
-      marginTop: 15,
-      borderWidth: 1,
-      borderColor: currentColors.border,
-      padding: 15
+      borderRadius: 10,
+      overflow: 'hidden'
     },
     sectionTitle: {
-      color: currentColors.text,
-      fontSize: 14,
-      marginBottom: 10,
-      fontWeight: 'bold'
+      color: currentColors.secondaryText,
+      fontSize: 16,
+      marginBottom: 5,
+      marginTop: 5,
+      marginLeft: 20,
+      fontWeight: '500'
     },
     settingsItem: {
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
       paddingVertical: 15,
-      paddingHorizontal: 15,
+      paddingHorizontal: 20,
       borderBottomWidth: 1,
       borderBottomColor: currentColors.border
     },
@@ -78,70 +87,97 @@ const SettingsScreen = () => {
       color: currentColors.text,
       fontSize: 16
     },
-    actionText: {
-      color: '#888888'
+    userNameText: {
+      color: currentColors.text,
+      fontSize: 18,
+      fontWeight: 'bold',
+      textAlign: 'center',
+      paddingVertical: 20
+    },
+    actionIcon: {
+      color: currentColors.secondaryText,
+      fontSize: 18
+    },
+    divider: {
+      height: 1,
+      backgroundColor: currentColors.border,
+      marginHorizontal: 0
+    },
+    sectionContainer: {
+      backgroundColor: currentColors.cardBackground,
+      marginHorizontal: 15,
+      marginVertical: 10,
+      borderRadius: 10,
+      overflow: 'hidden'
     }
   });
 
   const renderSettingsItem = (label, onPress, icon) => (
     <TouchableOpacity style={styles.settingsItem} onPress={onPress}>
       <Text style={styles.settingsText}>{label}</Text>
-      {icon && <Text style={styles.actionText}>{icon}</Text>}
+      <Text style={styles.actionIcon}>{icon}</Text>
     </TouchableOpacity>
   );
 
   return (
     <SafeAreaView style={styles.container}>
+      <StatusBar backgroundColor={currentColors.headerBackground} barStyle="light-content" />
+      
       {/* Header */}
       <View style={styles.headerContainer}>
         <Text style={styles.headerText}>Settings</Text>
       </View>
       
-      {/* Profile Section */}
-      <View style={styles.settingsSection}>
-        <View style={styles.settingsItem}>
-          <Text style={styles.settingsText}>User Name</Text>
-        </View>
-      </View>
-
-      {/* Account Settings */}
-      <View style={styles.settingsSection}>
-        <Text style={styles.sectionTitle}>Account Settings</Text>
-        {renderSettingsItem('Edit profile', () => {/* handle edit profile */}, '>')}
-        {renderSettingsItem('Change password', () => {/* handle change password */}, '>')}
-        {renderSettingsItem('Add a payment method', () => {/* handle payment method */}, '+')}
-
-        {/* Push Notifications */}
-        <View style={styles.settingsItem}>
-          <Text style={styles.settingsText}>Push notifications</Text>
-          <Switch
-            trackColor={{ false: colors.light.switchTrack, true: colors.dark.switchTrack }}
-            thumbColor={currentColors.switchThumb}
-            ios_backgroundColor={currentColors.switchTrack}
-            onValueChange={() => setPushNotifications(!pushNotifications)}
-            value={pushNotifications}
-          />
+      {/* Main Container */}
+      <View style={styles.sectionContainer}>
+        {/* Profile Section */}
+        <View>
+          <Text style={styles.userNameText}>USER NAME</Text>
+          <View style={styles.divider} />
         </View>
 
-        {/* Dark Mode */}
-        <View style={[styles.settingsItem, styles.lastItem]}>
-          <Text style={styles.settingsText}>Dark mode</Text>
-          <Switch
-            trackColor={{ false: colors.light.switchTrack, true: colors.dark.switchTrack }}
-            thumbColor={currentColors.switchThumb}
-            ios_backgroundColor={currentColors.switchTrack}
-            onValueChange={() => setIsDarkMode(!isDarkMode)}
-            value={isDarkMode}
-          />
-        </View>
-      </View>
+        {/* Account Settings Section */}
+        <View>
+          <Text style={styles.sectionTitle}>Account Settings</Text>
+          
+          {renderSettingsItem('Edit profile', () => {}, '>')}
+          {renderSettingsItem('Change password', () => {}, '>')}
+          {renderSettingsItem('Add a payment method', () => {}, '+')}
+          
+          {/* Push Notifications */}
+          <View style={styles.settingsItem}>
+            <Text style={styles.settingsText}>Push notifications</Text>
+            <Switch
+              trackColor={{ false: '#767577', true: currentColors.switchTrack }}
+              thumbColor={pushNotifications ? '#fff' : '#f4f3f4'}
+              ios_backgroundColor="#3e3e3e"
+              onValueChange={() => setPushNotifications(!pushNotifications)}
+              value={pushNotifications}
+            />
+          </View>
+          
+          {/* Dark Mode */}
+          <View style={[styles.settingsItem, styles.lastItem]}>
+            <Text style={styles.settingsText}>Dark mode</Text>
+            <Switch
+              trackColor={{ false: '#767577', true: currentColors.switchTrack }}
+              thumbColor={isDarkMode ? '#fff' : '#f4f3f4'}
+              ios_backgroundColor="#3e3e3e"
+              onValueChange={() => setIsDarkMode(!isDarkMode)}
+              value={isDarkMode}
+            />
+          </View>
 
-      {/* Legal & About */}
-      <View style={styles.settingsSection}>
-        <Text style={styles.sectionTitle}> More </Text>
-        {renderSettingsItem('About us', () => {/* handle about us */}, '>')}
-        {renderSettingsItem('Privacy policy', () => {/* handle privacy policy */}, '>')}
-        {renderSettingsItem('Terms and conditions', () => {/* handle terms */}, '>')}
+          <View style={styles.divider} />
+        </View>
+
+        {/* More Section */}
+        <View>
+          <Text style={styles.sectionTitle}>More</Text>
+          {renderSettingsItem('About us', () => {}, '>')}
+          {renderSettingsItem('Privacy policy', () => {}, '>')}
+          {renderSettingsItem('Terms and conditions', () => {}, '>')}
+        </View>
       </View>
     </SafeAreaView>
   );
