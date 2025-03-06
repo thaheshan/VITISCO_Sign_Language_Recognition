@@ -2,6 +2,7 @@ import React from 'react';
 import { SafeAreaView, ScrollView, StyleSheet, Text, View, TouchableOpacity } from 'react-native';
 import { LineChart } from 'react-native-chart-kit';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import axios from 'axios';
 
 const ProgressCard = ({ title, progress, total }) => (
   <View style={styles.progressCard}>
