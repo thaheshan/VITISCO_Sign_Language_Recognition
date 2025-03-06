@@ -46,10 +46,10 @@ const SettingsScreen = () => {
     },
     headerText: {
       color: 'white',
-      fontSize: 20,
+      fontSize: 23,
       fontWeight: 'bold',
-      alignSelf: 'center',
-      padding: 15
+      alignSelf: 'left',
+      padding: 19
     },
     settingsSection: {
       backgroundColor: currentColors.cardBackground,
@@ -76,9 +76,7 @@ const SettingsScreen = () => {
       justifyContent: 'space-between',
       alignItems: 'center',
       paddingVertical: 15,
-      paddingHorizontal: 20,
-      borderBottomWidth: 1,
-      borderBottomColor: currentColors.border
+      paddingHorizontal: 24,
     },
     lastItem: {
       borderBottomWidth: 0
@@ -99,13 +97,13 @@ const SettingsScreen = () => {
       fontSize: 18
     },
     divider: {
-      height: 1,
+      height: 2,
       backgroundColor: currentColors.border,
       marginHorizontal: 0
     },
     sectionContainer: {
       backgroundColor: currentColors.cardBackground,
-      marginHorizontal: 15,
+      marginHorizontal: 20,
       marginVertical: 10,
       borderRadius: 10,
       overflow: 'hidden'
