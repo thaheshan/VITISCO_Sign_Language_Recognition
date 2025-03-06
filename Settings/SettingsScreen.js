@@ -34,7 +34,7 @@ const SettingsScreen = () => {
       backgroundColor: currentColors.background
     },
     headerContainer: {
-      backgroundColor: isDarkMode ? '#2C2C2C' : '#E0E0E0',
+      backgroundColor: isDarkMode ? '#4A3F69' : '#4A3F69',
       paddingTop: StatusBar.currentHeight || 20,
       paddingBottom: 15,
       paddingHorizontal: 15
@@ -61,6 +61,21 @@ const SettingsScreen = () => {
       borderBottomWidth: 1,
       borderBottomColor: currentColors.border
     },
+    profileCard : {
+      backgroundColor: currentColors.cardBackground,
+      paddingVertical: 10,
+      paddingHorizontal: 15,
+      borderRadius: 10,
+    },
+    profileName : {
+      color: currentColors.text,
+      fontSize: 16,
+    },
+    sectionTitle: {
+      color: currentColors.text,
+      fontSize: 14,
+      marginBottom: 10
+    },
     lastItem: {
       borderBottomWidth: 0
     },
@@ -79,17 +94,13 @@ const SettingsScreen = () => {
         <Text style={styles.headerText}>Settings</Text>
       </View>
       
-      <View style={styles.settingsCard}>
+      <View style={styles.profileCard}>
         <View style={styles.settingsItem}>
-          <Text style={styles.settingsText}>User Name</Text>
+          <Text style={styles.profileName}>User Name</Text>
         </View>
       </View>
 
       <View style={styles.settingsCard}>
-        <TouchableOpacity style={styles.settingsItem}>
-          <Text style={styles.settingsText}>Account Settings</Text>
-          <Text style={styles.actionText}>{'>'}</Text>
-        </TouchableOpacity>
         <TouchableOpacity style={styles.settingsItem}>
           <Text style={styles.settingsText}>Edit profile</Text>
           <Text style={styles.actionText}>{'>'}</Text>
@@ -149,3 +160,5 @@ const SettingsScreen = () => {
 };
 
 export default SettingsScreen;
+
+
