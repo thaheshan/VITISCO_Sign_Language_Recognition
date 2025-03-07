@@ -1,7 +1,7 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
-const mongoose = require('mongoose');
+const mysql = require('mysql2/promise');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const nodemailer = require('nodemailer');
@@ -11,43 +11,75 @@ const crypto = require('crypto');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Connect to MongoDB (replace with your MongoDB URI)
-mongoose.connect('mongodb://localhost:27017/vitisco', {
-    useNewUrlParser: true,
-    useUnifiedTopology: true
-})
-.then(() => console.log('MongoDB connected'))
-.catch(err => console.error('MongoDB connection error:', err));
+// MySQL Connection Pool
+const pool = mysql.createPool({
+    host: 'localhost',
+    user: 'root',
+    password: 'password', // Replace with your MySQL password
+    database: 'vitisco',
+    waitForConnections: true,
+    connectionLimit: 10,
+    queueLimit: 0
+});
+
+// Test database connection
+async function testConnection() {
+    try {
+        const connection = await pool.getConnection();
+        console.log('MySQL Connected!');
+        connection.release();
+    } catch (error) {
+        console.error('MySQL connection error:', error);
+    }
+}
+
+testConnection();
+
+// Create tables if they don't exist
+async function setupDatabase() {
+    try {
+        // Users table
+        await pool.execute(`
+            CREATE TABLE IF NOT EXISTS users (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                username VARCHAR(50) NOT NULL UNIQUE,
+                email VARCHAR(100) NOT NULL UNIQUE,
+                password VARCHAR(255) NOT NULL,
+                profileName VARCHAR(100),
+                birthDate VARCHAR(30),
+                phoneNumber VARCHAR(20),
+                gender VARCHAR(20),
+                nativeLanguage VARCHAR(50),
+                preferredLanguage VARCHAR(50),
+                created TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
+
+        // OTP table with expiration
+        await pool.execute(`
+            CREATE TABLE IF NOT EXISTS otps (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                email VARCHAR(100) NOT NULL,
+                otp VARCHAR(255) NOT NULL,
+                created TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                expires TIMESTAMP DEFAULT (CURRENT_TIMESTAMP + INTERVAL 10 MINUTE),
+                INDEX idx_email (email),
+                INDEX idx_expires (expires)
+            )
+        `);
+
+        console.log('Database tables created successfully');
+    } catch (error) {
+        console.error('Database setup error:', error);
+    }
+}
+
+setupDatabase();
 
 // Middleware
 app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
-
-// Create User Schema
-const userSchema = new mongoose.Schema({
-    username: { type: String, required: true, unique: true },
-    email: { type: String, required: true, unique: true },
-    password: { type: String, required: true },
-    profileName: { type: String },
-    birthDate: { type: String },
-    phoneNumber: { type: String },
-    gender: { type: String },
-    nativeLanguage: { type: String },
-    preferredLanguage: { type: String },
-    created: { type: Date, default: Date.now }
-});
-
-// Create OTP Schema
-const otpSchema = new mongoose.Schema({
-    email: { type: String, required: true },
-    otp: { type: String, required: true },
-    created: { type: Date, default: Date.now, expires: 600 } // OTP expires in 10 minutes
-});
-
-// Create Models
-const User = mongoose.model('User', userSchema);
-const OTP = mongoose.model('OTP', otpSchema);
 
 // Utility: Email Transporter Setup
 const transporter = nodemailer.createTransport({
@@ -61,7 +93,7 @@ const transporter = nodemailer.createTransport({
 // Utility: Generate JWT
 const generateToken = (user) => {
     return jwt.sign(
-        { id: user._id, username: user.username, email: user.email },
+        { id: user.id, username: user.username, email: user.email },
         'VITISCO_JWT_SECRET', // Replace with a secure secret key
         { expiresIn: '24h' }
     );
@@ -99,7 +131,7 @@ const sendOTPEmail = async (email, otp) => {
 };
 
 // Middleware: Authenticate JWT
-const authenticate = (req, res, next) => {
+const authenticate = async (req, res, next) => {
     const token = req.headers.authorization?.split(' ')[1];
     
     if (!token) {
@@ -114,6 +146,15 @@ const authenticate = (req, res, next) => {
         return res.status(401).json({ message: 'Invalid token' });
     }
 };
+
+// Clean expired OTPs (can be called periodically)
+async function cleanExpiredOTPs() {
+    try {
+        await pool.execute('DELETE FROM otps WHERE expires < NOW()');
+    } catch (error) {
+        console.error('Clean OTPs error:', error);
+    }
+}
 
 // Routes
 
@@ -133,10 +174,16 @@ app.post('/api/login', async (req, res) => {
         }
         
         // Find user by username
-        const user = await User.findOne({ username });
-        if (!user) {
+        const [users] = await pool.execute(
+            'SELECT * FROM users WHERE username = ?',
+            [username]
+        );
+        
+        if (users.length === 0) {
             return res.status(401).json({ message: 'Invalid username or password' });
         }
+        
+        const user = users[0];
         
         // Compare passwords
         const isMatch = await bcrypt.compare(password, user.password);
@@ -152,7 +199,7 @@ app.post('/api/login', async (req, res) => {
             message: 'Login successful',
             token,
             user: {
-                id: user._id,
+                id: user.id,
                 username: user.username,
                 email: user.email,
                 profileName: user.profileName
@@ -185,8 +232,12 @@ app.post('/api/signup', async (req, res) => {
         }
         
         // Check if user already exists
-        const existingUser = await User.findOne({ $or: [{ username }, { email }] });
-        if (existingUser) {
+        const [existingUsers] = await pool.execute(
+            'SELECT * FROM users WHERE username = ? OR email = ?',
+            [username, email]
+        );
+        
+        if (existingUsers.length > 0) {
             return res.status(400).json({ message: 'Username or email already in use' });
         }
         
@@ -195,20 +246,30 @@ app.post('/api/signup', async (req, res) => {
         const hashedPassword = await bcrypt.hash(password, salt);
         
         // Create new user
-        const newUser = new User({
-            username,
-            email,
-            password: hashedPassword,
-            profileName,
-            birthDate,
-            phoneNumber,
-            gender,
-            nativeLanguage,
-            preferredLanguage
-        });
+        const [result] = await pool.execute(
+            `INSERT INTO users (username, email, password, profileName, birthDate, 
+            phoneNumber, gender, nativeLanguage, preferredLanguage) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [
+                username,
+                email,
+                hashedPassword,
+                profileName || null,
+                birthDate || null,
+                phoneNumber || null,
+                gender || null,
+                nativeLanguage || null,
+                preferredLanguage || null
+            ]
+        );
         
-        // Save user
-        await newUser.save();
+        // Get the newly created user
+        const [newUsers] = await pool.execute(
+            'SELECT * FROM users WHERE id = ?',
+            [result.insertId]
+        );
+        
+        const newUser = newUsers[0];
         
         // Generate token
         const token = generateToken(newUser);
@@ -218,7 +279,7 @@ app.post('/api/signup', async (req, res) => {
             message: 'User created successfully',
             token,
             user: {
-                id: newUser._id,
+                id: newUser.id,
                 username: newUser.username,
                 email: newUser.email
             }
@@ -240,8 +301,12 @@ app.post('/api/request-otp', async (req, res) => {
         }
         
         // Check if user exists
-        const user = await User.findOne({ email });
-        if (!user) {
+        const [users] = await pool.execute(
+            'SELECT * FROM users WHERE email = ?',
+            [email]
+        );
+        
+        if (users.length === 0) {
             return res.status(404).json({ message: 'User not found' });
         }
         
@@ -251,13 +316,17 @@ app.post('/api/request-otp', async (req, res) => {
         // Hash OTP for storage
         const hashedOTP = await bcrypt.hash(otp, 10);
         
+        // Delete existing OTP if any
+        await pool.execute(
+            'DELETE FROM otps WHERE email = ?',
+            [email]
+        );
+        
         // Save OTP to database
-        await OTP.findOneAndDelete({ email }); // Remove existing OTP if any
-        const newOTP = new OTP({
-            email,
-            otp: hashedOTP
-        });
-        await newOTP.save();
+        await pool.execute(
+            'INSERT INTO otps (email, otp) VALUES (?, ?)',
+            [email, hashedOTP]
+        );
         
         // Send OTP via email
         const emailSent = await sendOTPEmail(email, otp);
@@ -283,8 +352,12 @@ app.post('/api/resend-otp', async (req, res) => {
         }
         
         // Check if user exists
-        const user = await User.findOne({ email });
-        if (!user) {
+        const [users] = await pool.execute(
+            'SELECT * FROM users WHERE email = ?',
+            [email]
+        );
+        
+        if (users.length === 0) {
             return res.status(404).json({ message: 'User not found' });
         }
         
@@ -294,13 +367,17 @@ app.post('/api/resend-otp', async (req, res) => {
         // Hash OTP for storage
         const hashedOTP = await bcrypt.hash(otp, 10);
         
+        // Delete existing OTP
+        await pool.execute(
+            'DELETE FROM otps WHERE email = ?',
+            [email]
+        );
+        
         // Save new OTP to database
-        await OTP.findOneAndDelete({ email }); // Remove existing OTP
-        const newOTP = new OTP({
-            email,
-            otp: hashedOTP
-        });
-        await newOTP.save();
+        await pool.execute(
+            'INSERT INTO otps (email, otp) VALUES (?, ?)',
+            [email, hashedOTP]
+        );
         
         // Send OTP via email
         const emailSent = await sendOTPEmail(email, otp);
@@ -325,11 +402,20 @@ app.post('/api/verify-otp', async (req, res) => {
             return res.status(400).json({ message: 'Please provide email and OTP' });
         }
         
+        // Clean expired OTPs
+        await cleanExpiredOTPs();
+        
         // Find OTP record
-        const otpRecord = await OTP.findOne({ email });
-        if (!otpRecord) {
+        const [otpRecords] = await pool.execute(
+            'SELECT * FROM otps WHERE email = ?',
+            [email]
+        );
+        
+        if (otpRecords.length === 0) {
             return res.status(400).json({ message: 'Invalid or expired OTP' });
         }
+        
+        const otpRecord = otpRecords[0];
         
         // Verify OTP
         const isValidOTP = await bcrypt.compare(otp, otpRecord.otp);
@@ -365,8 +451,12 @@ app.post('/api/reset-password', async (req, res) => {
         }
         
         // Check if user exists
-        const user = await User.findOne({ email });
-        if (!user) {
+        const [users] = await pool.execute(
+            'SELECT * FROM users WHERE email = ?',
+            [email]
+        );
+        
+        if (users.length === 0) {
             return res.status(404).json({ message: 'User not found' });
         }
         
@@ -375,11 +465,16 @@ app.post('/api/reset-password', async (req, res) => {
         const hashedPassword = await bcrypt.hash(password, salt);
         
         // Update user password
-        user.password = hashedPassword;
-        await user.save();
+        await pool.execute(
+            'UPDATE users SET password = ? WHERE email = ?',
+            [hashedPassword, email]
+        );
         
         // Delete OTP record
-        await OTP.findOneAndDelete({ email });
+        await pool.execute(
+            'DELETE FROM otps WHERE email = ?',
+            [email]
+        );
         
         res.json({ message: 'Password reset successful' });
     } catch (error) {
@@ -391,11 +486,16 @@ app.post('/api/reset-password', async (req, res) => {
 // Protected route example (requires authentication)
 app.get('/api/profile', authenticate, async (req, res) => {
     try {
-        const user = await User.findById(req.user.id).select('-password');
-        if (!user) {
+        const [users] = await pool.execute(
+            'SELECT id, username, email, profileName, birthDate, phoneNumber, gender, nativeLanguage, preferredLanguage, created FROM users WHERE id = ?',
+            [req.user.id]
+        );
+        
+        if (users.length === 0) {
             return res.status(404).json({ message: 'User not found' });
         }
-        res.json(user);
+        
+        res.json(users[0]);
     } catch (error) {
         console.error('Profile fetch error:', error);
         res.status(500).json({ message: 'Server error' });

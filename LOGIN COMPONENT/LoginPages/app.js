@@ -1,7 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-
 import {
-  AppRegistry,
   StyleSheet,
   Text,
   View,
@@ -15,11 +13,33 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  // Remove AppRegistry import from here
 } from 'react-native';
 
+import { registerRootComponent } from 'expo'; // Add this import for Expo
 import { Ionicons } from '@expo/vector-icons';
-
 import axios from 'axios';
+
+// At the end of your file, after all your code
+export default registerRootComponent(App);
+
+// Register the root component
+registerRootComponent(App);
+// Update your API base URL to work with Expo Go
+// For Expo Go, you need to use your machine's local IP address instead of localhost or 10.0.2.2
+const API_BASE_URL = 'http://192.168.1.X:5000'; // Replace X with your actual IP address segment
+
+// Example MySQL connection setup for your backend (this would go in your Node.js server file, not in this React Native file)
+// const mysql = require('mysql2');
+// const pool = mysql.createPool({
+//   host: 'localhost',
+//   user: 'root',
+//   password: 'yourpassword',
+//   database: 'vitisco_db',
+//   waitForConnections: true,
+//   connectionLimit: 10,
+//   queueLimit: 0
+// });
 
 // Logo component with animation
 const Logo = ({ small = false }) => {
@@ -48,7 +68,7 @@ const Logo = ({ small = false }) => {
     return () => animation.stop();
   }, []);
   
-  // Fix 1: Use require with the correct path
+  // Use the correct path for Expo assets
   return (
     <View style={small ? styles.smallLogoContainer : styles.logoContainer}>
       <Animated.Image
@@ -93,10 +113,11 @@ function App() {
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(50)).current;
   
-  // Fetch data from API
+  // Fetch data from API with proper error handling for Expo Go
   useEffect(() => {
     if (currentScreen === 'welcome') {
-      axios.get('http://localhost:5000/api/message')
+      // Update to use the API_BASE_URL constant
+      axios.get(`${API_BASE_URL}/api/message`)
         .then(response => {
           setApiMessage(response.data.message);
           setApiError('');
@@ -127,17 +148,24 @@ function App() {
     ]).start();
   }, [currentScreen, createAccountStep]);
 
-  // OTP input handler
+  // OTP input handler - Modified for React Native
   const handleOtpChange = (text, index) => {
     const newOtp = [...otp];
     newOtp[index] = text;
     setOtp(newOtp);
     
-    // Auto focus next input
+    // Auto focus next input (modified for React Native)
     if (text && index < 3) {
-      document.querySelector(`#otp-${index + 1}`).focus();
+      // Note: In React Native, we would need refs for this to work properly
+      // This is a simplified version
+      if (otpInputRefs && otpInputRefs[index + 1]) {
+        otpInputRefs[index + 1].focus();
+      }
     }
   };
+
+  // Create refs for OTP inputs
+  const otpInputRefs = [useRef(), useRef(), useRef(), useRef()];
 
   // Welcome Screen
   const WelcomeScreen = () => (
@@ -168,13 +196,13 @@ function App() {
             setCurrentScreen('signup');
             setCreateAccountStep(1);
           }}
-          activeOpacity={0.8}
+          activeOpacity={0.86}
         >
           <Text style={styles.buttonText}>SIGNUP</Text>
         </TouchableOpacity>
         <TouchableOpacity 
           style={styles.textButton}
-          activeOpacity={0.6}
+          activeOpacity={0.65}
         >
           <Text style={styles.aboutText}>About Us</Text>
         </TouchableOpacity>
@@ -240,30 +268,25 @@ function App() {
         <View style={styles.socialContainer}>
           <TouchableOpacity style={styles.socialButton} activeOpacity={0.8}>
             <Image 
-              // Fix 2: Corrected path for google icon
               source={require('./assets/images/adaptive-icon.png')} 
               style={styles.socialIcon} 
             />
           </TouchableOpacity>
           <TouchableOpacity style={styles.socialButton} activeOpacity={0.8}>
             <Image 
-              // Fix 3: Corrected path for adaptive icon
               source={require('./assets/images/adaptive-icon.png')} 
               style={styles.socialIcon} 
             />
           </TouchableOpacity>
           <TouchableOpacity style={styles.socialButton} activeOpacity={0.8}>
             <Image 
-              // Fix 4: Corrected path for twitter icon
               source={require('./assets/images/adaptive-icon.png')} 
               style={styles.socialIcon} 
             />
           </TouchableOpacity>
           <TouchableOpacity style={styles.socialButton} activeOpacity={0.8}>
             <Image 
-              // Fix 5: Corrected path for linkedin icon
               source={require('./assets/images/adaptive-icon.png')} 
-              
               style={styles.socialIcon} 
             />
           </TouchableOpacity>
@@ -271,11 +294,11 @@ function App() {
         <TouchableOpacity 
           style={styles.button}
           onPress={() => {
-            // Handle login logic
+            // Handle login logic with updated API_BASE_URL
             console.log('Login pressed with:', { username, password });
             
             // Simulate API call for login
-            axios.post('http://localhost:5000/api/login', { username, password })
+            axios.post(`${API_BASE_URL}/api/login`, { username, password })
               .then(response => {
                 console.log('Login response:', response.data);
                 // Handle successful login
@@ -428,7 +451,6 @@ function App() {
         <View style={styles.phoneInputContainer}>
           <TouchableOpacity style={styles.countryCodeButton}>
             <Image 
-              // Fix 6: Corrected path for favicon
               source={require('./assets/images/favicon.png')} 
               style={styles.flagIcon} 
             />
@@ -531,7 +553,7 @@ function App() {
         <TouchableOpacity 
           style={styles.button}
           onPress={() => {
-            // Complete signup process via API
+            // Complete signup process via API with updated API_BASE_URL
             const userData = {
               username,
               email,
@@ -547,7 +569,7 @@ function App() {
             console.log('Signup data:', userData);
             
             // Simulated API call for signup
-            axios.post('http://localhost:5000/api/signup', userData)
+            axios.post(`${API_BASE_URL}/api/signup`, userData)
               .then(response => {
                 console.log('Signup response:', response.data);
                 setCurrentScreen('welcome');
@@ -596,8 +618,8 @@ function App() {
         <TouchableOpacity 
           style={styles.button}
           onPress={() => {
-            // Request OTP via API
-            axios.post('http://localhost:5000/api/request-otp', { email })
+            // Request OTP via API with updated API_BASE_URL
+            axios.post(`${API_BASE_URL}/api/request-otp`, { email })
               .then(response => {
                 console.log('OTP request response:', response.data);
                 setCurrentScreen('verifyOtp');
@@ -643,7 +665,7 @@ function App() {
           {otp.map((digit, index) => (
             <TextInput
               key={index}
-              id={`otp-${index}`}
+              ref={otpInputRefs[index]} // Use refs for focus management
               style={styles.otpInput}
               value={digit}
               onChangeText={(text) => handleOtpChange(text, index)}
@@ -656,8 +678,8 @@ function App() {
         <TouchableOpacity 
           style={styles.textButton}
           onPress={() => {
-            // Resend OTP via API
-            axios.post('http://localhost:5000/api/resend-otp', { email })
+            // Resend OTP via API with updated API_BASE_URL
+            axios.post(`${API_BASE_URL}/api/resend-otp`, { email })
               .then(response => {
                 console.log('Resend OTP response:', response.data);
                 // Handle successful resend
@@ -674,9 +696,9 @@ function App() {
         <TouchableOpacity 
           style={styles.button}
           onPress={() => {
-            // Verify OTP via API
+            // Verify OTP via API with updated API_BASE_URL
             const otpCode = otp.join('');
-            axios.post('http://localhost:5000/api/verify-otp', { email, otp: otpCode })
+            axios.post(`${API_BASE_URL}/api/verify-otp`, { email, otp: otpCode })
               .then(response => {
                 console.log('Verify OTP response:', response.data);
                 setCurrentScreen('resetPassword');
@@ -760,9 +782,9 @@ function App() {
         <TouchableOpacity 
           style={styles.button}
           onPress={() => {
-            // Reset password via API
+            // Reset password via API with updated API_BASE_URL
             if (password === confirmPassword) {
-              axios.post('http://localhost:5000/api/reset-password', { email, password })
+              axios.post(`${API_BASE_URL}/api/reset-password`, { email, password })
                 .then(response => {
                   console.log('Password reset response:', response.data);
                   setCurrentScreen('login');
