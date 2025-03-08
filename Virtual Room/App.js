@@ -16,12 +16,15 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import Video from "react-native-video";
 
+
 // Mock socket.io client - Replace with actual socket.io implementation
 const mockSocket = {
   id: "mock-user-1",
   emit: (event, data = {}) => console.log("Socket emit:", event, data),
   on: (event) => console.log("Socket on:", event),
 };
+
+
 
 const VirtualRoom = () => {
   const [gameState, setGameState] = useState({
@@ -36,12 +39,15 @@ const VirtualRoom = () => {
     totalQuestions: 5,
   });
 
+
+
   const [userInput, setUserInput] = useState({
     roomCode: "",
     message: "",
     selectedAnswer: null,
   });
 
+  
   const [notification, setNotification] = useState(null);
 
   // Notification component

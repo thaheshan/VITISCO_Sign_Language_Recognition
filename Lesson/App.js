@@ -152,7 +152,7 @@ const LoadingScreen = ({ navigation }) => {
         const newProgress = prev + 5;
         if (newProgress >= 100) {
           clearInterval(interval);
-          setTimeout(() => navigation.navigate('Customization'), 500);
+          setTimeout(() => navigation.navigate('Languageselection'), 500);
           return 100;
         }
         return newProgress;
@@ -195,6 +195,82 @@ const LoadingScreen = ({ navigation }) => {
             ]} 
           />
         </View>
+      </View>
+    </SafeAreaView>
+  );
+};
+
+const LanguageSelectionScreen = ({ navigation }) => {
+  const handleLanguageSelect = (language) => {
+    // Store the selected language and navigate to the next screen
+    navigation.navigate('Customization', { selectedLanguage: language });
+  };
+
+  return (
+    <SafeAreaView style={styles.container}>
+      <Text style={styles.welcomeTitle}>Choose Your Language</Text>
+      
+      <Text style={styles.basicText}>
+        Select the language you want to learn
+      </Text>
+      
+      <View style={styles.languagesContainer}>
+        <TouchableOpacity 
+          style={styles.languageOption} 
+          onPress={() => handleLanguageSelect('Sinhala')}
+        >
+          <View style={styles.languageCard}>
+            <Text style={styles.languageTitle}>Sinhala</Text>
+            <Text style={styles.languageNative}>සිංහල</Text>
+            <View style={styles.flagContainer}>
+              <View style={[styles.flagSection, { backgroundColor: '#FF8F1C' }]} />
+              <View style={[styles.flagSection, { backgroundColor: '#138808' }]} />
+              <View style={[styles.flagSection, { backgroundColor: '#5D5B8D' }]} />
+              <View style={[styles.flagSection, { backgroundColor: '#9291B9' }]} />
+            </View>
+          </View>
+        </TouchableOpacity>
+
+        <TouchableOpacity 
+          style={styles.languageOption} 
+          onPress={() => handleLanguageSelect('Tamil')}
+        >
+          <View style={styles.languageCard}>
+            <Text style={styles.languageTitle}>Tamil</Text>
+            <Text style={styles.languageNative}>தமிழ்</Text>
+            <View style={styles.flagContainer}>
+              <View style={[styles.flagSection, { backgroundColor: '#FF9933' }]} />
+              <View style={[styles.flagSection, { backgroundColor: '#FFFFFF' }]} />
+              <View style={[styles.flagSection, { backgroundColor: '#138808' }]} />
+            </View>
+          </View>
+        </TouchableOpacity>
+
+        <TouchableOpacity 
+          style={styles.languageOption} 
+          onPress={() => handleLanguageSelect('English')}
+        >
+          <View style={styles.languageCard}>
+            <Text style={styles.languageTitle}>English</Text>
+            <Text style={styles.languageNative}>English</Text>
+            <View style={styles.flagContainer}>
+              <View style={styles.ukFlag}>
+                <View style={styles.ukFlagBackground} />
+                <View style={styles.ukFlagCross1} />
+                <View style={styles.ukFlagCross2} />
+              </View>
+            </View>
+          </View>
+        </TouchableOpacity>
+      </View>
+
+      <View style={styles.buttonContainer}>
+        <TouchableOpacity 
+          style={styles.continueButton}
+          onPress={() => navigation.goBack()}
+        >
+          <Text style={styles.nextButtonText}>Back</Text>
+        </TouchableOpacity>
       </View>
     </SafeAreaView>
   );
@@ -1619,25 +1695,29 @@ const LessonCompleteScreen = ({ route, navigation }) => {
       </View>
       
       <View style={styles.buttonContainer}>
-        <TouchableOpacity 
-          style={styles.practiceButton}
-          onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-            navigation.navigate('PracticeQuiz', { lessonId });
-          }}
-        >
-          <Text style={styles.practiceButtonText}>PRACTICE</Text>
-        </TouchableOpacity>
+      <TouchableOpacity 
+        style={styles.continueButton}
+        onPress={() => {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+          // CORRECTED: Changed navigation target to 'LearningPathway'
+          navigation.navigate('quizzes');
+        }}
+      >
+        <Text style={styles.nextButtonText}>Practice</Text>
+
+      </TouchableOpacity>
         
-        <TouchableOpacity 
-          style={styles.continueButton}
-          onPress={() => {
-            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-            navigation.navigate('LearningPathway');
-          }}
-        >
-          <Text style={styles.nextButtonText}>CONTINUE</Text>
-        </TouchableOpacity>
+      <TouchableOpacity 
+        style={styles.continueButton}
+        onPress={() => {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+          // CORRECTED: Changed navigation target to 'LearningPathway'
+          navigation.navigate('quizzes');
+        }}
+      >
+        <Text style={styles.nextButtonText}>Continue</Text>
+
+      </TouchableOpacity>
       </View>
     </SafeAreaView>
   );
@@ -1805,35 +1885,6 @@ const PracticeQuizScreen = ({ route, navigation }) => {
   );
 };
 
-// App Navigation Configuration
-const AppNavigator = () => {
-  return (
-    <NavigationContainer>
-      <Stack.Navigator initialRouteName="LearningPathway">
-        <Stack.Screen 
-          name="LearningPathway" 
-          component={LearningPathwayScreen}
-          options={{ headerShown: false }}
-        />
-        <Stack.Screen 
-          name="AlphabetLearning" 
-          component={AlphabetLearningScreen}
-          options={{ headerShown: false }}
-        />
-        <Stack.Screen 
-          name="LessonComplete" 
-          component={LessonCompleteScreen}
-          options={{ headerShown: false }}
-        />
-        <Stack.Screen 
-          name="PracticeQuiz" 
-          component={PracticeQuizScreen}
-          options={{ headerShown: false }}
-        />
-      </Stack.Navigator>
-    </NavigationContainer>
-  );
-};
 
 
 
@@ -1862,6 +1913,7 @@ export default function App() {
         }}>
         <Stack.Screen name="Welcome" component={WelcomeScreen} />
         <Stack.Screen name="Loading" component={LoadingScreen} />
+        <Stack.Screen name="Languageselection" component={LanguageSelectionScreen} />
         <Stack.Screen name="Customization" component={CustomizationScreen} />
         <Stack.Screen name="LearningPathwayCustomization" component={LearningPathwayCustomizationScreen} />
         <Stack.Screen name="GamePreparation" component={GamePreparationScreen} />
@@ -1873,8 +1925,8 @@ export default function App() {
         <Stack.Screen name="LearningPathway" component={LearningPathwayScreen} />
         <Stack.Screen name="AlphabetLearning" component={AlphabetLearningScreen} />
         <Stack.Screen name="LessonComplete" component={LessonCompleteScreen} />
-         {/* <Stack.Screen name="QuizScreen"Screen={QuizScreen} />
-        < Stack.Screen name="QuizResults" Screen={QuizResultsScreen} /> */}
+        
+        <Stack.Screen name="quizzes" component={PracticeQuizScreen} />
 
     </Stack.Navigator>
 
@@ -2948,6 +3000,122 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
 
+  container: {
+    flex: 1,
+    backgroundColor: '#c5c6e8',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 20,
+  },
+  welcomeTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginTop: 60,
+    marginBottom: 20,
+    color: '#383773',
+  },
+  basicText: {
+    fontSize: 16,
+    textAlign: 'center',
+    color: '#383773',
+    marginBottom: 30,
+  },
+  languagesContainer: {
+    width: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flex: 1,
+  },
+  languageOption: {
+    width: '85%',
+    marginBottom: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
+    elevation: 5,
+  },
+  languageCard: {
+    backgroundColor: 'white',
+    borderRadius: 15,
+    padding: 20,
+    alignItems: 'center',
+  },
+  languageTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#383773',
+    marginBottom: 8,
+  },
+  languageNative: {
+    fontSize: 24,
+    color: '#5d5b8d',
+    marginBottom: 15,
+  },
+  flagContainer: {
+    flexDirection: 'row',
+    height: 30,
+    width: '80%',
+    borderRadius: 5,
+    overflow: 'hidden',
+    marginTop: 10,
+  },
+  flagSection: {
+    flex: 1,
+    height: '100%',
+  },
+  ukFlag: {
+    width: '80%',
+    height: 30,
+    backgroundColor: '#00247D',
+    position: 'relative',
+  },
+  ukFlagBackground: {
+    position: 'absolute',
+    width: '100%',
+    height: '100%',
+    backgroundColor: '#00247D',
+  },
+  ukFlagCross1: {
+    position: 'absolute',
+    width: '100%',
+    height: 6,
+    backgroundColor: 'white',
+    top: '50%',
+    marginTop: -3,
+  },
+  ukFlagCross2: {
+    position: 'absolute',
+    width: 6,
+    height: '100%',
+    backgroundColor: 'white',
+    left: '50%',
+    marginLeft: -3,
+  },
+  buttonContainer: {
+    width: '100%',
+    alignItems: 'center',
+    marginBottom: 30,
+  },
+  continueButton: {
+    backgroundColor: '#5d5b8d',
+    paddingVertical: 12,
+    paddingHorizontal: 40,
+    borderRadius: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
+    elevation: 5,
+  },
+  nextButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+
 
 
 
@@ -2966,6 +3134,7 @@ const styles = StyleSheet.create({
 
 
 const learningPathwayStyles = StyleSheet.create({
+
   pathwayContainer: {
     flex: 1,
     backgroundColor: '#c5c6e8',

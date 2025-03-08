@@ -754,10 +754,10 @@ class Application:
         if ch1=="  " and self.prev_char!="  ":
             self.str = self.str + "  "
 
-        self.prev_char=ch1
-        self.current_symbol=ch1
+        self.prev_char= ch1
+        self.current_symbol= ch1
         self.count += 1
-        self.ten_prev_char[self.count%10]=ch1
+        self.ten_prev_char[self.count%10]= ch1
 
 
         if len(self.str.strip())!=0:
