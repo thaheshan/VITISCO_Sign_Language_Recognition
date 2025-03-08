@@ -405,3 +405,27 @@ module.exports = (pool) => {
   
   return router;
 };
+
+//SQL Finalized Query for Progress Card
+// SELECT 
+//     c.categoryName,
+//     COALESCE(COUNT(DISTINCT CASE 
+//         WHEN l.languageId = (SELECT languageId FROM Language WHERE languageName = :selectedLanguage)
+//         AND ul.completionStatus = true THEN l.lessonId 
+//     END), 0) as progress,
+//     COALESCE(COUNT(DISTINCT CASE 
+//         WHEN l.languageId = (SELECT languageId FROM Language WHERE languageName = :selectedLanguage)
+//         THEN l.lessonId 
+//     END), 0) as total
+// FROM 
+//     Category c
+//     LEFT JOIN Lesson l ON c.categoryId = l.categoryId
+//     LEFT JOIN UserLesson ul ON l.lessonId = ul.lessonId
+// GROUP BY 
+//     c.categoryName
+// ORDER BY 
+//     CASE 
+//         WHEN c.categoryName = 'Basic' THEN 1
+//         WHEN c.categoryName = 'Intermediate' THEN 2
+//         WHEN c.categoryName = 'Advanced' THEN 3
+//     END;
