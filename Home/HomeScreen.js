@@ -1,6 +1,9 @@
 import React from 'react';
 import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, Image, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import Feather from '@expo/vector-icons/Feather';
+import AntDesign from '@expo/vector-icons/AntDesign';
+
 
 const HomeScreen = () => {
   return (
@@ -25,8 +28,12 @@ const HomeScreen = () => {
             <TouchableOpacity style={styles.tabIndicator}>
               <Ionicons name="grid-outline" size={20} color="#FFF" />
             </TouchableOpacity>
+            <TouchableOpacity>
             <Text style={styles.tabText}>DAILY TASKS</Text>
+            </TouchableOpacity>
+            <TouchableOpacity>
             <Text style={[styles.tabText, styles.inactiveTab]}>CHALLENGES</Text>
+            </TouchableOpacity>
           </View>
 
           <View style={styles.taskCards}>
@@ -37,13 +44,13 @@ const HomeScreen = () => {
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.taskCard}>
-              <Ionicons name="shield-outline" size={24} color="#4A86FF" />
+              <Ionicons name="time-outline" size={24} color="#4A86FF" />
               <Text style={styles.taskTitle}>Coursework</Text>
               <Text style={styles.taskSubtitle}>TASK 02</Text>
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.taskCard}>
-              <Ionicons name="apps-outline" size={24} color="#4A86FF" />
+              <AntDesign name="questioncircleo" size={23} color="#4A86FF" />
               <Text style={styles.taskTitle}>Do Quiz</Text>
               <Text style={styles.taskSubtitle}>TASK 03</Text>
             </TouchableOpacity>
@@ -116,7 +123,7 @@ const HomeScreen = () => {
           <View style={styles.activeNavIndicator} />
         </TouchableOpacity>
         <TouchableOpacity style={styles.navItem}>
-          <Ionicons name="time-outline" size={24} color="#9E9AA7" />
+          <Feather name="pie-chart" size={26} color="#9E9AA7" />
         </TouchableOpacity>
         <TouchableOpacity style={styles.addButton}>
           <Ionicons name="add" size={32} color="#FFF" />
@@ -213,6 +220,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     width: '30%',
     paddingVertical: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+    elevation: 5,
   },
   taskTitle: {
     marginTop: 8,
@@ -233,11 +245,11 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   seeAll: {
-    color: '#FFFFFF',
+    color: '#352561',
     fontSize: 14,
   },
   lessonCard: {
-    backgroundColor: '#352561',
+    backgroundColor: '#4E3D81',
     padding: 16,
     borderRadius: 16,
     marginBottom: 16,
@@ -280,7 +292,7 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
   },
   progressText: {
-    color: '#352561',
+    color: '#4E3D81',
     fontWeight: 'bold',
     fontSize: 15,
   },
@@ -290,9 +302,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: '#FFFFFF',
     padding: 16,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    paddingBottom: 20,
+    borderTopLeftRadius: 30,
+    borderTopRightRadius: 30,
+    
   },
   navItem: {
     alignItems: 'center',
@@ -316,6 +328,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: 20,
     bottom: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+    elevation: 5,
   },
   bottomPadding: {
     height: 80, // Add padding at the bottom to allow scrolling past the nav bar
