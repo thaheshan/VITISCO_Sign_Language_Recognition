@@ -14,11 +14,13 @@ import {
   Platform,
   StatusBar,
 } from 'react-native';
+
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import DropDownPicker from 'react-native-dropdown-picker';
 import CalendarPicker from 'react-native-calendar-picker';
 import * as Haptics from 'expo-haptics';
+import axioses from axios;
 
 // Icons for the app
 const Icons = {
