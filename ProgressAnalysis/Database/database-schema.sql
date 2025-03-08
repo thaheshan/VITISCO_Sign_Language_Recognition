@@ -1,12 +1,13 @@
 
 CREATE TABLE User (
     userId INT PRIMARY KEY AUTO_INCREMENT,
-    userName VARCHAR(25) NOT NULL,
+    userName VARCHAR(50) NOT NULL,
     password VARCHAR(15) NOT NULL,
     dob DATE,
     phoneNumber VARCHAR(15),
     gender CHAR(1),
     nativeLanguage VARCHAR(15)
+    
 );
 
 CREATE TABLE Language (
@@ -50,7 +51,7 @@ CREATE TABLE UserLesson (
 
 CREATE TABLE Challenge (
     challengeId INT PRIMARY KEY AUTO_INCREMENT,
-    title VARCHA
+    title VARCHAR(50),
     description VARCHAR(100),
     XPPoints INT
 );
@@ -85,7 +86,8 @@ CREATE TABLE UserQuiz (
     completionDateTime DATETIME,
     marksPercentage DECIMAL(5,2),
     marksXPPoints INT,
-    timeTaken INT,
+    minutes INT,   
+    seconds INT,
     PRIMARY KEY (userId, quizId),
     FOREIGN KEY (userId) REFERENCES User(userId),
     FOREIGN KEY (quizId) REFERENCES Quiz(quizId)
@@ -94,8 +96,10 @@ CREATE TABLE UserQuiz (
 CREATE TABLE VirtualRoom (
     roomCode INT PRIMARY KEY AUTO_INCREMENT,
     winnerId INT,
+    hostId INT,
     winnerXPPoints INT,
-    FOREIGN KEY (winnerId) REFERENCES User(userId)
+    FOREIGN KEY (winnerId) REFERENCES User(userId),
+    FOREIGN KEY (hostId) REFERENCES User(userId)
 );
 
 CREATE TABLE VirtualRoomQuiz (
@@ -112,6 +116,16 @@ CREATE TABLE UserVirtualRoom (
     PRIMARY KEY (userId, roomCode),
     FOREIGN KEY (userId) REFERENCES User(userId),
     FOREIGN KEY (roomCode) REFERENCES VirtualRoom(roomCode)
+);
+
+CREATE TABLE Schedule (
+    scheduleId INT PRIMARY KEY AUTO_INCREMENT,
+    title VARCHAR(50),
+    Description VARCHAR(100),
+    Status VARCHAR(20),
+    DateTime DATETIME,
+    UserId INT,
+    FOREIGN KEY (UserId) REFERENCES User(UserId)
 );
 
 
