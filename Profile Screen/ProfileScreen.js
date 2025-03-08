@@ -10,44 +10,161 @@ import {
   ScrollView,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import Icon from "react-native-vector-icons/MaterialCommunityIcons";
+import { Avatar, Title, Caption, TouchableRipple } from "react-native-paper";
 
 const ProfileScreen = () => {
+  // Sample data structures for your local images
+  const badgeImages = [
+    {
+      id: 1,
+      source: require("../Profile Screen/assets/b1.png"),
+      name: "Badge 1",
+    },
+    {
+      id: 2,
+      source: require("../Profile Screen/assets/b2.png"),
+      name: "Badge 2",
+    },
+    {
+      id: 3,
+      source: require("../Profile Screen/assets/b3.png"),
+      name: "Badge 3",
+    },
+    {
+      id: 4,
+      source: require("../Profile Screen/assets/b4.png"),
+      name: "Badge 4",
+    },
+  ];
+
+  const rewardImages = [
+    {
+      id: 1,
+      source: require("../Profile Screen/assets/r1.png"),
+      name: "Reward 1",
+    },
+    {
+      id: 2,
+      source: require("../Profile Screen/assets/r2.png"),
+      name: "Reward 2",
+    },
+    {
+      id: 3,
+      source: require("../Profile Screen/assets/r3.png"),
+      name: "Reward 3",
+    },
+    {
+      id: 4,
+      source: require("../Profile Screen/assets/r4.png"),
+      name: "Reward 4",
+    },
+  ];
+
+  // User profile data
+  const userData = {
+    userId: "ZA7194",
+    name: "Zuhar Ahamed",
+    handle: "@zheong123",
+    level: 5,
+    location: "Puttalam, Sri Lanka",
+    phone: "+94 76 495 7194",
+    email: "zuharahamed007@gmail.com",
+    gender: "Male",
+    nativeLanguage: "Tamil",
+    following: 140,
+    followers: 100,
+    membershipType: "Gold",
+    points: 1200,
+    notifications: 21,
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" />
 
-      {/* Header */}
+      {/* Header - Updated to match the screenshot */}
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color="white" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Profile</Text>
-        <View style={styles.notificationContainer}>
-          <Text style={styles.notificationCount}>21</Text>
-          <View style={styles.notificationDot} />
+        <View style={styles.headerContent}>
+          <TouchableOpacity style={styles.backButton}>
+            <Ionicons name="chevron-back" size={24} color="white" />
+          </TouchableOpacity>
+          <View style={styles.headerCenter}>
+            <Text style={styles.headerTitle}>Profile</Text>
+          </View>
+          <View style={styles.notificationContainer}>
+            <Text style={styles.notificationCount}>
+              {userData.notifications}
+            </Text>
+            <Text style={styles.notificationIcon}>🔥</Text>
+          </View>
         </View>
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* Profile Info */}
         <View style={styles.profileContainer}>
-          <Image
-            source={require("./assets/thalaivar.jpg")}
-            style={styles.avatar}
+          <Avatar.Image
+            source={require("../Profile Screen/assets/Zuhar.jpg")}
+            size={80}
           />
-          <Text style={styles.username}>fathima thahesan</Text>
-          <Text style={styles.handle}>@aarvakolearu</Text>
-          <View style={styles.levelContainer}>
-            <Text style={styles.levelText}>LEVEL 5</Text>
-          </View>
+          <Text style={styles.username}>{userData.name}</Text>
+          <Text style={styles.handle}>{userData.handle}</Text>
 
-          {/* Achievement Badge */}
-          {/*
-           */}
+          {/* User ID */}
+          <Text style={styles.userId}>ID: {userData.userId}</Text>
+
+          <View style={styles.levelContainer}>
+            <Text style={styles.levelText}>LEVEL {userData.level}</Text>
+          </View>
         </View>
 
-        {/* Frame ID */}
-        <Text style={styles.frameId}>Frame 261047</Text>
+        {/* User Information Section */}
+        <View style={styles.userInfoSection}>
+          <View style={styles.row}>
+            <Icon name="map-marker-radius" color="#777777" size={20} />
+            <Text style={styles.infoText}>{userData.location}</Text>
+          </View>
+          <View style={styles.row}>
+            <Icon name="phone" color="#777777" size={20} />
+            <Text style={styles.infoText}>{userData.phone}</Text>
+          </View>
+          <View style={styles.row}>
+            <Icon name="email" color="#777777" size={20} />
+            <Text style={styles.infoText}>{userData.email}</Text>
+          </View>
+
+          {/* Gender */}
+          <View style={styles.row}>
+            <Icon name="gender-male-female" color="#777777" size={20} />
+            <Text style={styles.infoText}>{userData.gender}</Text>
+          </View>
+
+          {/* Native language */}
+          <View style={styles.row}>
+            <Icon name="translate" color="#777777" size={20} />
+            <Text style={styles.infoText}>
+              Native: {userData.nativeLanguage}
+            </Text>
+          </View>
+        </View>
+
+        {/* Follower Stats */}
+        <View style={styles.infoBoxWrapper}>
+          <View
+            style={[
+              styles.infoBox,
+              { borderRightWidth: 1, borderRightColor: "#dddddd" },
+            ]}
+          >
+            <Title style={styles.statsNumber}>{userData.following}</Title>
+            <Caption style={styles.statsCaption}>Following</Caption>
+          </View>
+          <View style={styles.infoBox}>
+            <Title style={styles.statsNumber}>{userData.followers}</Title>
+            <Caption style={styles.statsCaption}>Followers</Caption>
+          </View>
+        </View>
 
         {/* Vouchers */}
         <View style={styles.vouchersContainer}>
@@ -92,12 +209,16 @@ const ProfileScreen = () => {
         <View style={styles.sectionContainer}>
           <Text style={styles.sectionTitle}>REWARDS</Text>
           <View style={styles.badgesRow}>
-            {[1, 2, 3, 4].map((item) => (
-              <View key={`reward-${item}`} style={styles.hexagonBadge}>
-                <Image
-                  source={require(`./assets/thalaivar.jpg`)}
-                  style={styles.badgeIcon}
-                />
+            {rewardImages.map((reward) => (
+              <View key={`reward-${reward.id}`} style={styles.rewardContainer}>
+                <View style={styles.hexagonBadge}>
+                  <Image
+                    source={reward.source}
+                    style={styles.badgeIcon}
+                    resizeMode="cover"
+                  />
+                </View>
+                <Text style={styles.rewardLabel}>{reward.name}</Text>
               </View>
             ))}
           </View>
@@ -107,19 +228,55 @@ const ProfileScreen = () => {
         <View style={styles.sectionContainer}>
           <Text style={styles.sectionTitle}>BADGES</Text>
           <View style={styles.badgesRow}>
-            {[1, 2, 3, 4].map((item) => (
-              <View
-                key={`badge-${item}`}
-                style={[
-                  styles.circleBadge,
-                  item === 4 ? styles.blueBadge : styles.goldBadge,
-                ]}
-              >
-                <Text style={styles.badgeText}>
-                  {item === 3 || item === 4 ? "Cl" : ""}
-                </Text>
+            {badgeImages.map((badge) => (
+              <View key={`badge-${badge.id}`} style={styles.badgeContainer}>
+                <View style={styles.circleBadge}>
+                  <Image
+                    source={badge.source}
+                    style={styles.badgeIcon}
+                    resizeMode="cover"
+                  />
+                </View>
+                <Text style={styles.badgeLabel}>{badge.name}</Text>
               </View>
             ))}
+          </View>
+        </View>
+
+        {/* XP Points Section - New section added below badges */}
+        <View style={styles.bottomContainer}>
+          <View style={styles.infoBox2}>
+            <View style={styles.xpIcon}>
+              <Ionicons name="star" size={18} color="#FFF" />
+            </View>
+            <View style={styles.infoTextContainer}>
+              <Text style={styles.infoTitle}>2,500</Text>
+              <Text style={styles.infoSubtitle}>XP Points</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={16} color="#FFD700" />
+          </View>
+        </View>
+
+        {/* Bottom Info */}
+        <View style={styles.bottomContainer}>
+          <View style={styles.infoBox2}>
+            <View style={styles.goldIcon} />
+            <View style={styles.infoTextContainer}>
+              <Text style={styles.infoTitle}>{userData.membershipType}</Text>
+              <Text style={styles.infoSubtitle}>Membership</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={16} color="#FFD700" />
+          </View>
+
+          <View style={styles.infoBox2}>
+            <View style={styles.goldIcon} />
+            <View style={styles.infoTextContainer}>
+              <Text style={styles.infoTitle}>
+                {userData.points.toLocaleString()}
+              </Text>
+              <Text style={styles.infoSubtitle}>Points</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={16} color="#FFD700" />
           </View>
         </View>
 
@@ -131,7 +288,7 @@ const ProfileScreen = () => {
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.menuItem}>
-            <Text style={styles.menuItemText}>Add Social Medias</Text>
+            <Text style={styles.menuItemText}>Add Social Media</Text>
             <Ionicons name="chevron-forward" size={20} color="#555" />
           </TouchableOpacity>
 
@@ -148,27 +305,6 @@ const ProfileScreen = () => {
             <Text style={styles.menuItemText}>Settings</Text>
             <Ionicons name="chevron-forward" size={20} color="#555" />
           </TouchableOpacity>
-        </View>
-
-        {/* Bottom Info */}
-        <View style={styles.bottomContainer}>
-          <View style={styles.infoBox}>
-            <View style={styles.goldIcon} />
-            <View style={styles.infoTextContainer}>
-              <Text style={styles.infoTitle}>Gold</Text>
-              <Text style={styles.infoSubtitle}>Membership</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={16} color="#FFD700" />
-          </View>
-
-          <View style={styles.infoBox}>
-            <View style={styles.goldIcon} />
-            <View style={styles.infoTextContainer}>
-              <Text style={styles.infoTitle}>1,200</Text>
-              <Text style={styles.infoSubtitle}>Points</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={16} color="#FFD700" />
-          </View>
         </View>
 
         {/* Logout Button */}
@@ -188,13 +324,23 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingBottom: 20,
   },
+  // Updated header styles to match the screenshot
   header: {
+    backgroundColor: "#5d5b8d",
+    paddingTop: 10,
+    paddingBottom: 15,
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
+  },
+  headerContent: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: "#5d5b8d",
+  },
+  headerCenter: {
+    flex: 1,
+    alignItems: "center",
   },
   backButton: {
     padding: 4,
@@ -210,65 +356,82 @@ const styles = StyleSheet.create({
   },
   notificationCount: {
     color: "white",
-    fontSize: 14,
+    fontSize: 16,
     marginRight: 4,
   },
-  notificationDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: "orange",
+  notificationIcon: {
+    fontSize: 16,
   },
   profileContainer: {
     alignItems: "center",
     paddingVertical: 20,
   },
-  avatar: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    marginBottom: 12,
-  },
   username: {
-    color: "white",
-    fontSize: 18,
-    fontWeight: "500",
+    color: "#333",
+    fontSize: 24,
+    fontWeight: "bold",
+    marginTop: 10,
   },
   handle: {
-    color: "#DDD",
+    color: "#777777",
     fontSize: 14,
+    lineHeight: 14,
+    fontWeight: "500",
+  },
+  userId: {
+    color: "#777777",
+    fontSize: 14,
+    marginTop: 5,
+    fontWeight: "500",
   },
   levelContainer: {
-    marginTop: 4,
+    marginTop: 8,
     paddingHorizontal: 12,
     paddingVertical: 4,
     borderRadius: 12,
+    backgroundColor: "#5d5b8d",
   },
   levelText: {
     color: "white",
     fontWeight: "600",
     fontSize: 14,
   },
-  achievementBadge: {
-    position: "relative",
-    marginTop: 16,
+  userInfoSection: {
+    paddingHorizontal: 30,
+    marginBottom: 25,
   },
-  starBadge: {
-    width: 50,
-    height: 50,
+  row: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingTop: 10,
   },
-  ribbon: {
-    position: "absolute",
-    width: 20,
-    height: 30,
-    bottom: -10,
-    right: -5,
+  infoText: {
+    color: "#777777",
+    marginLeft: 20,
+    fontSize: 14,
   },
-  frameId: {
-    color: "rgba(255, 255, 255, 0.4)",
-    fontSize: 12,
-    alignSelf: "center",
-    marginTop: 8,
+  infoBoxWrapper: {
+    borderBottomColor: "#dddddd",
+    borderBottomWidth: 1,
+    borderTopColor: "#dddddd",
+    borderTopWidth: 1,
+    flexDirection: "row",
+    height: 100,
+    backgroundColor: "rgba(255, 255, 255, 0.3)",
+  },
+  infoBox: {
+    width: "50%",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  statsNumber: {
+    fontSize: 24,
+    fontWeight: "bold",
+    color: "#333",
+  },
+  statsCaption: {
+    fontSize: 14,
+    color: "#666",
   },
   vouchersContainer: {
     flexDirection: "row",
@@ -348,14 +511,24 @@ const styles = StyleSheet.create({
   badgesRow: {
     flexDirection: "row",
     justifyContent: "space-between",
+    paddingHorizontal: 4,
+  },
+  badgeContainer: {
+    alignItems: "center",
+    width: "22%",
+  },
+  rewardContainer: {
+    alignItems: "center",
+    width: "22%",
   },
   hexagonBadge: {
     width: 60,
     height: 60,
-    backgroundColor: "#C75050",
     borderRadius: 10,
     alignItems: "center",
     justifyContent: "center",
+    overflow: "hidden",
+    marginBottom: 5,
   },
   circleBadge: {
     width: 60,
@@ -363,23 +536,26 @@ const styles = StyleSheet.create({
     borderRadius: 30,
     alignItems: "center",
     justifyContent: "center",
-  },
-  goldBadge: {
-    backgroundColor: "#5d5b8d",
+    overflow: "hidden",
     borderWidth: 2,
     borderColor: "#FFC700",
-  },
-  blueBadge: {
-    backgroundColor: "#4A69FF",
+    marginBottom: 5,
   },
   badgeIcon: {
-    width: 30,
-    height: 30,
+    width: "100%",
+    height: "100%",
   },
-  badgeText: {
-    fontSize: 16,
-    fontWeight: "bold",
-    color: "white",
+  badgeLabel: {
+    fontSize: 11,
+    color: "#333",
+    textAlign: "center",
+    fontWeight: "500",
+  },
+  rewardLabel: {
+    fontSize: 11,
+    color: "#333",
+    textAlign: "center",
+    fontWeight: "500",
   },
   menuContainer: {
     marginTop: 16,
@@ -409,7 +585,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingBottom: 16,
   },
-  infoBox: {
+  infoBox2: {
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "#5d5b8d",
@@ -448,6 +624,15 @@ const styles = StyleSheet.create({
     color: "white",
     fontWeight: "bold",
     fontSize: 16,
+  },
+  xpIcon: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: "#4E7BEF", // Blue color for XP
+    marginRight: 10,
+    alignItems: "center",
+    justifyContent: "center",
   },
 });
 
