@@ -429,3 +429,171 @@ module.exports = (pool) => {
 //         WHEN c.categoryName = 'Intermediate' THEN 2
 //         WHEN c.categoryName = 'Advanced' THEN 3
 //     END;
+
+
+function ProgressScreen() {
+  const [selectedLanguage, setSelectedLanguage] = useState('English');
+  const [progressData, setProgressData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    fetchProgressData();
+  }, [selectedLanguage]);
+
+  const fetchProgressData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const response = await fetch(`${API_URL}/progress/${selectedLanguage}/${TEST_USER_ID}`);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const data = await response.json();
+
+      if (data.error) {
+        throw new Error(data.error);
+      }
+
+      setProgressData(data);
+    } catch (err) {
+      console.error('Error fetching progress:', err);
+      setError('Failed to load progress data. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const renderProgressSection = () => {
+    if (loading) {
+      return (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#515CE6" />
+          <Text style={styles.loadingText}>Loading progress...</Text>
+        </View>
+      );
+    }
+
+    if (error) {
+      return (
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorText}>{error}</Text>
+          <TouchableOpacity style={styles.retryButton} onPress={fetchProgressData}>
+            <Text style={styles.retryText}>Retry</Text>
+          </TouchableOpacity>
+        </View>
+      );
+    }
+
+    return (
+      <View style={styles.progressSection}>
+        {progressData.map((category) => (
+          <ProgressCard
+            key={category.categoryName}
+            title={category.categoryName}
+            progress={category.progress}
+            total={category.total}
+          />
+        ))}
+      </View>
+    );
+  };
+
+  return (
+    <SafeAreaView>
+      {renderProgressSection()}
+    </SafeAreaView>
+  );
+}
+
+
+app.get('/progress/:language/:userId', (req, res) => {
+  const selectedLanguage = req.params.language;
+  const userId = req.params.userId;
+
+  // SQL query for progress data
+  const query = `
+    SELECT 
+      c.categoryName,
+      COALESCE(COUNT(DISTINCT CASE 
+          WHEN l.languageId = (SELECT languageId FROM Language WHERE languageName = ?) 
+          AND ul.completionStatus = true THEN l.lessonId 
+      END), 0) AS progress,
+      COALESCE(COUNT(DISTINCT CASE 
+          WHEN l.languageId = (SELECT languageId FROM Language WHERE languageName = ?) 
+          THEN l.lessonId 
+      END), 0) AS total
+    FROM 
+      Category c
+      LEFT JOIN Lesson l ON c.categoryId = l.categoryId
+      LEFT JOIN UserLesson ul ON l.lessonId = ul.lessonId AND ul.userId = ?
+    GROUP BY 
+      c.categoryName
+    ORDER BY 
+      CASE 
+        WHEN c.categoryName = 'Basic' THEN 1
+        WHEN c.categoryName = 'Intermediate' THEN 2
+        WHEN c.categoryName = 'Advanced' THEN 3
+      END;
+  `;
+
+  // Execute the query
+  db.execute(query, [selectedLanguage, selectedLanguage, userId], (err, results) => {
+    if (err) {
+      console.error('Error executing query:', err);
+      return res.status(500).json({ error: 'Database query error' });
+    }
+    return res.json(results);
+  });
+});
+
+
+
+<View style={styles.languageSelection}>
+<Text style={styles.sectionTitle}>Track your learning journey!</Text>
+<View style={styles.languageButtons}>
+  {['English', 'Tamil', 'Sinhala'].map((language) => (
+    <TouchableOpacity 
+      key={language} 
+      style={[
+        styles.languageButton, 
+        selectedLanguage === language && styles.activeLanguage // Apply active style if selected
+      ]}
+      onPress={() => setSelectedLanguage(language)} // Update state on press
+    >
+      <Text style={styles.languageButtonText}>{language}</Text>
+    </TouchableOpacity>
+  ))}
+</View>
+</View>
+
+//SELECT 
+// COALESCE(SUM(l.XPPoints), 0) + 
+// COALESCE(SUM(c.XPPoints), 0) + 
+// COALESCE(SUM(q.XPPoints), 0) + 
+// COALESCE(SUM(vc.XPPoints), 0) + 
+// COALESCE(SUM(uq.marksXPPoints), 0) + 
+// COALESCE(SUM(vr.winnerXPPoints), 0) AS totalXP
+// FROM 
+// User u
+// LEFT JOIN 
+// UserLesson ul ON u.userId = ul.userId
+// LEFT JOIN 
+// Lesson l ON ul.lessonId = l.lessonId
+// LEFT JOIN 
+// UserChallenge uc ON u.userId = uc.userId
+// LEFT JOIN 
+// Challenge c ON uc.challengeId = c.challengeId
+// LEFT JOIN 
+// UserQuiz uq ON u.userId = uq.userId
+// LEFT JOIN 
+// Quiz q ON uq.quizId = q.quizId
+// LEFT JOIN 
+// VirtualRoom vr ON u.userId = vr.hostId
+// LEFT JOIN 
+// VirtualRoomQuiz vrq ON vr.roomCode = vrq.roomCode
+// LEFT JOIN 
+// Quiz vc ON vrq.quizId = vc.quizId
+// WHERE 
+// u.userId = :userId;
