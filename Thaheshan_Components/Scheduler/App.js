@@ -22,6 +22,37 @@ import CalendarPicker from 'react-native-calendar-picker';
 import * as Haptics from 'expo-haptics';
 import axioses from axios;
 
+// In your React Native app, create an API service file:
+
+const API_URL = 'http://your-server-ip:5000/api';
+
+// Example functions to call your backend
+export const fetchTasks = async (userId) => {
+  try {
+    const response = await fetch(`${API_URL}/tasks/user/${userId}`);
+    return await response.json();
+  } catch (error) {
+    console.error("Error fetching tasks:", error);
+    throw error;
+  }
+};
+
+export const addTask = async (taskData) => {
+  try {
+    const response = await fetch(`${API_URL}/tasks`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(taskData),
+    });
+    return await response.json();
+  } catch (error) {
+    console.error("Error adding task:", error);
+    throw error;
+  }
+};
+
 // Icons for the app
 const Icons = {
   Calendar: (props) => (
