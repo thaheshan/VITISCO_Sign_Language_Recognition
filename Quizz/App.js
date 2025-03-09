@@ -19,11 +19,11 @@ const QuizApp = () => {
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState(null);
 
-  // Quiz questions data
+  // Quiz questions data for english letters 
   const questions = [
     {
       id: 1,
-      title: 'Question 01',
+      title: 'Select the correct sign for A',
       image: require('./assets/image01.png'),
       options: [
         { id: 'A', text: 'A' },
@@ -55,12 +55,275 @@ const QuizApp = () => {
     },
     {
       id: 4,
-      title: 'Question 4',
+      title: 'Select the correct sign for D',
       image: require('./assets/download.jpeg'),
       options: [
         { id: 'A', text: 'A' },
         { id: 'B', text: 'C' },
         { id: 'C', text: 'B' },
+      ],
+    },
+
+    {
+      id: 5,
+      title: 'Select the correct sign for E',
+      options: [
+        { image: require('./assets/image01.png') },
+        { image: require('./assets/image01.png') },
+        { image: require('./assets/image01.png') },
+        { image: require('./assets/image01.png') },
+      ],
+      gridView: true,
+    },
+    {
+      id: 6,
+      title: 'Select the correct sign for F',
+      options: [
+        { image: require('./assets/image01.png') },
+        { image: require('./assets/image01.png') },
+        { image: require('./assets/image01.png') },
+        { image: require('./assets/image01.png') },
+      ],
+      gridView: true,
+    },
+    //IMAGE OF G
+    {
+      id: 7,
+      title: 'Find the sign ',
+      image: require('./assets/image01.png'),
+      options: [
+        { id: 'A', text: 'E' },
+        { id: 'B', text: 'A' },
+        { id: 'C', text: 'G' },
+      ],
+    },
+
+    {
+      id: 8,
+      title: 'Select the correct sign for H',
+      options: [
+        { image: require('./assets/image01.png') },
+        { image: require('./assets/image01.png') },
+        { image: require('./assets/image01.png') },
+        { image: require('./assets/image01.png') },
+      ],
+      gridView: true,
+    },
+
+    {
+      id: 9,
+      title: 'Select the correct sign for I',
+      options: [
+        { image: require('./assets/image01.png') },
+        { image: require('./assets/image01.png') },
+        { image: require('./assets/image01.png') },
+        { image: require('./assets/image01.png') },
+      ],
+      gridView: true,
+    },
+
+
+    //IMAGE OF J
+    {
+      id: 10,
+      title: 'Find the sign ',
+      image: require('./assets/image01.png'),
+      options: [
+        { id: 'A', text: 'J' },
+        { id: 'B', text: 'I' },
+        { id: 'C', text: 'C' },
+      ],
+    },
+
+    {
+      id: 11,
+      title: 'Select the correct sign for K',
+      options: [
+        { image: require('./assets/image01.png') },
+        { image: require('./assets/image01.png') },
+        { image: require('./assets/image01.png') },
+        { image: require('./assets/image01.png') },
+      ],
+      gridView: true,
+    },
+
+    {
+      id: 12,
+      title: 'Select the correct sign for L',
+      options: [
+        { image: require('./assets/image01.png') },
+        { image: require('./assets/image01.png') },
+        { image: require('./assets/image01.png') },
+        { image: require('./assets/image01.png') },
+      ],
+      gridView: true,
+    },
+
+    //IMAGE OF M
+    {
+      id: 10,
+      title: 'Find the sign ',
+      image: require('./assets/image01.png'),
+      options: [
+        { id: 'A', text: 'A' },
+        { id: 'B', text: 'M' },
+        { id: 'C', text: 'C' },
+      ],
+    },
+
+    {
+      id: 14,
+      title: 'Select the correct sign for N',
+      options: [
+        { image: require('./assets/image01.png') },
+        { image: require('./assets/image01.png') },
+        { image: require('./assets/image01.png') },
+        { image: require('./assets/image01.png') },
+      ],
+      gridView: true,
+    },
+
+    {
+      id: 15,
+      title: 'Select the correct sign for O',
+      options: [
+        { image: require('./assets/image01.png') },
+        { image: require('./assets/image01.png') },
+        { image: require('./assets/image01.png') },
+        { image: require('./assets/image01.png') },
+      ],
+      gridView: true,
+    },
+
+    //IMAGE OF P
+    {
+      id: 10,
+      title: 'Find the sign ',
+      image: require('./assets/image01.png'),
+      options: [
+        { id: 'A', text: 'P' },
+        { id: 'B', text: 'I' },
+        { id: 'C', text: 'J' },
+      ],
+    },
+
+    {
+      id: 17,
+      title: 'Select the correct sign for Q',
+      options: [
+        { image: require('./assets/image01.png') },
+        { image: require('./assets/image01.png') },
+        { image: require('./assets/image01.png') },
+        { image: require('./assets/image01.png') },
+      ],
+      gridView: true,
+    },
+
+    {
+      id: 18,
+      title: 'Select the correct sign for R',
+      options: [
+        { image: require('./assets/image01.png') },
+        { image: require('./assets/image01.png') },
+        { image: require('./assets/image01.png') },
+        { image: require('./assets/image01.png') },
+      ],
+      gridView: true,
+    },
+
+    //IMAGE OF S
+    {
+      id: 10,
+      title: 'Find the sign ',
+      image: require('./assets/image01.png'),
+      options: [
+        { id: 'A', text: 'S' },
+        { id: 'B', text: 'B' },
+        { id: 'C', text: 'F' },
+      ],
+    },
+
+    {
+      id: 20,
+      title: 'Select the correct sign for T',
+      options: [
+        { image: require('./assets/image01.png') },
+        { image: require('./assets/image01.png') },
+        { image: require('./assets/image01.png') },
+        { image: require('./assets/image01.png') },
+      ],
+      gridView: true,
+    },
+
+    {
+      id: 21,
+      title: 'Select the correct sign for U',
+      options: [
+        { image: require('./assets/image01.png') },
+        { image: require('./assets/image01.png') },
+        { image: require('./assets/image01.png') },
+        { image: require('./assets/image01.png') },
+      ],
+      gridView: true,
+    },
+
+    {
+      id: 22,
+      title: 'Select the correct sign for V',
+      options: [
+        { image: require('./assets/image01.png') },
+        { image: require('./assets/image01.png') },
+        { image: require('./assets/image01.png') },
+        { image: require('./assets/image01.png') },
+      ],
+      gridView: true,
+    },
+
+    //IMAGE OF W
+    {
+      id: 10,
+      title: 'Find the sign ',
+      image: require('./assets/image01.png'),
+      options: [
+        { id: 'A', text: 'O' },
+        { id: 'B', text: 'S' },
+        { id: 'C', text: 'W' },
+      ],
+    },
+
+    {
+      id: 24,
+      title: 'Select the correct sign for X',
+      options: [
+        { image: require('./assets/image01.png') },
+        { image: require('./assets/image01.png') },
+        { image: require('./assets/image01.png') },
+        { image: require('./assets/image01.png') },
+      ],
+      gridView: true,
+    },
+
+    {
+      id: 25,
+      title: 'Select the correct sign for Y',
+      options: [
+        { image: require('./assets/image01.png') },
+        { image: require('./assets/image01.png') },
+        { image: require('./assets/image01.png') },
+        { image: require('./assets/image01.png') },
+      ],
+      gridView: true,
+    },
+
+    //IMAGE OF J
+    {
+      id: 10,
+      title: 'Find the sign ',
+      image: require('./assets/image01.png'),
+      options: [
+        { id: 'A', text: 'X' },
+        { id: 'B', text: 'Z' },
+        { id: 'C', text: 'G' },
       ],
     },
   ];
