@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -9,7 +9,8 @@ import {
   StatusBar,
   ScrollView,
   Alert,
-  Dimensions
+  Dimensions,
+  BackHandler
 } from 'react-native';
 
 const { width, height } = Dimensions.get('window');
@@ -18,13 +19,32 @@ const QuizApp = () => {
   const [showStartScreen, setShowStartScreen] = useState(true);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState(null);
+  const [quizHistory, setQuizHistory] = useState([]);
+
+  // Handle Android back button
+  useEffect(() => {
+    const backAction = () => {
+      if (!showStartScreen) {
+        handleBack();
+        return true;
+      }
+      return false;
+    };
+
+    const backHandler = BackHandler.addEventListener(
+      'hardwareBackPress',
+      backAction
+    );
+
+    return () => backHandler.remove();
+  }, [showStartScreen, currentQuestion]);
 
   // Quiz questions data for english letters 
   const questions = [
     {
       id: 1,
       title: 'Select the correct sign for A',
-      image: require('./assets/image01.png'),
+      image: require('./assets/sign1.png'),
       options: [
         { id: 'A', text: 'A' },
         { id: 'B', text: 'B' },
@@ -35,10 +55,10 @@ const QuizApp = () => {
       id: 2,
       title: 'Select the correct sign for B',
       options: [
-        { image: require('./assets/image01.png') },
-        { image: require('./assets/image01.png') },
-        { image: require('./assets/image01.png') },
-        { image: require('./assets/image01.png') },
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
       ],
       gridView: true,
     },
@@ -46,10 +66,10 @@ const QuizApp = () => {
       id: 3,
       title: 'Select the correct sign for C',
       options: [
-        { image: require('./assets/image01.png') },
-        { image: require('./assets/image01.png') },
-        { image: require('./assets/image01.png') },
-        { image: require('./assets/image01.png') },
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
       ],
       gridView: true,
     },
@@ -68,10 +88,10 @@ const QuizApp = () => {
       id: 5,
       title: 'Select the correct sign for E',
       options: [
-        { image: require('./assets/image01.png') },
-        { image: require('./assets/image01.png') },
-        { image: require('./assets/image01.png') },
-        { image: require('./assets/image01.png') },
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
       ],
       gridView: true,
     },
@@ -79,10 +99,10 @@ const QuizApp = () => {
       id: 6,
       title: 'Select the correct sign for F',
       options: [
-        { image: require('./assets/image01.png') },
-        { image: require('./assets/image01.png') },
-        { image: require('./assets/image01.png') },
-        { image: require('./assets/image01.png') },
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
       ],
       gridView: true,
     },
@@ -90,7 +110,7 @@ const QuizApp = () => {
     {
       id: 7,
       title: 'Find the sign ',
-      image: require('./assets/image01.png'),
+      image: require('./assets/sign1.png'),
       options: [
         { id: 'A', text: 'E' },
         { id: 'B', text: 'A' },
@@ -102,10 +122,10 @@ const QuizApp = () => {
       id: 8,
       title: 'Select the correct sign for H',
       options: [
-        { image: require('./assets/image01.png') },
-        { image: require('./assets/image01.png') },
-        { image: require('./assets/image01.png') },
-        { image: require('./assets/image01.png') },
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
       ],
       gridView: true,
     },
@@ -114,10 +134,10 @@ const QuizApp = () => {
       id: 9,
       title: 'Select the correct sign for I',
       options: [
-        { image: require('./assets/image01.png') },
-        { image: require('./assets/image01.png') },
-        { image: require('./assets/image01.png') },
-        { image: require('./assets/image01.png') },
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
       ],
       gridView: true,
     },
@@ -127,7 +147,7 @@ const QuizApp = () => {
     {
       id: 10,
       title: 'Find the sign ',
-      image: require('./assets/image01.png'),
+      image: require('./assets/sign1.png'),
       options: [
         { id: 'A', text: 'J' },
         { id: 'B', text: 'I' },
@@ -139,10 +159,10 @@ const QuizApp = () => {
       id: 11,
       title: 'Select the correct sign for K',
       options: [
-        { image: require('./assets/image01.png') },
-        { image: require('./assets/image01.png') },
-        { image: require('./assets/image01.png') },
-        { image: require('./assets/image01.png') },
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
       ],
       gridView: true,
     },
@@ -151,19 +171,19 @@ const QuizApp = () => {
       id: 12,
       title: 'Select the correct sign for L',
       options: [
-        { image: require('./assets/image01.png') },
-        { image: require('./assets/image01.png') },
-        { image: require('./assets/image01.png') },
-        { image: require('./assets/image01.png') },
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
       ],
       gridView: true,
     },
 
     //IMAGE OF M
     {
-      id: 10,
+      id: 13,
       title: 'Find the sign ',
-      image: require('./assets/image01.png'),
+      image: require('./assets/sign1.png'),
       options: [
         { id: 'A', text: 'A' },
         { id: 'B', text: 'M' },
@@ -175,10 +195,10 @@ const QuizApp = () => {
       id: 14,
       title: 'Select the correct sign for N',
       options: [
-        { image: require('./assets/image01.png') },
-        { image: require('./assets/image01.png') },
-        { image: require('./assets/image01.png') },
-        { image: require('./assets/image01.png') },
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
       ],
       gridView: true,
     },
@@ -187,19 +207,19 @@ const QuizApp = () => {
       id: 15,
       title: 'Select the correct sign for O',
       options: [
-        { image: require('./assets/image01.png') },
-        { image: require('./assets/image01.png') },
-        { image: require('./assets/image01.png') },
-        { image: require('./assets/image01.png') },
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
       ],
       gridView: true,
     },
 
     //IMAGE OF P
     {
-      id: 10,
+      id: 16,
       title: 'Find the sign ',
-      image: require('./assets/image01.png'),
+      image: require('./assets/sign1.png'),
       options: [
         { id: 'A', text: 'P' },
         { id: 'B', text: 'I' },
@@ -211,10 +231,10 @@ const QuizApp = () => {
       id: 17,
       title: 'Select the correct sign for Q',
       options: [
-        { image: require('./assets/image01.png') },
-        { image: require('./assets/image01.png') },
-        { image: require('./assets/image01.png') },
-        { image: require('./assets/image01.png') },
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
       ],
       gridView: true,
     },
@@ -223,19 +243,19 @@ const QuizApp = () => {
       id: 18,
       title: 'Select the correct sign for R',
       options: [
-        { image: require('./assets/image01.png') },
-        { image: require('./assets/image01.png') },
-        { image: require('./assets/image01.png') },
-        { image: require('./assets/image01.png') },
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
       ],
       gridView: true,
     },
 
     //IMAGE OF S
     {
-      id: 10,
+      id: 19,
       title: 'Find the sign ',
-      image: require('./assets/image01.png'),
+      image: require('./assets/naan.jpg'),
       options: [
         { id: 'A', text: 'S' },
         { id: 'B', text: 'B' },
@@ -247,10 +267,10 @@ const QuizApp = () => {
       id: 20,
       title: 'Select the correct sign for T',
       options: [
-        { image: require('./assets/image01.png') },
-        { image: require('./assets/image01.png') },
-        { image: require('./assets/image01.png') },
-        { image: require('./assets/image01.png') },
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
       ],
       gridView: true,
     },
@@ -259,10 +279,10 @@ const QuizApp = () => {
       id: 21,
       title: 'Select the correct sign for U',
       options: [
-        { image: require('./assets/image01.png') },
-        { image: require('./assets/image01.png') },
-        { image: require('./assets/image01.png') },
-        { image: require('./assets/image01.png') },
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
       ],
       gridView: true,
     },
@@ -271,19 +291,19 @@ const QuizApp = () => {
       id: 22,
       title: 'Select the correct sign for V',
       options: [
-        { image: require('./assets/image01.png') },
-        { image: require('./assets/image01.png') },
-        { image: require('./assets/image01.png') },
-        { image: require('./assets/image01.png') },
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
       ],
       gridView: true,
     },
 
     //IMAGE OF W
     {
-      id: 10,
+      id: 23,
       title: 'Find the sign ',
-      image: require('./assets/image01.png'),
+      image: require('./assets/sign1.png'),
       options: [
         { id: 'A', text: 'O' },
         { id: 'B', text: 'S' },
@@ -295,10 +315,10 @@ const QuizApp = () => {
       id: 24,
       title: 'Select the correct sign for X',
       options: [
-        { image: require('./assets/image01.png') },
-        { image: require('./assets/image01.png') },
-        { image: require('./assets/image01.png') },
-        { image: require('./assets/image01.png') },
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
       ],
       gridView: true,
     },
@@ -307,19 +327,19 @@ const QuizApp = () => {
       id: 25,
       title: 'Select the correct sign for Y',
       options: [
-        { image: require('./assets/image01.png') },
-        { image: require('./assets/image01.png') },
-        { image: require('./assets/image01.png') },
-        { image: require('./assets/image01.png') },
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
       ],
       gridView: true,
     },
 
-    //IMAGE OF J
+    //IMAGE OF Z
     {
-      id: 10,
+      id: 26,
       title: 'Find the sign ',
-      image: require('./assets/image01.png'),
+      image: require('./assets/sign1.png'),
       options: [
         { id: 'A', text: 'X' },
         { id: 'B', text: 'Z' },
@@ -328,40 +348,97 @@ const QuizApp = () => {
     },
   ];
 
-  // Move to the next question
+  // Start the quiz
+  const startQuiz = () => {
+    setCurrentQuestion(0);
+    setSelectedAnswer(null);
+    setQuizHistory([]);
+    setShowStartScreen(false);
+  };
+
+  // Move to the next question and save current answer to history
   const handleContinue = () => {
+    // Update quiz history
+    const updatedHistory = [...quizHistory];
+    updatedHistory[currentQuestion] = selectedAnswer;
+    setQuizHistory(updatedHistory);
+
     if (currentQuestion < questions.length - 1) {
       setCurrentQuestion(currentQuestion + 1);
       setSelectedAnswer(null);
     } else {
-      // Show completion alert
+      // Show completion alert with options
       Alert.alert(
         "Quiz Completed!",
         "Congratulations! You've completed the quiz.",
         [
-          { text: "Back to Start", onPress: () => setShowStartScreen(true) }
-        ]
+          { 
+            text: "Review Answers", 
+            onPress: () => {
+              // You could add a review screen here
+              setShowStartScreen(false);
+            } 
+          },
+          { 
+            text: "Back to Start", 
+            onPress: () => {
+              setShowStartScreen(true);
+            }
+          }
+        ],
+        { cancelable: false }
       );
     }
   };
 
-  // Move to the previous question
+  // Enhanced back functionality
   const handleBack = () => {
     if (currentQuestion > 0) {
-      setCurrentQuestion(currentQuestion - 1);
-      setSelectedAnswer(null);
+      Alert.alert(
+        "Go Back",
+        "Go back to previous question?",
+        [
+          { text: "Cancel", style: "cancel" },
+          { 
+            text: "Go Back", 
+            onPress: () => {
+              const prevQuestion = currentQuestion - 1;
+              setCurrentQuestion(prevQuestion);
+              // Restore previous answer if available
+              setSelectedAnswer(quizHistory[prevQuestion] !== undefined ? quizHistory[prevQuestion] : null);
+            } 
+          }
+        ]
+      );
+    } else {
+      // If on first question, ask if user wants to return to start screen
+      handleQuit();
     }
   };
 
-  // Quit confirmation alert
+  // Enhanced quit confirmation with save progress option
   const handleQuit = () => {
     Alert.alert(
-      "Quit Quiz",
-      "Are you sure you want to quit?",
+      "Exit Quiz",
+      "What would you like to do?",
       [
         { text: "Cancel", style: "cancel" },
-        { text: "Yes", onPress: () => setShowStartScreen(true) }
-      ]
+        { 
+          text: "Quit Without Saving", 
+          style: "destructive",
+          onPress: () => {
+            setShowStartScreen(true);
+          }
+        },
+        {
+          text: "Return to Start",
+          onPress: () => {
+            // Save progress and go back to start screen
+            setShowStartScreen(true);
+          }
+        }
+      ],
+      { cancelable: true }
     );
   };
 
@@ -372,7 +449,7 @@ const QuizApp = () => {
         <StatusBar barStyle="light-content" />
         <View style={styles.welcomeLogoContainer}>
           <Text style={styles.appTitle}>Sign Language Quiz</Text>
-          <Image source={require('./assets/image01.png')} style={styles.welcomeImage} />
+          <Image source={require('./assets/sign1.png')} style={styles.welcomeImage} />
           <Text style={styles.welcomeText}>Test your sign language knowledge!</Text>
           <Text style={styles.welcomeSubtext}>Learn, practice, and master sign language through interactive quizzes</Text>
         </View>
@@ -380,7 +457,7 @@ const QuizApp = () => {
         <View style={styles.welcomeButtonsContainer}>
           <TouchableOpacity 
             style={styles.startQuizButton} 
-            onPress={() => setShowStartScreen(false)}
+            onPress={startQuiz}
           >
             <Text style={styles.startQuizButtonText}>Start Quiz</Text>
           </TouchableOpacity>
@@ -492,17 +569,13 @@ const QuizApp = () => {
     <SafeAreaView style={styles.quizScreenContainer}>
       <StatusBar barStyle="dark-content" />
       
-      {/* Enhanced Header */}
+      {/* Enhanced Header with improved back button */}
       <View style={styles.enhancedHeader}>
         <TouchableOpacity
           style={styles.enhancedBackButton}
           onPress={handleBack}
-          disabled={currentQuestion === 0}
         >
-          <Text style={[
-            styles.backButtonText,
-            currentQuestion === 0 && styles.disabledBackButton
-          ]}>
+          <Text style={styles.backButtonText}>
             &#10094;
           </Text>
         </TouchableOpacity>
