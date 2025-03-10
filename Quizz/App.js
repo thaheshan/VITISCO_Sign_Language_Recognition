@@ -17,6 +17,8 @@ const { width, height } = Dimensions.get('window');
 
 const QuizApp = () => {
   const [showStartScreen, setShowStartScreen] = useState(true);
+  const [showLanguageSelection, setShowLanguageSelection] = useState(true);
+  const [selectedLanguage, setSelectedLanguage] = useState(null);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState(null);
   const [quizHistory, setQuizHistory] = useState([]);
@@ -26,6 +28,10 @@ const QuizApp = () => {
     const backAction = () => {
       if (!showStartScreen) {
         handleBack();
+        return true;
+      } else if (!showLanguageSelection && showStartScreen) {
+        // Go back to language selection screen
+        setShowLanguageSelection(true);
         return true;
       }
       return false;
@@ -37,10 +43,10 @@ const QuizApp = () => {
     );
 
     return () => backHandler.remove();
-  }, [showStartScreen, currentQuestion]);
+  }, [showStartScreen, showLanguageSelection, currentQuestion]);
 
   // Quiz questions data for english letters 
-  const questions = [
+  const englishQuestions = [
     {
       id: 1,
       title: 'Select the correct sign for A',
@@ -83,7 +89,7 @@ const QuizApp = () => {
         { id: 'C', text: 'B' },
       ],
     },
-
+    // ... rest of the English questions remain the same
     {
       id: 5,
       title: 'Select the correct sign for E',
@@ -255,7 +261,7 @@ const QuizApp = () => {
     {
       id: 19,
       title: 'Find the sign ',
-      image: require('./assets/naan.jpg'),
+      image: require('./assets/sign1.png'),
       options: [
         { id: 'A', text: 'S' },
         { id: 'B', text: 'B' },
@@ -348,6 +354,50 @@ const QuizApp = () => {
     },
   ];
 
+  // Tamil quiz questions data (placeholder structure - you would need actual Tamil content)
+  const tamilQuestions = [
+    {
+      id: 1,
+      title: 'அ-க்கான சரியான சைகையைத் தேர்ந்தெடுக்கவும்',
+      image: require('./assets/sign1.png'),
+      options: [
+        { id: 'அ', text: 'அ' },
+        { id: 'ஆ', text: 'ஆ' },
+        { id: 'இ', text: 'இ' },
+      ],
+    },
+    {
+      id: 2,
+      title: 'ஆ-க்கான சரியான சைகையைத் தேர்ந்தெடுக்கவும்',
+      options: [
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+      ],
+      gridView: true,
+    },
+    // Add more Tamil questions following the same pattern
+  ];
+
+  // Get questions based on selected language
+  const getQuestions = () => {
+    if (selectedLanguage === 'english') {
+      return englishQuestions;
+    } else if (selectedLanguage === 'tamil') {
+      return tamilQuestions;
+    }
+    return [];
+  };
+
+  const questions = getQuestions();
+
+  // Handle language selection
+  const selectLanguage = (language) => {
+    setSelectedLanguage(language);
+    setShowLanguageSelection(false);
+  };
+
   // Start the quiz
   const startQuiz = () => {
     setCurrentQuestion(0);
@@ -424,6 +474,14 @@ const QuizApp = () => {
       [
         { text: "Cancel", style: "cancel" },
         { 
+          text: "Back to Language Selection", 
+          style: "default",
+          onPress: () => {
+            setShowStartScreen(true);
+            setShowLanguageSelection(true);
+          }
+        },
+        { 
           text: "Quit Without Saving", 
           style: "destructive",
           onPress: () => {
@@ -442,16 +500,71 @@ const QuizApp = () => {
     );
   };
 
-  // Enhanced Welcome Screen UI
-  if (showStartScreen) {
+  // Language Selection Screen
+  if (showLanguageSelection) {
     return (
-      <SafeAreaView style={styles.welcomeScreenContainer}>
+      <SafeAreaView style={styles.languageScreenContainer}>
         <StatusBar barStyle="light-content" />
         <View style={styles.welcomeLogoContainer}>
           <Text style={styles.appTitle}>Sign Language Quiz</Text>
           <Image source={require('./assets/sign1.png')} style={styles.welcomeImage} />
-          <Text style={styles.welcomeText}>Test your sign language knowledge!</Text>
-          <Text style={styles.welcomeSubtext}>Learn, practice, and master sign language through interactive quizzes</Text>
+          <Text style={styles.languageSelectionText}>Choose your language</Text>
+          <Text style={styles.languageSelectionSubtext}>Select the language you want to learn sign language for</Text>
+        </View>
+        
+        <View style={styles.languageButtonsContainer}>
+          <TouchableOpacity 
+            style={styles.languageButton} 
+            onPress={() => selectLanguage('english')}
+          >
+            <Text style={styles.languageButtonText}>English</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={styles.languageButton}
+            onPress={() => selectLanguage('tamil')}
+          >
+            <Text style={styles.languageButtonText}>தமிழ் (Tamil)</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  // Enhanced Welcome Screen UI (shown after language selection)
+  if (showStartScreen) {
+    return (
+      <SafeAreaView style={styles.welcomeScreenContainer}>
+        <StatusBar barStyle="light-content" />
+        <View style={styles.enhancedHeader}>
+          <TouchableOpacity
+            style={styles.enhancedBackButton}
+            onPress={() => setShowLanguageSelection(true)}
+          >
+            <Text style={styles.backButtonText}>
+              &#10094;
+            </Text>
+          </TouchableOpacity>
+          
+          <Text style={styles.enhancedHeaderTitle}>
+            {selectedLanguage === 'english' ? 'English Sign Language' : 'தமிழ் சைகை மொழி (Tamil Sign Language)'}
+          </Text>
+          
+          <View style={{width: 40}} />
+        </View>
+        
+        <View style={styles.welcomeLogoContainer}>
+          <Text style={styles.welcomeText}>
+            {selectedLanguage === 'english' 
+              ? 'Test your sign language knowledge!' 
+              : 'உங்கள் சைகை மொழி அறிவைச் சோதிக்கவும்!'}
+          </Text>
+          <Image source={require('./assets/sign1.png')} style={styles.welcomeImage} />
+          <Text style={styles.welcomeSubtext}>
+            {selectedLanguage === 'english'
+              ? 'Learn, practice, and master sign language through interactive quizzes'
+              : 'ஊடாடும் வினாடி வினாக்கள் மூலம் சைகை மொழியைக் கற்றுக்கொள்ளுங்கள், பயிற்சி செய்யுங்கள் மற்றும் தேர்ச்சி பெறுங்கள்'}
+          </Text>
         </View>
         
         <View style={styles.welcomeButtonsContainer}>
@@ -459,13 +572,17 @@ const QuizApp = () => {
             style={styles.startQuizButton} 
             onPress={startQuiz}
           >
-            <Text style={styles.startQuizButtonText}>Start Quiz</Text>
+            <Text style={styles.startQuizButtonText}>
+              {selectedLanguage === 'english' ? 'Start Quiz' : 'தேர்வைத் தொடங்கு'}
+            </Text>
           </TouchableOpacity>
           
           <TouchableOpacity 
             style={styles.learnMoreButton}
           >
-            <Text style={styles.learnMoreButtonText}>Learn More</Text>
+            <Text style={styles.learnMoreButtonText}>
+              {selectedLanguage === 'english' ? 'Learn More' : 'மேலும் அறிக'}
+            </Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -485,7 +602,11 @@ const QuizApp = () => {
           />
         </View>
       </View>
-      <Text style={styles.progressText}>Question {currentQuestion + 1} of {questions.length}</Text>
+      <Text style={styles.progressText}>
+        {selectedLanguage === 'english' 
+          ? `Question ${currentQuestion + 1} of ${questions.length}`
+          : `கேள்வி ${currentQuestion + 1} / ${questions.length}`}
+      </Text>
     </View>
   );
 
@@ -580,7 +701,9 @@ const QuizApp = () => {
           </Text>
         </TouchableOpacity>
         
-        <Text style={styles.enhancedHeaderTitle}>Sign Language Quiz</Text>
+        <Text style={styles.enhancedHeaderTitle}>
+          {selectedLanguage === 'english' ? 'Sign Language Quiz' : 'சைகை மொழி வினாடி வினா'}
+        </Text>
         
         <TouchableOpacity style={styles.closeButtonContainer} onPress={handleQuit}>
           <Text style={styles.closeButtonText}>✕</Text>
@@ -601,7 +724,9 @@ const QuizApp = () => {
           disabled={selectedAnswer === null}
         >
           <Text style={styles.enhancedContinueButtonText}>
-            {currentQuestion < questions.length - 1 ? "CONTINUE" : "FINISH QUIZ"}
+            {selectedLanguage === 'english' 
+              ? (currentQuestion < questions.length - 1 ? "CONTINUE" : "FINISH QUIZ")
+              : (currentQuestion < questions.length - 1 ? "தொடரவும்" : "தேர்வை முடிக்கவும்")}
           </Text>
         </TouchableOpacity>
       </View>
@@ -610,6 +735,51 @@ const QuizApp = () => {
 };
 
 const styles = StyleSheet.create({
+  // Language Selection Screen Styles
+  languageScreenContainer: {
+    flex: 1,
+    backgroundColor: '#6A5ACD', // Rich purple background
+    justifyContent: 'space-between',
+    padding: 20,
+  },
+  languageSelectionText: {
+    fontSize: 24,
+    fontWeight: '600',
+    color: 'white',
+    textAlign: 'center',
+    marginBottom: 10,
+  },
+  languageSelectionSubtext: {
+    fontSize: 16,
+    color: 'rgba(255, 255, 255, 0.8)',
+    textAlign: 'center',
+    marginHorizontal: 20,
+    lineHeight: 22,
+  },
+  languageButtonsContainer: {
+    marginBottom: 50,
+    alignItems: 'center',
+    gap: 20,
+  },
+  languageButton: {
+    backgroundColor: 'white',
+    paddingVertical: 16,
+    paddingHorizontal: 40,
+    borderRadius: 30,
+    width: '80%',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 7,
+  },
+  languageButtonText: {
+    color: '#6A5ACD',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  
   // Enhanced Welcome Screen Styles
   welcomeScreenContainer: {
     flex: 1,
@@ -619,7 +789,7 @@ const styles = StyleSheet.create({
   },
   welcomeLogoContainer: {
     alignItems: 'center',
-    marginTop: 60,
+    marginTop: 40,
   },
   appTitle: {
     fontSize: 32,
@@ -634,7 +804,7 @@ const styles = StyleSheet.create({
     width: 180,
     height: 180,
     resizeMode: 'contain',
-    marginBottom: 40,
+    marginVertical: 30,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.3,
@@ -716,6 +886,7 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: '600',
     color: '#ffffff',
+    textAlign: 'center',
   },
   enhancedBackButton: {
     padding: 8,
@@ -766,6 +937,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   progressText: {
+
     textAlign: 'right',
     color: '#6C757D',
     fontSize: 14,
