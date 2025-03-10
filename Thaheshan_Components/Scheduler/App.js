@@ -60,26 +60,31 @@ const Icons = {
       <Text style={{ fontSize: 18 }}>📅</Text>
     </View>
   ),
+  
   Clock: (props) => (
     <View style={[styles.icon, props.style]}>
       <Text style={{ fontSize: 18 }}>⏰</Text>
     </View>
   ),
+
   Book: (props) => (
     <View style={[styles.icon, props.style]}>
       <Text style={{ fontSize: 18 }}>📚</Text>
     </View>
   ),
+
   Quiz: (props) => (
     <View style={[styles.icon, props.style]}>
       <Text style={{ fontSize: 18 }}>❓</Text>
     </View>
   ),
+
   Check: (props) => (
     <View style={[styles.icon, props.style]}>
       <Text style={{ fontSize: 18 }}>✅</Text>
     </View>
   ),
+
   Close: (props) => (
     <View style={[styles.icon, props.style]}>
       <Text style={{ fontSize: 18 }}>❌</Text>

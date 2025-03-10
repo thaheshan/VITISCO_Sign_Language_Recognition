@@ -1,798 +1,285 @@
-# Importing Libraries
-import numpy as np
-import math
 import cv2
-
-import os, sys
-import traceback
-import pyttsx3
-from keras.models import load_model
+import numpy as np
+import time
 from cvzone.HandTrackingModule import HandDetector
-from string import ascii_uppercase
-import enchant
-ddd=enchant.Dict("en-US")
-hd = HandDetector(maxHands=1)
-hd2 = HandDetector(maxHands=1)
-import tkinter as tk
-from PIL import Image, ImageTk
+from cvzone.ClassificationModule import Classifier
+from PIL import Image, ImageDraw, ImageFont
+import os
+import pygame  # For audio playback
+import threading
+from gtts import gTTS  # Google Text-to-Speech
 
-offset=29
+# Custom classifier that forces the input size to our desired value.
+class MyClassifier(Classifier):
+    def __init__(self, modelPath, input_size=200):
+        super().__init__(modelPath)
+        self.input_size = input_size
 
-
-os.environ["THEANO_FLAGS"] = "device=cuda, assert_no_cpu_op=True"
-
-
-# Application :
-
-class Application:
-
-    def __init__(self):
-        self.vs = cv2.VideoCapture(0)
-        self.current_image = None
-        self.model = load_model('./hand_gesture_model_2.h5')
-        self.speak_engine=pyttsx3.init()
-        self.speak_engine.setProperty("rate",100)
-        voices=self.speak_engine.getProperty("voices")
-        self.speak_engine.setProperty("voice",voices[0].id)
-
-        self.ct = {}
-        self.ct['blank'] = 0
-        self.blank_flag = 0
-        self.space_flag=False
-        self.next_flag=True
-        self.prev_char=""
-        self.count=-1
-        self.ten_prev_char=[]
-        for i in range(10):
-            self.ten_prev_char.append(" ")
-
-
-        for i in ascii_uppercase:
-            self.ct[i] = 0
-        print("Loaded model from disk")
-
-
-        self.root = tk.Tk()
-        self.root.title("Sign Language To Text Conversion")
-        self.root.protocol('WM_DELETE_WINDOW', self.destructor)
-        self.root.geometry("1300x700")
-
-        self.panel = tk.Label(self.root)
-        self.panel.place(x=100, y=3, width=480, height=640)
-
-        self.panel2 = tk.Label(self.root)  # initialize image panel
-        self.panel2.place(x=700, y=115, width=400, height=400)
-
-        self.T = tk.Label(self.root)
-        self.T.place(x=60, y=5)
-        self.T.config(text="Sign Language To Text Conversion", font=("Courier", 30, "bold"))
-
-        self.panel3 = tk.Label(self.root)  # Current Symbol
-        self.panel3.place(x=280, y=585)
-
-        self.T1 = tk.Label(self.root)
-        self.T1.place(x=10, y=580)
-        self.T1.config(text="Character :", font=("Courier", 30, "bold"))
-
-        self.panel5 = tk.Label(self.root)  # Sentence
-        self.panel5.place(x=260, y=632)
-
-        self.T3 = tk.Label(self.root)
-        self.T3.place(x=10, y=632)
-        self.T3.config(text="Sentence :", font=("Courier", 30, "bold"))
-
-        self.T4 = tk.Label(self.root)
-        self.T4.place(x=10, y=700)
-        self.T4.config(text="Suggestions :", fg="red", font=("Courier", 30, "bold"))
-
-
-        self.b1=tk.Button(self.root)
-        self.b1.place(x=390,y=700)
-
-        self.b2 = tk.Button(self.root)
-        self.b2.place(x=590, y=700)
-
-        self.b3 = tk.Button(self.root)
-        self.b3.place(x=790, y=700)
-
-        self.b4 = tk.Button(self.root)
-        self.b4.place(x=990, y=700)
-
-        self.speak = tk.Button(self.root)
-        self.speak.place(x=1305, y=630)
-        self.speak.config(text="Speak", font=("Courier", 20), wraplength=100, command=self.speak_fun)
-
-        self.clear = tk.Button(self.root)
-        self.clear.place(x=1205, y=630)
-        self.clear.config(text="Clear", font=("Courier", 20), wraplength=100, command=self.clear_fun)
-
-
-
-
-
-        self.str = " "
-        self.ccc=0
-        self.word = " "
-        self.current_symbol = "C"
-        self.photo = "Empty"
-
-
-        self.word1=" "
-        self.word2 = " "
-        self.word3 = " "
-        self.word4 = " "
-
-        self.video_loop()
-
-    def video_loop(self):
+    def getPrediction(self, img, draw=True):
         try:
-            ok, frame = self.vs.read()
-            cv2image = cv2.flip(frame, 1)
-            if cv2image.any:
-                hands = hd.findHands(cv2image, draw=False, flipType=True)
-                cv2image_copy=np.array(cv2image)
-                cv2image = cv2.cvtColor(cv2image, cv2.COLOR_BGR2RGB)
-                self.current_image = Image.fromarray(cv2image)
-                imgtk = ImageTk.PhotoImage(image=self.current_image)
-                self.panel.imgtk = imgtk
-                self.panel.config(image=imgtk)
+            img_resized = cv2.resize(img, (self.input_size, self.input_size))
+            blob = cv2.dnn.blobFromImage(img_resized, scalefactor=1/255.0, size=(self.input_size, self.input_size), swapRB=True)
+            
+            # Convert (1, 3, H, W) → (1, H, W, 3)
+            blob = np.transpose(blob, (0, 2, 3, 1))  
 
-                if hands[0]:
-                    hand = hands[0]
-                    map = hand[0]
-                    x, y, w, h=map['bbox']
-                    image = cv2image_copy[y - offset:y + h + offset, x - offset:x + w + offset]
+            prediction = self.model.predict(blob)
+            index = np.argmax(prediction)
+            return prediction[0], index
+        except Exception as e:
+            print("Error in prediction:", e)
+            return [0]*10, 0  # Return a default value to prevent crashes
 
-                    white = cv2.imread("white.jpg")
-                    # img_final=img_final1=img_final2=0
-                    if image.all:
-                        handz = hd2.findHands(image, draw=False, flipType=True)
-                        self.ccc += 1
-                        if handz[0]:
-                            hand = handz[0]
-                            handmap=hand[0]
-                            self.pts = handmap['lmList']
-                            # x1,y1,w1,h1=hand['bbox']
+# Function to draw Sinhala text on an OpenCV image
+def putSinhalaText(img, text, position, font_path="./Iskoola Pota Regular.ttf", font_size=32, color=(0, 0, 0)):
+    """
+    Draw Sinhala text on an OpenCV image using PIL.
+    - img: OpenCV image
+    - text: Sinhala text
+    - position: Tuple (x, y)
+    - font_path: Path to Sinhala-supporting TTF font
+    - font_size: Font size
+    - color: Text color (BGR)
+    """
+    pil_img = Image.fromarray(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
+    draw = ImageDraw.Draw(pil_img)
 
-                            os = ((400 - w) // 2) - 15
-                            os1 = ((400 - h) // 2) - 15
-                            for t in range(0, 4, 1):
-                                cv2.line(white, (self.pts[t][0] + os, self.pts[t][1] + os1), (self.pts[t + 1][0] + os, self.pts[t + 1][1] + os1),
-                                         (0, 255, 0), 3)
-                            for t in range(5, 8, 1):
-                                cv2.line(white, (self.pts[t][0] + os, self.pts[t][1] + os1), (self.pts[t + 1][0] + os, self.pts[t + 1][1] + os1),
-                                         (0, 255, 0), 3)
-                            for t in range(9, 12, 1):
-                                cv2.line(white, (self.pts[t][0] + os, self.pts[t][1] + os1), (self.pts[t + 1][0] + os, self.pts[t + 1][1] + os1),
-                                         (0, 255, 0), 3)
-                            for t in range(13, 16, 1):
-                                cv2.line(white, (self.pts[t][0] + os, self.pts[t][1] + os1), (self.pts[t + 1][0] + os, self.pts[t + 1][1] + os1),
-                                         (0, 255, 0), 3)
-                            for t in range(17, 20, 1):
-                                cv2.line(white, (self.pts[t][0] + os, self.pts[t][1] + os1), (self.pts[t + 1][0] + os, self.pts[t + 1][1] + os1),
-                                         (0, 255, 0), 3)
-                            cv2.line(white, (self.pts[5][0] + os, self.pts[5][1] + os1), (self.pts[9][0] + os, self.pts[9][1] + os1), (0, 255, 0),
-                                     3)
-                            cv2.line(white, (self.pts[9][0] + os, self.pts[9][1] + os1), (self.pts[13][0] + os, self.pts[13][1] + os1), (0, 255, 0),
-                                     3)
-                            cv2.line(white, (self.pts[13][0] + os, self.pts[13][1] + os1), (self.pts[17][0] + os, self.pts[17][1] + os1),
-                                     (0, 255, 0), 3)
-                            cv2.line(white, (self.pts[0][0] + os, self.pts[0][1] + os1), (self.pts[5][0] + os, self.pts[5][1] + os1), (0, 255, 0),
-                                     3)
-                            cv2.line(white, (self.pts[0][0] + os, self.pts[0][1] + os1), (self.pts[17][0] + os, self.pts[17][1] + os1), (0, 255, 0),
-                                     3)
+    try:
+        font = ImageFont.truetype(font_path, font_size)
+    except Exception as e:
+        print("Error loading font:", e)
+        return img  # Return original image if font loading fails
 
-                            for i in range(21):
-                                cv2.circle(white, (self.pts[i][0] + os, self.pts[i][1] + os1), 2, (0, 0, 255), 1)
+    draw.text(position, text, font=font, fill=color)
+    return cv2.cvtColor(np.array(pil_img), cv2.COLOR_RGB2BGR)
 
-                            res=white
-                            self.predict(res)
+# Text-to-Speech function for Sinhala
+def speak_text(text, lang='si'):
+    """
+    Convert text to speech and play it
+    - text: Text to speak
+    - lang: Language code ('si' for Sinhala)
+    """
+    # Create output directory if it doesn't exist
+    if not os.path.exists("audio_cache"):
+        os.makedirs("audio_cache")
+    
+    # Generate a filename based on the text content
+    filename = f"audio_cache/speech_{hash(text) % 10000}.mp3"
+    
+    # Only generate speech file if it doesn't already exist
+    if not os.path.exists(filename):
+        try:
+            tts = gTTS(text=text, lang=lang, slow=False)
+            tts.save(filename)
+        except Exception as e:
+            print(f"Error generating speech: {e}")
+            return
+    
+    # Play the audio in a non-blocking way
+    try:
+        pygame.mixer.init()
+        pygame.mixer.music.load(filename)
+        pygame.mixer.music.play()
+    except Exception as e:
+        print(f"Error playing audio: {e}")
 
-                            self.current_image2 = Image.fromarray(res)
+# Class to manage text accumulation and sentence formation
+class TextAccumulator:
+    def __init__(self):
+        self.current_text = ""
+        self.sentence_buffer = ""
+        self.last_gesture = ""
+        self.last_gesture_time = 0
+        self.sentence_timeout = 5  # seconds to wait before considering a sentence complete
+        self.speaking_lock = threading.Lock()
+        
+    def add_gesture(self, gesture, confidence):
+        current_time = time.time()
+        
+        # Skip if same gesture detected multiple times in a row (with a threshold)
+        if gesture == self.last_gesture and current_time - self.last_gesture_time < 1.0:
+            return False
+        
+        # Check if we should finalize the current sentence due to timeout
+        if current_time - self.last_gesture_time > self.sentence_timeout and self.sentence_buffer:
+            self.finalize_sentence()
+        
+        # Add the new gesture to our buffer
+        self.sentence_buffer += gesture
+        self.last_gesture = gesture
+        self.last_gesture_time = current_time
+        return True
+    
+    def finalize_sentence(self):
+        """Finalize the current sentence and speak it"""
+        if not self.sentence_buffer:
+            return
+        
+        # Add the sentence to our accumulated text
+        if self.current_text:
+            self.current_text += " "
+        self.current_text += self.sentence_buffer
+        
+        # Speak the sentence in a separate thread
+        threading.Thread(target=self._speak_sentence, args=(self.sentence_buffer,)).start()
+        
+        # Clear the buffer for the next sentence
+        self.sentence_buffer = ""
+    
+    def _speak_sentence(self, text):
+        with self.speaking_lock:
+            speak_text(text)
+    
+    def get_display_text(self):
+        """Get text to display on screen"""
+        if self.current_text and self.sentence_buffer:
+            return f"{self.current_text} | {self.sentence_buffer}"
+        elif self.sentence_buffer:
+            return f"| {self.sentence_buffer}"
+        else:
+            return self.current_text
+    
+    def clear_all(self):
+        """Clear all accumulated text"""
+        self.current_text = ""
+        self.sentence_buffer = ""
 
-                            imgtk = ImageTk.PhotoImage(image=self.current_image2)
+# Initialize pygame for audio
+pygame.init()
 
-                            self.panel2.imgtk = imgtk
-                            self.panel2.config(image=imgtk)
+# Initialize camera
+cap = cv2.VideoCapture(0)
+detector = HandDetector(maxHands=2)
 
-                            self.panel3.config(text=self.current_symbol, font=("Courier", 30))
+# Initialize text accumulator
+text_accumulator = TextAccumulator()
 
-                            #self.panel4.config(text=self.word, font=("Courier", 30))
+# Load classifier model safely
+model_path = "./hand_gesture_model_sinhala.h5"
+try:
+    classifier = MyClassifier(model_path, input_size=200)
+except Exception as e:
+    print(f"Error loading model: {e}")
+    exit()
 
+# Load gesture actions dynamically (ensure labels.txt is UTF-8 encoded)
+try:
+    with open("labels.txt", "r", encoding="utf-8") as f:
+        actions = [line.strip() for line in f.readlines()]
+except FileNotFoundError:
+    actions = ['ං', 'ග්', 'චි', 'ටි', 'ඩි', 'ත්', 'ද්', 'න්', 'ෆ', 'ෟ']  # Default fallback labels
 
+# Image size parameters
+offset = 20
+imgSize = 200  
+fps_limit = 30
+prev_time = time.time()
 
-                            self.b1.config(text=self.word1, font=("Courier", 20), wraplength=825, command=self.action1)
-                            self.b2.config(text=self.word2, font=("Courier", 20), wraplength=825,  command=self.action2)
-                            self.b3.config(text=self.word3, font=("Courier", 20), wraplength=825,  command=self.action3)
-                            self.b4.config(text=self.word4, font=("Courier", 20), wraplength=825,  command=self.action4)
+# Control variables
+confidence_threshold = 75  # Minimum confidence to accept a gesture
+is_paused = False
+last_key_press_time = 0
 
-                self.panel5.config(text=self.str, font=("Courier", 30), wraplength=1025)
-        except Exception:
-            print(Exception.__traceback__)
-            hands = hd.findHands(cv2image, draw=False, flipType=True)
-            cv2image_copy=np.array(cv2image)
-            cv2image = cv2.cvtColor(cv2image, cv2.COLOR_BGR2RGB)
-            self.current_image = Image.fromarray(cv2image)
-            imgtk = ImageTk.PhotoImage(image=self.current_image)
-            self.panel.imgtk = imgtk
-            self.panel.config(image=imgtk)
+print("Controls:")
+print("  'q' - Quit")
+print("  'c' - Clear text")
+print("  'p' - Pause/Resume detection")
+print("  's' - Speak current sentence")
+print("  'space' - Finalize current sentence")
 
-            if hands:
-                # #print(" --------- lmlist=",hands[1])
-                hand = hands[0]
+while True:
+    success, img = cap.read()
+    if not success:
+        print("Failed to capture image from webcam")
+        break
+    
+    imgOutput = img.copy()
+    
+    # Add text display area at the bottom
+    text_area = np.ones((100, img.shape[1], 3), dtype=np.uint8) * 255
+    imgOutput = np.vstack([imgOutput, text_area])
+    
+    # Display current accumulated text
+    display_text = text_accumulator.get_display_text()
+    imgOutput = putSinhalaText(imgOutput, display_text, (10, img.shape[0] + 30))
+    
+    # Process hand gestures only if not paused
+    if not is_paused:
+        hands, img = detector.findHands(img)
+
+        if hands:
+            for hand in hands:
                 x, y, w, h = hand['bbox']
-                image = cv2image_copy[y - offset:y + h + offset, x - offset:x + w + offset]
 
-                white = cv2.imread("C:\\Users\\devansh raval\\PycharmProjects\\pythonProject\\white.jpg")
-                # img_final=img_final1=img_final2=0
-
-                handz = hd2.findHands(image, draw=False, flipType=True)
-                print(" ", self.ccc)
-                self.ccc += 1
-                if handz:
-                    hand = handz[0]
-                    self.pts = hand['lmList']
-                    # x1,y1,w1,h1=hand['bbox']
-
-                    os = ((400 - w) // 2) - 15
-                    os1 = ((400 - h) // 2) - 15
-                    for t in range(0, 4, 1):
-                        cv2.line(white, (self.pts[t][0] + os, self.pts[t][1] + os1), (self.pts[t + 1][0] + os, self.pts[t + 1][1] + os1),
-                                 (0, 255, 0), 3)
-                    for t in range(5, 8, 1):
-                        cv2.line(white, (self.pts[t][0] + os, self.pts[t][1] + os1), (self.pts[t + 1][0] + os, self.pts[t + 1][1] + os1),
-                                 (0, 255, 0), 3)
-                    for t in range(9, 12, 1):
-                        cv2.line(white, (self.pts[t][0] + os, self.pts[t][1] + os1), (self.pts[t + 1][0] + os, self.pts[t + 1][1] + os1),
-                                 (0, 255, 0), 3)
-                    for t in range(13, 16, 1):
-                        cv2.line(white, (self.pts[t][0] + os, self.pts[t][1] + os1), (self.pts[t + 1][0] + os, self.pts[t + 1][1] + os1),
-                                 (0, 255, 0), 3)
-                    for t in range(17, 20, 1):
-                        cv2.line(white, (self.pts[t][0] + os, self.pts[t][1] + os1), (self.pts[t + 1][0] + os, self.pts[t + 1][1] + os1),
-                                 (0, 255, 0), 3)
-                    cv2.line(white, (self.pts[5][0] + os, self.pts[5][1] + os1), (self.pts[9][0] + os, self.pts[9][1] + os1), (0, 255, 0),
-                             3)
-                    cv2.line(white, (self.pts[9][0] + os, self.pts[9][1] + os1), (self.pts[13][0] + os, self.pts[13][1] + os1), (0, 255, 0),
-                             3)
-                    cv2.line(white, (self.pts[13][0] + os, self.pts[13][1] + os1), (self.pts[17][0] + os, self.pts[17][1] + os1),
-                             (0, 255, 0), 3)
-                    cv2.line(white, (self.pts[0][0] + os, self.pts[0][1] + os1), (self.pts[5][0] + os, self.pts[5][1] + os1), (0, 255, 0),
-                             3)
-                    cv2.line(white, (self.pts[0][0] + os, self.pts[0][1] + os1), (self.pts[17][0] + os, self.pts[17][1] + os1), (0, 255, 0),
-                             3)
-
-                    for i in range(21):
-                        cv2.circle(white, (self.pts[i][0] + os, self.pts[i][1] + os1), 2, (0, 0, 255), 1)
-
-                    res=white
-                    self.predict(res)
-
-                    self.current_image2 = Image.fromarray(res)
-
-                    imgtk = ImageTk.PhotoImage(image=self.current_image2)
-
-                    self.panel2.imgtk = imgtk
-                    self.panel2.config(image=imgtk)
-
-                    self.panel3.config(text=self.current_symbol, font=("Courier", 30))
-
-                    #self.panel4.config(text=self.word, font=("Courier", 30))
-
-
-
-                    self.b1.config(text=self.word1, font=("Courier", 20), wraplength=825, command=self.action1)
-                    self.b2.config(text=self.word2, font=("Courier", 20), wraplength=825,  command=self.action2)
-                    self.b3.config(text=self.word3, font=("Courier", 20), wraplength=825,  command=self.action3)
-                    self.b4.config(text=self.word4, font=("Courier", 20), wraplength=825,  command=self.action4)
-
-            self.panel5.config(text=self.str, font=("Courier", 30), wraplength=1025)
-        except Exception:
-            print("==", traceback.format_exc())
-        finally:
-            self.root.after(1, self.video_loop)
-
-    def distance(self,x,y):
-        return math.sqrt(((x[0] - y[0]) ** 2) + ((x[1] - y[1]) ** 2))
-
-    def action1(self):
-        idx_space = self.str.rfind(" ")
-        idx_word = self.str.find(self.word, idx_space)
-        last_idx = len(self.str)
-        self.str = self.str[:idx_word]
-        self.str = self.str + self.word1.upper()
-
-
-    def action2(self):
-        idx_space = self.str.rfind(" ")
-        idx_word = self.str.find(self.word, idx_space)
-        last_idx = len(self.str)
-        self.str=self.str[:idx_word]
-        self.str=self.str+self.word2.upper()
-        #self.str[idx_word:last_idx] = self.word2
-
-
-    def action3(self):
-        idx_space = self.str.rfind(" ")
-        idx_word = self.str.find(self.word, idx_space)
-        last_idx = len(self.str)
-        self.str = self.str[:idx_word]
-        self.str = self.str + self.word3.upper()
-
-
-
-    def action4(self):
-        idx_space = self.str.rfind(" ")
-        idx_word = self.str.find(self.word, idx_space)
-        last_idx = len(self.str)
-        self.str = self.str[:idx_word]
-        self.str = self.str + self.word4.upper()
-
-
-    def speak_fun(self):
-        self.speak_engine.say(self.str)
-        self.speak_engine.runAndWait()
-
-
-    def clear_fun(self):
-        self.str=" "
-        self.word1 = " "
-        self.word2 = " "
-        self.word3 = " "
-        self.word4 = " "
-
-    def predict(self, test_image):
-        white=test_image
-        white = white.reshape(1, 400, 400, 3)
-        prob = np.array(self.model.predict(white)[0], dtype='float32')
-        ch1 = np.argmax(prob, axis=0)
-        prob[ch1] = 0
-        ch2 = np.argmax(prob, axis=0)
-        prob[ch2] = 0
-        ch3 = np.argmax(prob, axis=0)
-        prob[ch3] = 0
-
-        pl = [ch1, ch2]
-
-        # condition for [Aemnst]
-        l = [[5, 2], [5, 3], [3, 5], [3, 6], [3, 0], [3, 2], [6, 4], [6, 1], [6, 2], [6, 6], [6, 7], [6, 0], [6, 5],
-             [4, 1], [1, 0], [1, 1], [6, 3], [1, 6], [5, 6], [5, 1], [4, 5], [1, 4], [1, 5], [2, 0], [2, 6], [4, 6],
-             [1, 0], [5, 7], [1, 6], [6, 1], [7, 6], [2, 5], [7, 1], [5, 4], [7, 0], [7, 5], [7, 2]]
-        if pl in l:
-            if (self.pts[6][1] < self.pts[8][1] and self.pts[10][1] < self.pts[12][1] and self.pts[14][1] < self.pts[16][1] and self.pts[18][1] < self.pts[20][
-                1]):
-                ch1 = 0
-
-        # condition for [o][s]
-        l = [[2, 2], [2, 1]]
-        if pl in l:
-            if (self.pts[5][0] < self.pts[4][0]):
-                ch1 = 0
-                print("++++++++++++++++++")
-                # print("00000")
-
-        # condition for [c0][aemnst]
-        l = [[0, 0], [0, 6], [0, 2], [0, 5], [0, 1], [0, 7], [5, 2], [7, 6], [7, 1]]
-        pl = [ch1, ch2]
-        if pl in l:
-            if (self.pts[0][0] > self.pts[8][0] and self.pts[0][0] > self.pts[4][0] and self.pts[0][0] > self.pts[12][0] and self.pts[0][0] > self.pts[16][
-                0] and self.pts[0][0] > self.pts[20][0]) and self.pts[5][0] > self.pts[4][0]:
-                ch1 = 2
-
-        # condition for [c0][aemnst]
-        l = [[6, 0], [6, 6], [6, 2]]
-        pl = [ch1, ch2]
-        if pl in l:
-            if self.distance(self.pts[8], self.pts[16]) < 52:
-                ch1 = 2
-
-
-        # condition for [gh][bdfikruvw]
-        l = [[1, 4], [1, 5], [1, 6], [1, 3], [1, 0]]
-        pl = [ch1, ch2]
-
-        if pl in l:
-            if self.pts[6][1] > self.pts[8][1] and self.pts[14][1] < self.pts[16][1] and self.pts[18][1] < self.pts[20][1] and self.pts[0][0] < self.pts[8][
-                0] and self.pts[0][0] < self.pts[12][0] and self.pts[0][0] < self.pts[16][0] and self.pts[0][0] < self.pts[20][0]:
-                ch1 = 3
-
-
-
-        # con for [gh][l]
-        l = [[4, 6], [4, 1], [4, 5], [4, 3], [4, 7]]
-        pl = [ch1, ch2]
-        if pl in l:
-            if self.pts[4][0] > self.pts[0][0]:
-                ch1 = 3
-
-        # con for [gh][pqz]
-        l = [[5, 3], [5, 0], [5, 7], [5, 4], [5, 2], [5, 1], [5, 5]]
-        pl = [ch1, ch2]
-        if pl in l:
-            if self.pts[2][1] + 15 < self.pts[16][1]:
-                ch1 = 3
-
-        # con for [l][x]
-        l = [[6, 4], [6, 1], [6, 2]]
-        pl = [ch1, ch2]
-        if pl in l:
-            if self.distance(self.pts[4], self.pts[11]) > 55:
-                ch1 = 4
-
-        # con for [l][d]
-        l = [[1, 4], [1, 6], [1, 1]]
-        pl = [ch1, ch2]
-        if pl in l:
-            if (self.distance(self.pts[4], self.pts[11]) > 50) and (
-                    self.pts[6][1] > self.pts[8][1] and self.pts[10][1] < self.pts[12][1] and self.pts[14][1] < self.pts[16][1] and self.pts[18][1] <
-                    self.pts[20][1]):
-                ch1 = 4
-
-        # con for [l][gh]
-        l = [[3, 6], [3, 4]]
-        pl = [ch1, ch2]
-        if pl in l:
-            if (self.pts[4][0] < self.pts[0][0]):
-                ch1 = 4
-
-        # con for [l][c0]
-        l = [[2, 2], [2, 5], [2, 4]]
-        pl = [ch1, ch2]
-        if pl in l:
-            if (self.pts[1][0] < self.pts[12][0]):
-                ch1 = 4
-
-        # con for [l][c0]
-        l = [[2, 2], [2, 5], [2, 4]]
-        pl = [ch1, ch2]
-        if pl in l:
-            if (self.pts[1][0] < self.pts[12][0]):
-                ch1 = 4
-
-        # con for [gh][z]
-        l = [[3, 6], [3, 5], [3, 4]]
-        pl = [ch1, ch2]
-        if pl in l:
-            if (self.pts[6][1] > self.pts[8][1] and self.pts[10][1] < self.pts[12][1] and self.pts[14][1] < self.pts[16][1] and self.pts[18][1] < self.pts[20][
-                1]) and self.pts[4][1] > self.pts[10][1]:
-                ch1 = 5
-
-        # con for [gh][pq]
-        l = [[3, 2], [3, 1], [3, 6]]
-        pl = [ch1, ch2]
-        if pl in l:
-            if self.pts[4][1] + 17 > self.pts[8][1] and self.pts[4][1] + 17 > self.pts[12][1] and self.pts[4][1] + 17 > self.pts[16][1] and self.pts[4][
-                1] + 17 > self.pts[20][1]:
-                ch1 = 5
-
-        # con for [l][pqz]
-        l = [[4, 4], [4, 5], [4, 2], [7, 5], [7, 6], [7, 0]]
-        pl = [ch1, ch2]
-        if pl in l:
-            if self.pts[4][0] > self.pts[0][0]:
-                ch1 = 5
-
-        # con for [pqz][aemnst]
-        l = [[0, 2], [0, 6], [0, 1], [0, 5], [0, 0], [0, 7], [0, 4], [0, 3], [2, 7]]
-        pl = [ch1, ch2]
-        if pl in l:
-            if self.pts[0][0] < self.pts[8][0] and self.pts[0][0] < self.pts[12][0] and self.pts[0][0] < self.pts[16][0] and self.pts[0][0] < self.pts[20][0]:
-                ch1 = 5
-
-        # con for [pqz][yj]
-        l = [[5, 7], [5, 2], [5, 6]]
-        pl = [ch1, ch2]
-        if pl in l:
-            if self.pts[3][0] < self.pts[0][0]:
-                ch1 = 7
-
-        # con for [l][yj]
-        l = [[4, 6], [4, 2], [4, 4], [4, 1], [4, 5], [4, 7]]
-        pl = [ch1, ch2]
-        if pl in l:
-            if self.pts[6][1] < self.pts[8][1]:
-                ch1 = 7
-
-        # con for [x][yj]
-        l = [[6, 7], [0, 7], [0, 1], [0, 0], [6, 4], [6, 6], [6, 5], [6, 1]]
-        pl = [ch1, ch2]
-        if pl in l:
-            if self.pts[18][1] > self.pts[20][1]:
-                ch1 = 7
-
-        # condition for [x][aemnst]
-        l = [[0, 4], [0, 2], [0, 3], [0, 1], [0, 6]]
-        pl = [ch1, ch2]
-        if pl in l:
-            if self.pts[5][0] > self.pts[16][0]:
-                ch1 = 6
-
-
-        # condition for [yj][x]
-        print("2222  ch1=+++++++++++++++++", ch1, ",", ch2)
-        l = [[7, 2]]
-        pl = [ch1, ch2]
-        if pl in l:
-            if self.pts[18][1] < self.pts[20][1] and self.pts[8][1] < self.pts[10][1]:
-                ch1 = 6
-
-        # condition for [c0][x]
-        l = [[2, 1], [2, 2], [2, 6], [2, 7], [2, 0]]
-        pl = [ch1, ch2]
-        if pl in l:
-            if self.distance(self.pts[8], self.pts[16]) > 50:
-                ch1 = 6
-
-        # con for [l][x]
-
-        l = [[4, 6], [4, 2], [4, 1], [4, 4]]
-        pl = [ch1, ch2]
-        if pl in l:
-            if self.distance(self.pts[4], self.pts[11]) < 60:
-                ch1 = 6
-
-        # con for [x][d]
-        l = [[1, 4], [1, 6], [1, 0], [1, 2]]
-        pl = [ch1, ch2]
-        if pl in l:
-            if self.pts[5][0] - self.pts[4][0] - 15 > 0:
-                ch1 = 6
-
-        # con for [b][pqz]
-        l = [[5, 0], [5, 1], [5, 4], [5, 5], [5, 6], [6, 1], [7, 6], [0, 2], [7, 1], [7, 4], [6, 6], [7, 2], [5, 0],
-             [6, 3], [6, 4], [7, 5], [7, 2]]
-        pl = [ch1, ch2]
-        if pl in l:
-            if (self.pts[6][1] > self.pts[8][1] and self.pts[10][1] > self.pts[12][1] and self.pts[14][1] > self.pts[16][1] and self.pts[18][1] > self.pts[20][
-                1]):
-                ch1 = 1
-
-        # con for [f][pqz]
-        l = [[6, 1], [6, 0], [0, 3], [6, 4], [2, 2], [0, 6], [6, 2], [7, 6], [4, 6], [4, 1], [4, 2], [0, 2], [7, 1],
-             [7, 4], [6, 6], [7, 2], [7, 5], [7, 2]]
-        pl = [ch1, ch2]
-        if pl in l:
-            if (self.pts[6][1] < self.pts[8][1] and self.pts[10][1] > self.pts[12][1] and self.pts[14][1] > self.pts[16][1] and
-                    self.pts[18][1] > self.pts[20][1]):
-                ch1 = 1
-
-        l = [[6, 1], [6, 0], [4, 2], [4, 1], [4, 6], [4, 4]]
-        pl = [ch1, ch2]
-        if pl in l:
-            if (self.pts[10][1] > self.pts[12][1] and self.pts[14][1] > self.pts[16][1] and
-                    self.pts[18][1] > self.pts[20][1]):
-                ch1 = 1
-
-        # con for [d][pqz]
-        fg = 19
-        # print("_________________ch1=",ch1," ch2=",ch2)
-        l = [[5, 0], [3, 4], [3, 0], [3, 1], [3, 5], [5, 5], [5, 4], [5, 1], [7, 6]]
-        pl = [ch1, ch2]
-        if pl in l:
-            if ((self.pts[6][1] > self.pts[8][1] and self.pts[10][1] < self.pts[12][1] and self.pts[14][1] < self.pts[16][1] and
-                 self.pts[18][1] < self.pts[20][1]) and (self.pts[2][0] < self.pts[0][0]) and self.pts[4][1] > self.pts[14][1]):
-                ch1 = 1
-
-        l = [[4, 1], [4, 2], [4, 4]]
-        pl = [ch1, ch2]
-        if pl in l:
-            if (self.distance(self.pts[4], self.pts[11]) < 50) and (
-                    self.pts[6][1] > self.pts[8][1] and self.pts[10][1] < self.pts[12][1] and self.pts[14][1] < self.pts[16][1] and self.pts[18][1] <
-                    self.pts[20][1]):
-                ch1 = 1
-
-        l = [[3, 4], [3, 0], [3, 1], [3, 5], [3, 6]]
-        pl = [ch1, ch2]
-        if pl in l:
-            if ((self.pts[6][1] > self.pts[8][1] and self.pts[10][1] < self.pts[12][1] and self.pts[14][1] < self.pts[16][1] and
-                 self.pts[18][1] < self.pts[20][1]) and (self.pts[2][0] < self.pts[0][0]) and self.pts[14][1] < self.pts[4][1]):
-                ch1 = 1
-
-        l = [[6, 6], [6, 4], [6, 1], [6, 2]]
-        pl = [ch1, ch2]
-        if pl in l:
-            if self.pts[5][0] - self.pts[4][0] - 15 < 0:
-                ch1 = 1
-
-        # con for [i][pqz]
-        l = [[5, 4], [5, 5], [5, 1], [0, 3], [0, 7], [5, 0], [0, 2], [6, 2], [7, 5], [7, 1], [7, 6], [7, 7]]
-        pl = [ch1, ch2]
-        if pl in l:
-            if ((self.pts[6][1] < self.pts[8][1] and self.pts[10][1] < self.pts[12][1] and self.pts[14][1] < self.pts[16][1] and
-                 self.pts[18][1] > self.pts[20][1])):
-                ch1 = 1
-
-        # con for [yj][bfdi]
-        l = [[1, 5], [1, 7], [1, 1], [1, 6], [1, 3], [1, 0]]
-        pl = [ch1, ch2]
-        if pl in l:
-            if (self.pts[4][0] < self.pts[5][0] + 15) and (
-            (self.pts[6][1] < self.pts[8][1] and self.pts[10][1] < self.pts[12][1] and self.pts[14][1] < self.pts[16][1] and
-             self.pts[18][1] > self.pts[20][1])):
-                ch1 = 7
-
-        # con for [uvr]
-        l = [[5, 5], [5, 0], [5, 4], [5, 1], [4, 6], [4, 1], [7, 6], [3, 0], [3, 5]]
-        pl = [ch1, ch2]
-        if pl in l:
-            if ((self.pts[6][1] > self.pts[8][1] and self.pts[10][1] > self.pts[12][1] and self.pts[14][1] < self.pts[16][1] and
-                 self.pts[18][1] < self.pts[20][1])) and self.pts[4][1] > self.pts[14][1]:
-                ch1 = 1
-
-        # con for [w]
-        fg = 13
-        l = [[3, 5], [3, 0], [3, 6], [5, 1], [4, 1], [2, 0], [5, 0], [5, 5]]
-        pl = [ch1, ch2]
-        if pl in l:
-            if not (self.pts[0][0] + fg < self.pts[8][0] and self.pts[0][0] + fg < self.pts[12][0] and self.pts[0][0] + fg < self.pts[16][0] and
-                    self.pts[0][0] + fg < self.pts[20][0]) and not (
-                    self.pts[0][0] > self.pts[8][0] and self.pts[0][0] > self.pts[12][0] and self.pts[0][0] > self.pts[16][0] and self.pts[0][0] > self.pts[20][
-                0]) and self.distance(self.pts[4], self.pts[11]) < 50:
-                ch1 = 1
-
-        # con for [w]
-
-        l = [[5, 0], [5, 5], [0, 1]]
-        pl = [ch1, ch2]
-        if pl in l:
-            if self.pts[6][1] > self.pts[8][1] and self.pts[10][1] > self.pts[12][1] and self.pts[14][1] > self.pts[16][1]:
-                ch1 = 1
-
-        # -------------------------condn for 8 groups  ends
-
-        # -------------------------condn for subgroups  starts
-        #
-        if ch1 == 0:
-            ch1 = 'S'
-            if self.pts[4][0] < self.pts[6][0] and self.pts[4][0] < self.pts[10][0] and self.pts[4][0] < self.pts[14][0] and self.pts[4][0] < self.pts[18][0]:
-                ch1 = 'A'
-            if self.pts[4][0] > self.pts[6][0] and self.pts[4][0] < self.pts[10][0] and self.pts[4][0] < self.pts[14][0] and self.pts[4][0] < self.pts[18][
-                0] and self.pts[4][1] < self.pts[14][1] and self.pts[4][1] < self.pts[18][1]:
-                ch1 = 'T'
-            if self.pts[4][1] > self.pts[8][1] and self.pts[4][1] > self.pts[12][1] and self.pts[4][1] > self.pts[16][1] and self.pts[4][1] > self.pts[20][1]:
-                ch1 = 'E'
-            if self.pts[4][0] > self.pts[6][0] and self.pts[4][0] > self.pts[10][0] and self.pts[4][0] > self.pts[14][0] and self.pts[4][1] < self.pts[18][1]:
-                ch1 = 'M'
-            if self.pts[4][0] > self.pts[6][0] and self.pts[4][0] > self.pts[10][0] and self.pts[4][1] < self.pts[18][1] and self.pts[4][1] < self.pts[14][1]:
-                ch1 = 'N'
-
-        if ch1 == 2:
-            if self.distance(self.pts[12], self.pts[4]) > 42:
-                ch1 = 'C'
-            else:
-                ch1 = 'O'
-
-        if ch1 == 3:
-            if (self.distance(self.pts[8], self.pts[12])) > 72:
-                ch1 = 'G'
-            else:
-                ch1 = 'H'
-
-        if ch1 == 7:
-            if self.distance(self.pts[8], self.pts[4]) > 42:
-                ch1 = 'Y'
-            else:
-                ch1 = 'J'
-
-        if ch1 == 4:
-            ch1 = 'L'
-
-        if ch1 == 6:
-            ch1 = 'X'
-
-        if ch1 == 5:
-            if self.pts[4][0] > self.pts[12][0] and self.pts[4][0] > self.pts[16][0] and self.pts[4][0] > self.pts[20][0]:
-                if self.pts[8][1] < self.pts[5][1]:
-                    ch1 = 'Z'
-                else:
-                    ch1 = 'Q'
-            else:
-                ch1 = 'P'
-
-        if ch1 == 1:
-            if (self.pts[6][1] > self.pts[8][1] and self.pts[10][1] > self.pts[12][1] and self.pts[14][1] > self.pts[16][1] and self.pts[18][1] > self.pts[20][
-                1]):
-                ch1 = 'B'
-            if (self.pts[6][1] > self.pts[8][1] and self.pts[10][1] < self.pts[12][1] and self.pts[14][1] < self.pts[16][1] and self.pts[18][1] < self.pts[20][
-                1]):
-                ch1 = 'D'
-            if (self.pts[6][1] < self.pts[8][1] and self.pts[10][1] > self.pts[12][1] and self.pts[14][1] > self.pts[16][1] and self.pts[18][1] > self.pts[20][
-                1]):
-                ch1 = 'F'
-            if (self.pts[6][1] < self.pts[8][1] and self.pts[10][1] < self.pts[12][1] and self.pts[14][1] < self.pts[16][1] and self.pts[18][1] > self.pts[20][
-                1]):
-                ch1 = 'I'
-            if (self.pts[6][1] > self.pts[8][1] and self.pts[10][1] > self.pts[12][1] and self.pts[14][1] > self.pts[16][1] and self.pts[18][1] < self.pts[20][
-                1]):
-                ch1 = 'W'
-            if (self.pts[6][1] > self.pts[8][1] and self.pts[10][1] > self.pts[12][1] and self.pts[14][1] < self.pts[16][1] and self.pts[18][1] < self.pts[20][
-                1]) and self.pts[4][1] < self.pts[9][1]:
-                ch1 = 'K'
-            if ((self.distance(self.pts[8], self.pts[12]) - self.distance(self.pts[6], self.pts[10])) < 8) and (
-                    self.pts[6][1] > self.pts[8][1] and self.pts[10][1] > self.pts[12][1] and self.pts[14][1] < self.pts[16][1] and self.pts[18][1] <
-                    self.pts[20][1]):
-                ch1 = 'U'
-            if ((self.distance(self.pts[8], self.pts[12]) - self.distance(self.pts[6], self.pts[10])) >= 8) and (
-                    self.pts[6][1] > self.pts[8][1] and self.pts[10][1] > self.pts[12][1] and self.pts[14][1] < self.pts[16][1] and self.pts[18][1] <
-                    self.pts[20][1]) and (self.pts[4][1] > self.pts[9][1]):
-                ch1 = 'V'
-
-            if (self.pts[8][0] > self.pts[12][0]) and (
-                    self.pts[6][1] > self.pts[8][1] and self.pts[10][1] > self.pts[12][1] and self.pts[14][1] < self.pts[16][1] and self.pts[18][1] <
-                    self.pts[20][1]):
-                ch1 = 'R'
-
-        if ch1 == 1 or ch1 =='E' or ch1 =='S' or ch1 =='X' or ch1 =='Y' or ch1 =='B':
-            if (self.pts[6][1] > self.pts[8][1] and self.pts[10][1] < self.pts[12][1] and self.pts[14][1] < self.pts[16][1] and self.pts[18][1] > self.pts[20][1]):
-                ch1=" "
-
-
-
-        print(self.pts[4][0] < self.pts[5][0])
-        if ch1 == 'E' or ch1=='Y' or ch1=='B':
-            if (self.pts[4][0] < self.pts[5][0]) and (self.pts[6][1] > self.pts[8][1] and self.pts[10][1] > self.pts[12][1] and self.pts[14][1] > self.pts[16][1] and self.pts[18][1] > self.pts[20][1]):
-                ch1="next"
-
-
-        if ch1 == 'Next' or 'B' or 'C' or 'H' or 'F' or 'X':
-            if (self.pts[0][0] > self.pts[8][0] and self.pts[0][0] > self.pts[12][0] and self.pts[0][0] > self.pts[16][0] and self.pts[0][0] > self.pts[20][0]) and (self.pts[4][1] < self.pts[8][1] and self.pts[4][1] < self.pts[12][1] and self.pts[4][1] < self.pts[16][1] and self.pts[4][1] < self.pts[20][1]) and (self.pts[4][1] < self.pts[6][1] and self.pts[4][1] < self.pts[10][1] and self.pts[4][1] < self.pts[14][1] and self.pts[4][1] < self.pts[18][1]):
-                ch1 = 'Backspace'
-
-
-        if ch1=="next" and self.prev_char!="next":
-            if self.ten_prev_char[(self.count-2)%10]!="next":
-                if self.ten_prev_char[(self.count-2)%10]=="Backspace":
-                    self.str=self.str[0:-1]
-                else:
-                    if self.ten_prev_char[(self.count - 2) % 10] != "Backspace":
-                        self.str = self.str + self.ten_prev_char[(self.count-2)%10]
-            else:
-                if self.ten_prev_char[(self.count - 0) % 10] != "Backspace":
-                    self.str = self.str + self.ten_prev_char[(self.count - 0) % 10]
-
-
-        if ch1=="  " and self.prev_char!="  ":
-            self.str = self.str + "  "
-
-        self.prev_char= ch1
-        self.current_symbol= ch1
-        self.count += 1
-        self.ten_prev_char[self.count%10]= ch1
-
-
-        if len(self.str.strip())!=0:
-            st=self.str.rfind(" ")
-            ed=len(self.str)
-            word=self.str[st+1:ed]
-            self.word=word
-            if len(word.strip())!=0:
-                ddd.check(word)
-                lenn = len(ddd.suggest(word))
-                if lenn >= 4:
-                    self.word4 = ddd.suggest(word)[3]
-
-                if lenn >= 3:
-                    self.word3 = ddd.suggest(word)[2]
-
-                if lenn >= 2:
-                    self.word2 = ddd.suggest(word)[1]
-
-                if lenn >= 1:
-                    self.word1 = ddd.suggest(word)[0]
-            else:
-                self.word1 = " "
-                self.word2 = " "
-                self.word3 = " "
-                self.word4 = " "
-
-
-    def destructor(self):
-        print(self.ten_prev_char)
-        self.root.destroy()
-        self.vs.release()
-        cv2.destroyAllWindows()
-
-
-print("Starting Application...")
-
-(Application()).root.mainloop()
+                # Ensure crop region is within bounds
+                y1, y2 = max(0, y - offset), min(img.shape[0], y + h + offset)
+                x1, x2 = max(0, x - offset), min(img.shape[1], x + w + offset)
+                imgCrop = img[y1:y2, x1:x2]
+                if imgCrop.size == 0:
+                    continue
+
+                # Preprocess image for classifier
+                imgWhite = np.ones((imgSize, imgSize, 3), np.uint8) * 255
+                try:
+                    imgResize = cv2.resize(imgCrop, (imgSize, imgSize))
+                    imgWhite[:imgResize.shape[0], :imgResize.shape[1]] = imgResize
+                
+                    # Get prediction
+                    prediction, index = classifier.getPrediction(imgWhite, draw=False)
+                    confidence = prediction[index] * 100
+                    
+                    # Only accept predictions with confidence above threshold
+                    if confidence >= confidence_threshold:
+                        label = actions[index] if index < len(actions) else "Unknown"
+                        label_with_confidence = f"{label}: {confidence:.2f}%"
+                        
+                        # Add the gesture to our text accumulator
+                        if text_accumulator.add_gesture(label, confidence):
+                            print(f"Detected: {label} ({confidence:.2f}%)")
+
+                        # Draw results (use Sinhala text rendering)
+                        imgOutput = putSinhalaText(imgOutput, label_with_confidence, (x1, y1 - 60))
+                        
+                        # Draw bounding boxes
+                        cv2.rectangle(imgOutput, (x1, y1), (x2, y2), (0, 255, 0), 4)
+                except Exception as e:
+                    print(f"Error processing hand: {e}")
+    
+    # Display status information
+    status = "PAUSED" if is_paused else "ACTIVE"
+    cv2.putText(imgOutput, status, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255) if is_paused else (0, 255, 0), 2)
+    
+    cv2.imshow('Sinhala Hand Gesture Translator', imgOutput)
+
+    # Frame rate control
+    current_time = time.time()
+    elapsed_time = current_time - prev_time
+    if elapsed_time < 1 / fps_limit:
+        time.sleep(1 / fps_limit - elapsed_time)
+    prev_time = time.time()
+
+    # Handle key presses
+    key = cv2.waitKey(1) & 0xFF
+    
+    # Throttle key presses to prevent repeated triggers
+    if current_time - last_key_press_time > 0.3:
+        if key == ord('q'):
+            break
+        elif key == ord('c'):
+            text_accumulator.clear_all()
+            last_key_press_time = current_time
+        elif key == ord('p'):
+            is_paused = not is_paused
+            last_key_press_time = current_time
+        elif key == ord('s'):
+            threading.Thread(target=speak_text, args=(text_accumulator.get_display_text(),)).start()
+            last_key_press_time = current_time
+        elif key == 32:  # Space bar
+            text_accumulator.finalize_sentence()
+            last_key_press_time = current_time
+
+# Release resources
+cap.release()
+cv2.destroyAllWindows()
+pygame.quit()
