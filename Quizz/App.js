@@ -354,21 +354,23 @@ const QuizApp = () => {
     },
   ];
 
-  // Tamil quiz questions data (placeholder structure - you would need actual Tamil content)
+  // Tamil quiz questions data in English text
   const tamilQuestions = [
+    //அ
     {
       id: 1,
-      title: 'அ-க்கான சரியான சைகையைத் தேர்ந்தெடுக்கவும்',
+      title: 'Select the correct Tamil letter for this sign ',
       image: require('./assets/sign1.png'),
       options: [
-        { id: 'அ', text: 'அ' },
-        { id: 'ஆ', text: 'ஆ' },
-        { id: 'இ', text: 'இ' },
+        { id: 'A', text: 'அ' },
+        { id: 'B', text: 'ஆ' },
+        { id: 'C', text: 'இ' },
       ],
     },
+    //ஆ
     {
       id: 2,
-      title: 'ஆ-க்கான சரியான சைகையைத் தேர்ந்தெடுக்கவும்',
+      title: 'Select the correct sign for Tamil letter "ஆ"',
       options: [
         { image: require('./assets/sign1.png') },
         { image: require('./assets/sign1.png') },
@@ -377,7 +379,200 @@ const QuizApp = () => {
       ],
       gridView: true,
     },
-    // Add more Tamil questions following the same pattern
+    //இ
+    {
+      id: 3,
+      title: 'Select the correct sign for Tamil letter "இ"',
+      options: [
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+      ],
+      gridView: true,
+    },
+    //ஈ
+    {
+      id: 2,
+      title: 'Select the correct sign for Tamil letter "ஈ"',
+      options: [
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+      ],
+      gridView: true,
+    },
+    //உ
+    {
+      id: 5,
+      title: 'Select the correct sign for Tamil letter "உ"',
+      options: [
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+      ],
+      gridView: true,
+    },
+    //ஊ
+    {
+        id: 2,
+        title: 'Select the correct sign for Tamil letter "ஊ"',
+        options: [
+          { image: require('./assets/sign1.png') },
+          { image: require('./assets/sign1.png') },
+          { image: require('./assets/sign1.png') },
+          { image: require('./assets/sign1.png') },
+        ],
+        gridView: true,
+    },
+    //எ
+    {
+      id: 6,
+      title: 'Select the correct Tamil letter for this sign',
+      image: require('./assets/sign1.png'),
+      options: [
+        { id: 'A', text: 'ஊ' },
+        { id: 'B', text: 'எ' },
+        { id: 'C', text: 'ஒ' },
+      ],
+    },
+
+    //ஏ	
+    {
+      id: 6,
+      title: 'Select the correct Tamil letter for this sign',
+      image: require('./assets/sign1.png'),
+      options: [
+        { id: 'A', text: 'ஊ' },
+        { id: 'B', text: 'எ' },
+        { id: 'C', text: 'ஒ' },
+      ],
+    },
+
+    //ஐ	
+    {
+      id: 2,
+      title: 'Select the correct sign for Tamil letter "ஐ	"',
+      options: [
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+      ],
+      gridView: true,
+    },
+
+    //ஒ	
+    {
+      id: 6,
+      title: 'Select the correct Tamil letter for this sign',
+      image: require('./assets/sign1.png'),
+      options: [
+        { id: 'A', text: 'ஊ' },
+        { id: 'B', text: 'எ' },
+        { id: 'C', text: 'ஒ' },
+      ],
+    },
+
+    //ஓ	
+    {
+      id: 6,
+      title: 'Select the correct Tamil letter for this sign',
+      image: require('./assets/sign1.png'),
+      options: [
+        { id: 'A', text: 'ஊ' },
+        { id: 'B', text: 'எ' },
+        { id: 'C', text: 'ஒ' },
+      ],
+    },
+
+    //ஔ
+    {
+      id: 2,
+      title: 'Select the correct sign for Tamil letter "ஔ"',
+      options: [
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+      ],
+      gridView: true,
+    },
+    //க	
+    {
+      id: 2,
+      title: 'Select the correct sign for Tamil letter "க"',
+      options: [
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+      ],
+      gridView: true,
+    },
+    //ச	
+    {
+      id: 2,
+      title: 'Select the correct sign for Tamil letter "ச"',
+      options: [
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+      ],
+      gridView: true,
+    },
+    //ட
+    {
+      id: 2,
+      title: 'Select the correct sign for Tamil letter "ட"',
+      options: [
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+      ],
+      gridView: true,
+    },
+    //த
+    {
+      id: 2,
+      title: 'Select the correct sign for Tamil letter "த"',
+      options: [
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+      ],
+      gridView: true,
+    },
+    //ப
+    {
+      id: 2,
+      title: 'Select the correct sign for Tamil letter "ப"',
+      options: [
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+      ],
+      gridView: true,
+    },
+    //ற
+    {
+      id: 2,
+      title: 'Select the correct sign for Tamil letter "ற"',
+      options: [
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+      ],
+      gridView: true,
+    },
+    
   ];
 
   // Get questions based on selected language
@@ -524,7 +719,7 @@ const QuizApp = () => {
             style={styles.languageButton}
             onPress={() => selectLanguage('tamil')}
           >
-            <Text style={styles.languageButtonText}>தமிழ் (Tamil)</Text>
+            <Text style={styles.languageButtonText}>Tamil</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -547,7 +742,7 @@ const QuizApp = () => {
           </TouchableOpacity>
           
           <Text style={styles.enhancedHeaderTitle}>
-            {selectedLanguage === 'english' ? 'English Sign Language' : 'தமிழ் சைகை மொழி (Tamil Sign Language)'}
+            {selectedLanguage === 'english' ? 'English Sign Language' : 'Tamil Sign Language'}
           </Text>
           
           <View style={{width: 40}} />
@@ -555,15 +750,11 @@ const QuizApp = () => {
         
         <View style={styles.welcomeLogoContainer}>
           <Text style={styles.welcomeText}>
-            {selectedLanguage === 'english' 
-              ? 'Test your sign language knowledge!' 
-              : 'உங்கள் சைகை மொழி அறிவைச் சோதிக்கவும்!'}
+            Test your sign language knowledge!
           </Text>
           <Image source={require('./assets/sign1.png')} style={styles.welcomeImage} />
           <Text style={styles.welcomeSubtext}>
-            {selectedLanguage === 'english'
-              ? 'Learn, practice, and master sign language through interactive quizzes'
-              : 'ஊடாடும் வினாடி வினாக்கள் மூலம் சைகை மொழியைக் கற்றுக்கொள்ளுங்கள், பயிற்சி செய்யுங்கள் மற்றும் தேர்ச்சி பெறுங்கள்'}
+            Learn, practice, and master sign language through interactive quizzes
           </Text>
         </View>
         
@@ -573,7 +764,7 @@ const QuizApp = () => {
             onPress={startQuiz}
           >
             <Text style={styles.startQuizButtonText}>
-              {selectedLanguage === 'english' ? 'Start Quiz' : 'தேர்வைத் தொடங்கு'}
+              Start Quiz
             </Text>
           </TouchableOpacity>
           
@@ -581,7 +772,7 @@ const QuizApp = () => {
             style={styles.learnMoreButton}
           >
             <Text style={styles.learnMoreButtonText}>
-              {selectedLanguage === 'english' ? 'Learn More' : 'மேலும் அறிக'}
+              Learn More
             </Text>
           </TouchableOpacity>
         </View>
@@ -603,9 +794,7 @@ const QuizApp = () => {
         </View>
       </View>
       <Text style={styles.progressText}>
-        {selectedLanguage === 'english' 
-          ? `Question ${currentQuestion + 1} of ${questions.length}`
-          : `கேள்வி ${currentQuestion + 1} / ${questions.length}`}
+        Question {currentQuestion + 1} of {questions.length}
       </Text>
     </View>
   );
@@ -702,7 +891,7 @@ const QuizApp = () => {
         </TouchableOpacity>
         
         <Text style={styles.enhancedHeaderTitle}>
-          {selectedLanguage === 'english' ? 'Sign Language Quiz' : 'சைகை மொழி வினாடி வினா'}
+          {selectedLanguage === 'english' ? 'Sign Language Quiz' : 'Tamil Sign Language Quiz'}
         </Text>
         
         <TouchableOpacity style={styles.closeButtonContainer} onPress={handleQuit}>
@@ -724,9 +913,7 @@ const QuizApp = () => {
           disabled={selectedAnswer === null}
         >
           <Text style={styles.enhancedContinueButtonText}>
-            {selectedLanguage === 'english' 
-              ? (currentQuestion < questions.length - 1 ? "CONTINUE" : "FINISH QUIZ")
-              : (currentQuestion < questions.length - 1 ? "தொடரவும்" : "தேர்வை முடிக்கவும்")}
+            {currentQuestion < questions.length - 1 ? "CONTINUE" : "FINISH QUIZ"}
           </Text>
         </TouchableOpacity>
       </View>
