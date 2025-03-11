@@ -115,6 +115,7 @@ const WelcomeScreen = ({ navigation }) => {
             navigation.navigate('Loading');
           }}
         >
+        
           <Text style={styles.nextButtonText}>BEGIN</Text>
         </TouchableOpacity>
       </Animated.View>
@@ -171,7 +172,7 @@ const LoadingScreen = ({ navigation }) => {
     <SafeAreaView style={styles.container}>
       <View style={styles.loadingContent}>
         <Animated.Image
-          source={require('./assets/favicon.png')}
+          source={require('./images/se3.png')}
           style={[styles.characterImage, { transform: [{ rotate: spin }] }]}
           resizeMode="contain"
         />
@@ -322,7 +323,7 @@ const CustomizationScreen = ({ navigation }) => {
       </View>
       
       <Image
-        source={require('./assets/splash-icon.png')}
+        source={require('./images/Studies.png')}
         style={styles.characterImage}
         resizeMode="contain"
       />
@@ -482,7 +483,7 @@ const GamePreparationScreen = ({ navigation }) => {
       ) : (
         <Animated.View style={[styles.gameReadyContainer, { opacity: fadeAnim }]}>
           <Image
-            source={require('./assets/favicon.png')}
+            source={require('./images/jumps.png')}
             style={styles.characterImage}
             resizeMode="contain"
           />
@@ -661,7 +662,7 @@ const ReadyCountdownScreen = ({ navigation }) => {
       </View>
       
       <Image
-        source={require('./assets/favicon.png')}
+        source={require('./images/starts.png')}
         style={styles.characterImage}
         resizeMode="contain"
       />

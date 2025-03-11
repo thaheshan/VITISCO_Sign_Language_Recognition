@@ -20,7 +20,6 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import DropDownPicker from 'react-native-dropdown-picker';
 import CalendarPicker from 'react-native-calendar-picker';
 import * as Haptics from 'expo-haptics';
-import axioses from axios;
 
 // In your React Native app, create an API service file:
 
