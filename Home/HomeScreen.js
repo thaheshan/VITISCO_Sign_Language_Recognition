@@ -95,6 +95,9 @@ const HomeScreen = () => {
               </View>
               <Text style={styles.dueDate}>Due on : 04 April</Text>
             </View>
+            <View style={styles.progressCircle}>
+              <Text style={styles.progressText}>50%</Text>
+            </View>
           </TouchableOpacity>
 
           {/* Virtual Room Card */}
@@ -108,6 +111,9 @@ const HomeScreen = () => {
                 <View style={[styles.avatar, { backgroundColor: '#FF5722' }]} />
               </View>
               <Text style={styles.dueDate}>Due on : 06 June</Text>
+            </View>
+            <View style={styles.progressCircle}>
+              <Text style={styles.progressText}>60%</Text>
             </View>
           </TouchableOpacity>
         </View>
