@@ -12,6 +12,8 @@ import {
   ScrollView
 } from 'react-native';
 
+import { Video } from 'expo-av';
+
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 
@@ -1358,73 +1360,37 @@ const LearningPathwayScreen = ({ navigation, route }) => {
 };
 
 // Enhanced Alphabet Learning Screen with lesson data
+// Enhanced Alphabet Learning Screen with video support for sign language
+// Enhanced Alphabet Learning Screen with video support for sign language
 const AlphabetLearningScreen = ({ route, navigation }) => {
-  const { lessonId, onComplete } = route.params || { lessonId: 1 };
+  const { lessonId = 1, onComplete } = route.params || {};
   const [currentCard, setCurrentCard] = useState(0);
   const [showSuccess, setShowSuccess] = useState(false);
   const cardAnim = useRef(new Animated.Value(0)).current;
+  const videoRef = useRef(null);
   
   // Lesson content based on lesson ID
   const lessonContent = {
     1: {
+      
       title: "Basic Alphabet (අ-ඉ)",
+
       cards: [
-        { letter: 'අ', pronunciation: 'a', example: 'apple', sign: require('./assets/adaptive-icon.png') },
-        { letter: 'ආ', pronunciation: 'aa', example: 'art', sign: require('./assets/adaptive-icon.png') },
-        { letter: 'ඇ', pronunciation: 'ae', example: 'ant', sign: require('./assets/adaptive-icon.png') },
-        { letter: 'ඈ', pronunciation: 'aae', example: 'ask', sign: require('./assets/adaptive-icon.png') },
-        { letter: 'ඉ', pronunciation: 'i', example: 'if', sign: require('./assets/adaptive-icon.png') },
+        { letter: 'අ', pronunciation: 'a', example: 'apple', sign: require('./videos/0312 (1)(1).mov'), signText: 'Hand forms letter A shape' },
+        { letter: 'ආ', pronunciation: 'aa', example: 'art', sign: require('./videos/0312 (1).mp4'), signText: 'Palm facing forward, fingers spread' },
+        { letter: 'ඇ', pronunciation: 'ae', example: 'ant', sign: require('./videos/0312 (1).mp4'), signText: 'Open palm moving rightward' },
+        { letter: 'ඈ', pronunciation: 'aae', example: 'ask', sign: require('./videos/0312 (1).mp4'), signText: 'Extended palm with circular motion' },
+        { letter: 'ඉ', pronunciation: 'i', example: 'if', sign: require('./videos/0312 (1).mp4'), signText: 'Pinky finger pointing upward' },
       ],
+
       xpReward: 75
     },
-    2: {
-      title: "More Vowels (ඊ-ඖ)",
-      cards: [
-        { letter: 'ඊ', pronunciation: 'ii', example: 'eel', sign: require('./assets/adaptive-icon.png') },
-        { letter: 'උ', pronunciation: 'u', example: 'put', sign: require('./assets/adaptive-icon.png') },
-        { letter: 'ඌ', pronunciation: 'uu', example: 'food', sign: require('./assets/adaptive-icon.png') },
-        { letter: 'ඍ', pronunciation: 'ru', example: 'rhythm', sign: require('./assets/adaptive-icon.png') },
-        { letter: 'ඎ', pronunciation: 'ruu', example: 'root', sign: require('./assets/adaptive-icon.png') },
-      ],
-      xpReward: 75
-    },
-    3: {
-      title: "Basic Consonants",
-      cards: [
-        { letter: 'ක', pronunciation: 'ka', example: 'cat', sign: require('./assets/adaptive-icon.png') },
-        { letter: 'ග', pronunciation: 'ga', example: 'gun', sign: require('./assets/adaptive-icon.png') },
-        { letter: 'ච', pronunciation: 'cha', example: 'chair', sign: require('./assets/adaptive-icon.png') },
-        { letter: 'ජ', pronunciation: 'ja', example: 'jar', sign: require('./assets/adaptive-icon.png') },
-        { letter: 'ට', pronunciation: 'ta', example: 'top', sign: require('./assets/adaptive-icon.png') },
-      ],
-      xpReward: 100
-    },
-    4: {
-      title: "Simple Greetings",
-      cards: [
-        { phrase: 'ආයුබෝවන්', meaning: 'Hello/Greetings', usage: 'Formal greeting', sign: require('./assets/adaptive-icon.png') },
-        { phrase: 'සුභ උදෑසනක්', meaning: 'Good morning', usage: 'Morning greeting', sign: require('./assets/adaptive-icon.png') },
-        { phrase: 'කොහොමද', meaning: 'How are you?', usage: 'Asking about wellbeing', sign: require('./assets/adaptive-icon.png') },
-        { phrase: 'හොඳින්', meaning: 'Well/Good', usage: 'Response to "How are you?"', sign: require('./assets/adaptive-icon.png') },
-        { phrase: 'ස්තුතියි', meaning: 'Thank you', usage: 'Expressing gratitude', sign: require('./assets/adaptive-icon.png') },
-      ],
-      xpReward: 100
-    },
-    5: {
-      title: "Numbers 1-10",
-      cards: [
-        { number: '1', sinhala: 'එක', pronunciation: 'eka', sign: require('./assets/adaptive-icon.png') },
-        { number: '2', sinhala: 'දෙක', pronunciation: 'deka', sign: require('./assets/adaptive-icon.png') },
-        { number: '3', sinhala: 'තුන', pronunciation: 'thuna', sign: require('./assets/adaptive-icon.png') },
-        { number: '4', sinhala: 'හතර', pronunciation: 'hathara', sign: require('./assets/adaptive-icon.png') },
-        { number: '5', sinhala: 'පහ', pronunciation: 'paha', sign: require('./assets/adaptive-icon.png') },
-      ],
-      xpReward: 125
-    }
+ 
   };
   
-  // If lesson content doesn't exist, use default lesson 1
-  const currentLesson = lessonContent[lessonId] || lessonContent[1];
+  // Default to lesson 1 if lessonId is undefined or not found in lessonContent
+  const safeId = lessonId && lessonContent[lessonId] ? lessonId : 1;
+  const currentLesson = lessonContent[safeId];
   const alphabetCards = currentLesson.cards;
   
   useEffect(() => {
@@ -1434,12 +1400,38 @@ const AlphabetLearningScreen = ({ route, navigation }) => {
       duration: 500,
       useNativeDriver: true,
     }).start();
+    
+    // Play video when component mounts or card changes
+    if (videoRef.current) {
+      videoRef.current.setStatusAsync({
+        shouldPlay: true,
+        isLooping: true,
+      }).catch(error => {
+        console.log("Video playback error:", error);
+      });
+    }
+    
+    return () => {
+      // Stop video when unmounting
+      if (videoRef.current) {
+        videoRef.current.stopAsync().catch(error => {
+          console.log("Video stop error:", error);
+        });
+      }
+    };
   }, [currentCard]);
   
   const nextCard = () => {
     if (currentCard < alphabetCards.length - 1) {
       // Reset animation value
       cardAnim.setValue(0);
+      
+      // Stop current video
+      if (videoRef.current) {
+        videoRef.current.stopAsync().catch(error => {
+          console.log("Video stop error:", error);
+        });
+      }
       
       // Haptic feedback
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -1454,7 +1446,7 @@ const AlphabetLearningScreen = ({ route, navigation }) => {
       // Navigate after showing success animation
       setTimeout(() => {
         navigation.navigate('LessonComplete', {
-          lessonId,
+          lessonId: safeId,
           xpEarned: currentLesson.xpReward,
           lessonTitle: currentLesson.title,
           onComplete
@@ -1467,6 +1459,13 @@ const AlphabetLearningScreen = ({ route, navigation }) => {
     if (currentCard > 0) {
       // Reset animation value
       cardAnim.setValue(0);
+      
+      // Stop current video
+      if (videoRef.current) {
+        videoRef.current.stopAsync().catch(error => {
+          console.log("Video stop error:", error);
+        });
+      }
       
       // Haptic feedback
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -1487,6 +1486,11 @@ const AlphabetLearningScreen = ({ route, navigation }) => {
     outputRange: [0, 0.5, 1]
   });
   
+  // Handle errors for missing video files
+  const handleVideoError = (error) => {
+    console.log("Video loading error:", error);
+  };
+  
   // Render card content based on lesson type
   const renderCardContent = (card) => {
     // For alphabet lessons
@@ -1497,11 +1501,21 @@ const AlphabetLearningScreen = ({ route, navigation }) => {
           <Text style={styles.alphabetPronunciation}>
             Pronounced as: "{card.pronunciation}"
           </Text>
-          <Image
-            source={card.sign}
-            style={styles.signImage}
-            resizeMode="contain"
-          />
+          <View style={styles.videoContainer}>
+            <Video
+              ref={videoRef}
+              source={card.sign}
+              style={styles.signVideo}
+              resizeMode="contain"
+              isLooping
+              shouldPlay
+              useNativeControls={false}
+              onError={handleVideoError}
+            />
+          </View>
+          <Text style={styles.signText}>
+            {card.signText}
+          </Text>
           <Text style={styles.exampleText}>
             Example: {card.example}
           </Text>
@@ -1517,11 +1531,21 @@ const AlphabetLearningScreen = ({ route, navigation }) => {
           <Text style={styles.phraseMeaning}>
             Meaning: "{card.meaning}"
           </Text>
-          <Image
-            source={card.sign}
-            style={styles.signImage}
-            resizeMode="contain"
-          />
+          <View style={styles.videoContainer}>
+            <Video
+              ref={videoRef}
+              source={card.sign}
+              style={styles.signVideo}
+              resizeMode="contain"
+              isLooping
+              shouldPlay
+              useNativeControls={false}
+              onError={handleVideoError}
+            />
+          </View>
+          <Text style={styles.signText}>
+            {card.signText}
+          </Text>
           <Text style={styles.usageText}>
             Usage: {card.usage}
           </Text>
@@ -1538,11 +1562,21 @@ const AlphabetLearningScreen = ({ route, navigation }) => {
           <Text style={styles.numberPronunciation}>
             Pronounced as: "{card.pronunciation}"
           </Text>
-          <Image
-            source={card.sign}
-            style={styles.signImage}
-            resizeMode="contain"
-          />
+          <View style={styles.videoContainer}>
+            <Video
+              ref={videoRef}
+              source={card.sign}
+              style={styles.signVideo}
+              resizeMode="contain"
+              isLooping
+              shouldPlay
+              useNativeControls={false}
+              onError={handleVideoError}
+            />
+          </View>
+          <Text style={styles.signText}>
+            {card.signText}
+          </Text>
         </>
       );
     }
@@ -1889,6 +1923,22 @@ const PracticeQuizScreen = ({ route, navigation }) => {
 
 
 
+// Helper to get random different letters for quiz options
+const getRandomDifferentLetter = (currentLetter, content, excludeIndices = []) => {
+  const availableLetters = content
+    .map(item => item.letter)
+    .filter(letter => letter !== currentLetter && 
+            !excludeIndices.includes(content.findIndex(i => i.letter === letter)));
+  
+  if (availableLetters.length === 0) return 'X'; // Fallback
+  
+  return availableLetters[Math.floor(Math.random() * availableLetters.length)];
+};
+
+
+
+
+
 
 
 
@@ -1928,6 +1978,7 @@ export default function App() {
         <Stack.Screen name="LessonComplete" component={LessonCompleteScreen} />
         
         <Stack.Screen name="quizzes" component={PracticeQuizScreen} />
+        
 
     </Stack.Navigator>
 
@@ -3116,7 +3167,45 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     textAlign: 'center',
   },
-
+  videoContainer: {
+    width: '100%',
+    height: 200,
+    marginVertical: 15,
+    borderRadius: 12,
+    overflow: 'hidden',
+    backgroundColor: '#f0f0f0',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  
+  signVideo: {
+    width: '100%',
+    height: '100%',
+  },
+  
+  signText: {
+    fontSize: 16,
+    color: '#555',
+    textAlign: 'center',
+    marginBottom: 10,
+    fontStyle: 'italic',
+  },
+  
+  // Update your existing styles if needed
+  alphabetCard: {
+    width: '90%',
+    backgroundColor: 'white',
+    borderRadius: 15,
+    padding: 20,
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginVertical: 20,
+  },
 
 
 
