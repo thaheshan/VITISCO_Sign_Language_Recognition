@@ -1,11 +1,65 @@
-import React from 'react';
-import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, Image, ScrollView } from 'react-native';
+import React, { useState, useRef } from 'react';
+import { 
+  View, 
+  Text, 
+  StyleSheet, 
+  SafeAreaView, 
+  TouchableOpacity, 
+  Image, 
+  ScrollView,
+  Animated 
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Feather from '@expo/vector-icons/Feather';
 import AntDesign from '@expo/vector-icons/AntDesign';
-
+import { useNavigation } from '@react-navigation/native';
 
 const HomeScreen = () => {
+  const navigation = useNavigation();
+  const [showUserId, setShowUserId] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  
+  // Animation values
+  const addButtonRotation = useRef(new Animated.Value(0)).current;
+  const menuHeight = useRef(new Animated.Value(0)).current;
+  
+  // Toggle user ID display
+  const toggleUserId = () => {
+    setShowUserId(!showUserId);
+  };
+  
+  // Toggle menu animation
+  const toggleMenu = () => {
+    const toValue = menuOpen ? 0 : 1;
+    
+    Animated.parallel([
+      Animated.timing(addButtonRotation, {
+        toValue,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+      Animated.timing(menuHeight, {
+        toValue,
+        duration: 300,
+        useNativeDriver: false,
+      })
+    ]).start();
+    
+    setMenuOpen(!menuOpen);
+  };
+  
+  // Interpolate rotation for + to x animation
+  const rotateInterpolation = addButtonRotation.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '45deg']
+  });
+  
+  // Interpolate height for menu animation
+  const menuHeightInterpolation = menuHeight.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, 100]
+  });
+
   return (
     <SafeAreaView style={styles.container}>
       {/* Header */}
@@ -15,8 +69,14 @@ const HomeScreen = () => {
           style={styles.logo}
         />
         <Text style={styles.headerTitle}>Home</Text>
-        <TouchableOpacity style={styles.userButton}>
-          <Text style={styles.userText}>USER ID</Text>
+        <TouchableOpacity 
+          style={styles.userButton}
+          onPress={toggleUserId}
+          activeOpacity={0.8}
+        >
+          <Text style={styles.userText}>
+            {showUserId ? "VIT5643" : "USER ID"}
+          </Text>
         </TouchableOpacity>
       </View>
 
@@ -24,32 +84,46 @@ const HomeScreen = () => {
       <ScrollView style={styles.scrollContent} showsVerticalScrollIndicator={false}>
         {/* Daily Tasks Section */}
         <View style={styles.section}>
-          <View style={styles.tasksHeader}>
-            <TouchableOpacity style={styles.tabIndicator}>
-              <Ionicons name="grid-outline" size={20} color="#FFF" />
-            </TouchableOpacity>
+          <View style={styles.sectionHeader}>
+            <View style={styles.tasksHeader}>
+              <TouchableOpacity style={styles.tabIndicator}>
+                <Ionicons name="grid-outline" size={20} color="#FFF" />
+              </TouchableOpacity>
+              <TouchableOpacity>
+                <Text style={styles.tabText}>DAILY TASKS</Text>
+              </TouchableOpacity>
+              <TouchableOpacity>
+                <Text style={[styles.tabText, styles.inactiveTab]}>CHALLENGES</Text>
+              </TouchableOpacity>
+            </View>
             <TouchableOpacity>
-            <Text style={styles.tabText}>DAILY TASKS</Text>
-            </TouchableOpacity>
-            <TouchableOpacity>
-            <Text style={[styles.tabText, styles.inactiveTab]}>CHALLENGES</Text>
+              <Text style={styles.seeAll}>See all</Text>
             </TouchableOpacity>
           </View>
 
           <View style={styles.taskCards}>
-            <TouchableOpacity style={styles.taskCard}>
+            <TouchableOpacity 
+              style={styles.taskCard}
+              activeOpacity={0.7}
+            >
               <Ionicons name="flame-outline" size={24} color="#4A86FF" />
               <Text style={styles.taskTitle}>Lesson Time</Text>
               <Text style={styles.taskSubtitle}>TASK 01</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.taskCard}>
+            <TouchableOpacity 
+              style={styles.taskCard}
+              activeOpacity={0.7}
+            >
               <Ionicons name="time-outline" size={24} color="#4A86FF" />
               <Text style={styles.taskTitle}>Coursework</Text>
               <Text style={styles.taskSubtitle}>TASK 02</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.taskCard}>
+            <TouchableOpacity 
+              style={styles.taskCard}
+              activeOpacity={0.7}
+            >
               <AntDesign name="questioncircleo" size={23} color="#4A86FF" />
               <Text style={styles.taskTitle}>Do Quiz</Text>
               <Text style={styles.taskSubtitle}>TASK 03</Text>
@@ -67,7 +141,11 @@ const HomeScreen = () => {
           </View>
 
           {/* Lessons Card */}
-          <TouchableOpacity style={styles.lessonCard}>
+          <TouchableOpacity 
+            style={styles.lessonCard} 
+            onPress={() => navigation.navigate('Lesson', {}, { animation: 'slide_from_right' })}
+            activeOpacity={0.9}
+          >
             <View>
               <Text style={styles.cardTitle}>Lessons</Text>
               <Text style={styles.activeText}>Active</Text>
@@ -84,7 +162,11 @@ const HomeScreen = () => {
           </TouchableOpacity>
 
           {/* Quizzes Card */}
-          <TouchableOpacity style={styles.lessonCard}>
+          <TouchableOpacity 
+            style={styles.lessonCard} 
+            onPress={() => navigation.navigate('Quiz', {}, { animation: 'slide_from_right' })}
+            activeOpacity={0.9}
+          >
             <View>
               <Text style={styles.cardTitle}>Quizzes</Text>
               <Text style={styles.activeText}>Active</Text>
@@ -101,7 +183,11 @@ const HomeScreen = () => {
           </TouchableOpacity>
 
           {/* Virtual Room Card */}
-          <TouchableOpacity style={styles.lessonCard}>
+          <TouchableOpacity 
+            style={styles.lessonCard} 
+            onPress={() => navigation.navigate('Virtual Room', {}, { animation: 'slide_from_right' })}
+            activeOpacity={0.9}
+          >
             <View>
               <Text style={styles.cardTitle}>Virtual Room</Text>
               <Text style={styles.activeText}>Active</Text>
@@ -122,28 +208,42 @@ const HomeScreen = () => {
         <View style={styles.bottomPadding} />
       </ScrollView>
 
+      {/* Popup Menu */}
+      <Animated.View style={[styles.popupMenu, { height: menuHeightInterpolation }]}>
+        <TouchableOpacity style={styles.menuItem}>
+          <Text style={styles.menuText}   onPress={() => navigation.navigate('Translator Screen', {}, { animation: 'slide_from_right' })}>Translator</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.menuItem}>
+          <Text style={styles.menuText} >ADD SCHEDULE</Text>
+        </TouchableOpacity>
+      </Animated.View>
+
       {/* Bottom Navigation */}
       <View style={styles.bottomNav}>
         <TouchableOpacity style={styles.navItem}>
           <Ionicons name="grid-outline" size={24} color="#352561" />
           <View style={styles.activeNavIndicator} />
         </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem}>
+        <TouchableOpacity style={styles.navItem}  onPress={() => navigation.navigate('Progress Analysis', {}, { animation: 'slide_from_right' })}>
           <Feather name="pie-chart" size={26} color="#9E9AA7" />
         </TouchableOpacity>
-        <TouchableOpacity style={styles.addButton}>
-          <Ionicons name="add" size={32} color="#FFF" />
+        <TouchableOpacity style={styles.addButton} onPress={toggleMenu}>
+          <Animated.View style={{ transform: [{ rotate: rotateInterpolation }] }}>
+            <Ionicons name="add" size={32} color="#FFF" />
+          </Animated.View>
         </TouchableOpacity>
         <TouchableOpacity style={styles.navItem}>
           <Ionicons name="notifications-outline" size={24} color="#9E9AA7" />
         </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem}>
+        <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate('Profile Screen', {}, { animation: 'slide_from_right' })}>
           <Ionicons name="person-outline" size={24} color="#9E9AA7" />
         </TouchableOpacity>
       </View>
     </SafeAreaView>
   );
 };
+
+
 
 const styles = StyleSheet.create({
   container: {
@@ -161,24 +261,27 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     paddingTop: 40,
-   
-
   },
   headerTitle: {
     fontSize: 20,
     fontWeight: 'bold',
     color: '#FFFFFF',
     paddingTop: 40,
-   
   },
   userButton: {
     backgroundColor: '#FFFFFF',
     padding: 8,
     borderRadius: 20,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
   },
   userText: {
     color: '#6B5ECD',
     fontSize: 12,
+    fontWeight: '600',
   },
   scrollContent: {
     flex: 1,
@@ -187,10 +290,16 @@ const styles = StyleSheet.create({
     padding: 16,
     paddingTop: 8,
   },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+    marginTop: 8,
+  },
   tasksHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 16,
   },
   tabIndicator: {
     backgroundColor: '#352561',
@@ -215,6 +324,11 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#FFFFFF',
   },
+  seeAll: {
+    color: '#352561',
+    fontSize: 14,
+    fontWeight: '600',
+  },
   taskCards: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -231,6 +345,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 5,
     elevation: 5,
+    transform: [{ scale: 1 }],
   },
   taskTitle: {
     marginTop: 8,
@@ -243,17 +358,6 @@ const styles = StyleSheet.create({
     fontSize: 11,
     marginTop: 4,
   },
-  sectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
-    marginTop: 8,
-  },
-  seeAll: {
-    color: '#352561',
-    fontSize: 14,
-  },
   lessonCard: {
     backgroundColor: '#4E3D81',
     padding: 16,
@@ -261,6 +365,11 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     flexDirection: 'row',
     justifyContent: 'space-between',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+    elevation: 5,
   },
   cardTitle: {
     color: '#FFFFFF',
@@ -302,6 +411,29 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: 15,
   },
+  popupMenu: {
+    position: 'absolute',
+    bottom: 90,
+    left: 0,
+    right: 0,
+    backgroundColor: 'rgba(107, 94, 205, 0.95)',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    overflow: 'hidden',
+    zIndex: 999,
+  },
+  menuItem: {
+    paddingVertical: 14,
+    alignItems: 'center',
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  
+  menuText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+  },
   bottomNav: {
     flexDirection: 'row',
     justifyContent: 'space-around',
@@ -310,7 +442,6 @@ const styles = StyleSheet.create({
     padding: 16,
     borderTopLeftRadius: 30,
     borderTopRightRadius: 30,
-    
   },
   navItem: {
     alignItems: 'center',
@@ -339,9 +470,10 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 5,
     elevation: 5,
+    zIndex: 1000,
   },
   bottomPadding: {
-    height: 80, // Add padding at the bottom to allow scrolling past the nav bar
+    height: 80,
   },
 });
 

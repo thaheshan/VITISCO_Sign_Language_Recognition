@@ -10,6 +10,7 @@ import {
   Animated, 
   Easing,
   ScrollView
+
 } from 'react-native';
 
 import { Video } from 'expo-av';
@@ -29,6 +30,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 
 
 // Progress Bar Component with animation
+
 function ProgressBar({ current, total }) {
   const progressAnim = useRef(new Animated.Value(0)).current;
   const progress = (current / total) * 100;
@@ -73,7 +75,7 @@ const Confetti = ({ show }) => {
     <View style={styles.confettiContainer}>
       <LottieView
         ref={confettiRef}
-        source={require('./assets/image 01.png')}
+        source={require('../images/download (10).png')}
         style={styles.confetti}
         autoPlay
         loop={false}
@@ -174,7 +176,7 @@ const LoadingScreen = ({ navigation }) => {
     <SafeAreaView style={styles.container}>
       <View style={styles.loadingContent}>
         <Animated.Image
-          source={require('./images/se3.png')}
+          source={require('../images/se3.png')}
           style={[styles.characterImage, { transform: [{ rotate: spin }] }]}
           resizeMode="contain"
         />
@@ -325,7 +327,7 @@ const CustomizationScreen = ({ navigation }) => {
       </View>
       
       <Image
-        source={require('./images/Studies.png')}
+        source={require('../images/Studies.png')}
         style={styles.characterImage}
         resizeMode="contain"
       />
@@ -485,7 +487,7 @@ const GamePreparationScreen = ({ navigation }) => {
       ) : (
         <Animated.View style={[styles.gameReadyContainer, { opacity: fadeAnim }]}>
           <Image
-            source={require('./images/jumps.png')}
+            source={require('../images/jumps.png')}
             style={styles.characterImage}
             resizeMode="contain"
           />
@@ -664,7 +666,7 @@ const ReadyCountdownScreen = ({ navigation }) => {
       </View>
       
       <Image
-        source={require('./images/starts.png')}
+        source={require('../images/starts.png')}
         style={styles.characterImage}
         resizeMode="contain"
       />
@@ -708,7 +710,7 @@ const GetStartedScreen = ({ navigation }) => {
       </Animated.Text>
       
       <Image
-        source={require('./assets/favicon.png')}
+        source={require('../images/thinks.png')}
         style={styles.characterImage}
         resizeMode="contain"
       />
@@ -826,7 +828,7 @@ const WelcomeLessonsScreen = ({ navigation }) => {
       <Text style={styles.welcomeLessonsTitle}>WELCOME TO THE LESSONS!!!</Text>
       
       <Image
-        source={require('./assets/image 01.png')}
+        source={require('../images/download (10).png')}
         style={styles.characterImage}
         resizeMode="contain"
       />
@@ -1277,7 +1279,7 @@ const LearningPathwayScreen = ({ navigation, route }) => {
           ]}
         >
           <Image
-            source={require('./assets/image 01.png')}
+            source={require('../assets/icon.png')}
             style={learningPathwayStyles.pathwayAvatarImage}
           />
           
@@ -1376,10 +1378,10 @@ const AlphabetLearningScreen = ({ route, navigation }) => {
       title: "Basic Alphabet (අ-ඉ)",
 
       cards: [
-        { letter: 'අ', pronunciation: 'a', example: 'apple', sign: require('./videos/0312 (1)(1).mov'), signText: 'Hand forms letter A shape' },
-        { letter: 'ඇ', pronunciation: 'ae', example: 'ant', sign: require('./videos/0312 (1).mp4'), signText: 'Open palm moving rightward' },
-        { letter: 'ඈ', pronunciation: 'aae', example: 'ask', sign: require('./videos/0312 (1).mp4'), signText: 'Extended palm with circular motion' },
-        { letter: 'ඉ', pronunciation: 'i', example: 'if', sign: require('./videos/0312 (1).mp4'), signText: 'Pinky finger pointing upward' },
+        { letter: 'අ', pronunciation: 'a', example: 'apple', sign: require('../videos/0312 (1)(1).mov'), signText: 'Hand forms letter A shape' },
+        { letter: 'ඇ', pronunciation: 'ae', example: 'ant', sign: require('../videos/0312 (1).mp4'), signText: 'Open palm moving rightward' },
+        { letter: 'ඈ', pronunciation: 'aae', example: 'ask', sign: require('../videos/0312 (1).mp4'), signText: 'Extended palm with circular motion' },
+        { letter: 'ඉ', pronunciation: 'i', example: 'if', sign: require('../videos/0312 (1).mp4'), signText: 'Pinky finger pointing upward' },
       ],
 
       xpReward: 75
