@@ -1,10 +1,12 @@
 import React, { useState, useRef } from 'react';
 import { 
+  KeyboardAvoidingView,
   View, 
   Text, 
   StyleSheet, 
   SafeAreaView, 
   TouchableOpacity, 
+  Platform,
   Image, 
   ScrollView,
   Animated 
@@ -13,6 +15,12 @@ import { Ionicons } from '@expo/vector-icons';
 import Feather from '@expo/vector-icons/Feather';
 import AntDesign from '@expo/vector-icons/AntDesign';
 import { useNavigation } from '@react-navigation/native';
+
+
+
+
+
+
 
 const HomeScreen = () => {
   const navigation = useNavigation();
@@ -61,6 +69,7 @@ const HomeScreen = () => {
   });
 
   return (
+
     <SafeAreaView style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
@@ -79,6 +88,8 @@ const HomeScreen = () => {
           </Text>
         </TouchableOpacity>
       </View>
+
+      
 
       {/* Main Content - Scrollable */}
       <ScrollView style={styles.scrollContent} showsVerticalScrollIndicator={false}>
@@ -185,7 +196,7 @@ const HomeScreen = () => {
           {/* Virtual Room Card */}
           <TouchableOpacity 
             style={styles.lessonCard} 
-            onPress={() => navigation.navigate('Virtual Room', {}, { animation: 'slide_from_right' })}
+            onPress={() => navigation.navigate('VirtualRoom', {}, { animation: 'slide_from_right' })}
             activeOpacity={0.9}
           >
             <View>
@@ -211,7 +222,7 @@ const HomeScreen = () => {
       {/* Popup Menu */}
       <Animated.View style={[styles.popupMenu, { height: menuHeightInterpolation }]}>
         <TouchableOpacity style={styles.menuItem}>
-          <Text style={styles.menuText}   onPress={() => navigation.navigate('Translator Screen', {}, { animation: 'slide_from_right' })}>Translator</Text>
+          <Text style={styles.menuText}   onPress={() => navigation.navigate('TextToSpeech', {}, { animation: 'slide_from_right' })}>Translator</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.menuItem}>
           <Text style={styles.menuText} >ADD SCHEDULE</Text>
@@ -224,7 +235,7 @@ const HomeScreen = () => {
           <Ionicons name="grid-outline" size={24} color="#352561" />
           <View style={styles.activeNavIndicator} />
         </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem}  onPress={() => navigation.navigate('Progress Analysis', {}, { animation: 'slide_from_right' })}>
+        <TouchableOpacity style={styles.navItem}  onPress={() => navigation.navigate("ProgressAnalysis" , {}, { animation: 'slide_from_right' })}>
           <Feather name="pie-chart" size={26} color="#9E9AA7" />
         </TouchableOpacity>
         <TouchableOpacity style={styles.addButton} onPress={toggleMenu}>
@@ -232,10 +243,10 @@ const HomeScreen = () => {
             <Ionicons name="add" size={32} color="#FFF" />
           </Animated.View>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem}>
+        <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate('Notifications', {}, { animation: 'slide_from_right' })}>
           <Ionicons name="notifications-outline" size={24} color="#9E9AA7" />
         </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate('Profile Screen', {}, { animation: 'slide_from_right' })}>
+        <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate('Profile', {}, { animation: 'slide_from_right' })}>
           <Ionicons name="person-outline" size={24} color="#9E9AA7" />
         </TouchableOpacity>
       </View>
@@ -246,6 +257,8 @@ const HomeScreen = () => {
 
 
 const styles = StyleSheet.create({
+
+  
   container: {
     flex: 1,
     backgroundColor: '#B2B5E7',

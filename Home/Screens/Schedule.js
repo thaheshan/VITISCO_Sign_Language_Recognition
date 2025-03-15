@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import {
+  AppRegistry,
   SafeAreaView,
   StyleSheet,
   Text,
@@ -24,36 +25,6 @@ import * as Haptics from 'expo-haptics';
 // API Configuration
 const API_URL = 'http://your-server-ip:5000/api';
 
-// API Functions
-export const fetchTasks = async (userId) => {
-  try {
-    const response = await fetch(`${API_URL}/tasks/user/${userId}`);
-    return await response.json();
-  } catch (error) {
-    console.error("Error fetching tasks:", error);
-    throw error;
-  }
-};
-
-export const addTask = async (taskData) => {
-  try {
-    const response = await fetch(`${API_URL}/tasks`, {
-      method: 'POST',
-      headers: {
-        
-        'Content-Type': 'application/json',
-      },
-
-      body: JSON.stringify(taskData),
-    });
-    return await response.json();
-  } catch (error) {
-    console.error("Error adding task:", error);
-    throw error;
-  }
-};
-
-// Styles
 const styles = StyleSheet.create({
   // Layout & Container Styles
   safeArea: {
@@ -402,43 +373,89 @@ const styles = StyleSheet.create({
   },
 });
 
-// Icons for the app
+// API Functions
+export const fetchTasks = async (userId) => {
+  try {
+    const response = await fetch(`${API_URL}/tasks/user/${userId}`);
+    return await response.json();
+  } catch (error) {
+    console.error("Error fetching tasks:", error);
+    throw error;
+  }
+};
+
+export const addTask = async (taskData) => {
+  try {
+    const response = await fetch(`${API_URL}/tasks`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(taskData),
+    });
+    return await response.json();
+  } catch (error) {
+    console.error("Error adding task:", error);
+    throw error;
+  }
+};
+
+// Icons for the app - FIX: Properly handle undefined props
+// Icons for the app with proper undefined props handling
 const Icons = {
-  Calendar: (props) => (
-    <View style={[styles.icon, props.style]}>
-      <Text style={styles.iconText}>📅</Text>
-    </View>
-  ),
+  Calendar: (props) => {
+    const safeProps = props || {};
+    return (
+      <View style={[styles.icon, safeProps.style]}>
+        <Text style={styles.iconText}>📅</Text>
+      </View>
+    );
+  },
   
-  Clock: (props) => (
-    <View style={[styles.icon, props.style]}>
-      <Text style={styles.iconText}>⏰</Text>
-    </View>
-  ),
+  Clock: (props) => {
+    const safeProps = props || {};
+    return (
+      <View style={[styles.icon, safeProps.style]}>
+        <Text style={styles.iconText}>⏰</Text>
+      </View>
+    );
+  },
 
-  Book: (props) => (
-    <View style={[styles.icon, props.style]}>
-      <Text style={styles.iconText}>📚</Text>
-    </View>
-  ),
+  Book: (props) => {
+    const safeProps = props || {};
+    return (
+      <View style={[styles.icon, safeProps.style]}>
+        <Text style={styles.iconText}>📚</Text>
+      </View>
+    );
+  },
 
-  Quiz: (props) => (
-    <View style={[styles.icon, props.style]}>
-      <Text style={styles.iconText}>❓</Text>
-    </View>
-  ),
+  Quiz: (props) => {
+    const safeProps = props || {};
+    return (
+      <View style={[styles.icon, safeProps.style]}>
+        <Text style={styles.iconText}>❓</Text>
+      </View>
+    );
+  },
 
-  Check: (props) => (
-    <View style={[styles.icon, props.style]}>
-      <Text style={styles.iconText}>✅</Text>
-    </View>
-  ),
+  Check: (props) => {
+    const safeProps = props || {};
+    return (
+      <View style={[styles.icon, safeProps.style]}>
+        <Text style={styles.iconText}>✅</Text>
+      </View>
+    );
+  },
 
-  Close: (props) => (
-    <View style={[styles.icon, props.style]}>
-      <Text style={styles.iconText}>❌</Text>
-    </View>
-  ),
+  Close: (props) => {
+    const safeProps = props || {};
+    return (
+      <View style={[styles.icon, safeProps.style]}>
+        <Text style={styles.iconText}>❌</Text>
+      </View>
+    );
+  },
 };
 
 // Lesson plan suggestions
@@ -476,7 +493,7 @@ const lessonPlanSuggestions = [
 ];
 
 // Main App component
-const App = () => {
+const App = ({ navigation }) => {
   const [scheduleItems, setScheduleItems] = useState([
     { 
       id: 's1', 
