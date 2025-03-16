@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -16,15 +16,12 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import Video from "react-native-video";
 
-
 // Mock socket.io client - Replace with actual socket.io implementation
 const mockSocket = {
   id: "mock-user-1",
   emit: (event, data = {}) => console.log("Socket emit:", event, data),
   on: (event) => console.log("Socket on:", event),
 };
-
-
 
 const VirtualRoom = () => {
   const [gameState, setGameState] = useState({
@@ -39,16 +36,62 @@ const VirtualRoom = () => {
     totalQuestions: 5,
   });
 
-
-
   const [userInput, setUserInput] = useState({
     roomCode: "",
     message: "",
     selectedAnswer: null,
   });
-
   
   const [notification, setNotification] = useState(null);
+
+  // Simulate second player joining after room creation
+  useEffect(() => {
+    if (gameState.phase === "waiting" && gameState.players.length < 2) {
+      // Add current user to players list
+      if (gameState.players.length === 0) {
+        setTimeout(() => {
+          setGameState(prev => ({
+            ...prev,
+            players: [...prev.players, { id: mockSocket.id, name: "You (Player 1)" }]
+          }));
+        }, 500);
+      }
+      
+      // Simulate another player joining after a delay
+      if (gameState.players.length === 1) {
+        setTimeout(() => {
+          setGameState(prev => ({
+            ...prev,
+            players: [...prev.players, { id: "mock-user-2", name: "Player 2" }],
+            messages: [...prev.messages, {
+              id: Date.now(),
+              sender: "Player 2",
+              text: "Hi! Ready to play?"
+            }]
+          }));
+          showNotification("Player 2 has joined the room!");
+        }, 2000);
+      }
+    }
+  }, [gameState.phase, gameState.players.length]);
+
+  // Simulate game timer
+  useEffect(() => {
+    let timer;
+    if (gameState.phase === "playing" && gameState.timeLeft > 0) {
+      timer = setTimeout(() => {
+        setGameState(prev => ({
+          ...prev, 
+          timeLeft: prev.timeLeft - 1
+        }));
+      }, 1000);
+    } else if (gameState.phase === "playing" && gameState.timeLeft === 0 && userInput.selectedAnswer) {
+      // Auto-submit when timer runs out
+      submitAnswer();
+    }
+    
+    return () => clearTimeout(timer);
+  }, [gameState.timeLeft, gameState.phase]);
 
   // Notification component
   const NotificationComponent = ({ message, type, onClose }) => (
@@ -71,9 +114,15 @@ const VirtualRoom = () => {
 
   // Chat Message component
   const ChatMessage = ({ message, sender }) => (
-    <View style={styles.messageContainer}>
+    <View style={[
+      styles.messageContainer,
+      sender === "You" || sender === "You (Player 1)" ? styles.myMessage : {}
+    ]}>
       <Text style={styles.messageSender}>{sender}</Text>
-      <View style={styles.messageContent}>
+      <View style={[
+        styles.messageContent,
+        sender === "You" || sender === "You (Player 1)" ? styles.myMessageContent : {}
+      ]}>
         <Text style={styles.messageText}>{message}</Text>
       </View>
     </View>
@@ -121,50 +170,119 @@ const VirtualRoom = () => {
   };
 
   const startGame = () => {
+    // Initialize scores for both players
+    const initialScores = {};
+    gameState.players.forEach(player => {
+      initialScores[player.id] = 0;
+    });
+
     setGameState((prev) => ({
       ...prev,
       phase: "playing",
       questionNumber: 1,
       timeLeft: 20,
+      scores: initialScores,
       currentQuestion: {
         id: 1,
         question: "What is the sign for 'Hello'?",
         options: ["Wave hand", "Touch forehead", "Cross arms", "Point up"],
-        videoUrl: "/signs/hello.mp4",
+        videoUrl: "https://example.com/signs/hello.mp4", // Placeholder URL
       },
     }));
+    
+    // Simulate the other player sending a message
+    setTimeout(() => {
+      setGameState(prev => ({
+        ...prev,
+        messages: [...prev.messages, {
+          id: Date.now(),
+          sender: "Player 2",
+          text: "Good luck everyone!"
+        }]
+      }));
+    }, 1500);
   };
 
   const submitAnswer = () => {
     if (!userInput.selectedAnswer) return;
 
     // Mock score calculation
-    const newScores = {
-      ...gameState.scores,
-      [mockSocket.id]: (gameState.scores[mockSocket.id] || 0) + 10,
-    };
+    const newScores = { ...gameState.scores };
+    // Your score increases
+    newScores[mockSocket.id] = (newScores[mockSocket.id] || 0) + 10;
+    
+    // Simulate other player's score changing too
+    const otherPlayerId = gameState.players.find(p => p.id !== mockSocket.id)?.id;
+    if (otherPlayerId) {
+      // Random score between 0-10 for other player
+      const otherPlayerPoints = Math.floor(Math.random() * 11);
+      newScores[otherPlayerId] = (newScores[otherPlayerId] || 0) + otherPlayerPoints;
+      
+      // Simulate other player submitting answer message
+      setTimeout(() => {
+        setGameState(prev => ({
+          ...prev,
+          messages: [...prev.messages, {
+            id: Date.now(),
+            sender: "Player 2",
+            text: otherPlayerPoints > 5 ? "Got it!" : "That was a tough one!"
+          }]
+        }));
+      }, 1000);
+    }
+
+    // Questions data to simulate multiple questions
+    const questions = [
+      {
+        id: 1,
+        question: "What is the sign for 'Hello'?",
+        options: ["Wave hand", "Touch forehead", "Cross arms", "Point up"],
+        videoUrl: "https://example.com/signs/hello.mp4",
+      },
+      {
+        id: 2,
+        question: "What is the sign for 'Thank you'?",
+        options: ["Hand to chest", "Thumbs up", "Tapping forehead", "Peace sign"],
+        videoUrl: "https://example.com/signs/thankyou.mp4",
+      },
+      {
+        id: 3,
+        question: "What is the sign for 'Friend'?",
+        options: ["Linked fingers", "Wave", "Hands together", "Point at self"],
+        videoUrl: "https://example.com/signs/friend.mp4",
+      },
+      {
+        id: 4,
+        question: "What is the sign for 'Help'?",
+        options: ["Thumbs up on palm", "Crossed arms", "Raised hand", "Tapping shoulder"],
+        videoUrl: "https://example.com/signs/help.mp4",
+      },
+      {
+        id: 5,
+        question: "What is the sign for 'Understand'?",
+        options: ["Finger to forehead", "Nod", "OK gesture", "Hand wave"],
+        videoUrl: "https://example.com/signs/understand.mp4",
+      }
+    ];
+
+    const nextQuestionNumber = gameState.questionNumber + 1;
+    const nextQuestion = nextQuestionNumber <= gameState.totalQuestions ? 
+      questions[nextQuestionNumber - 1] : null;
 
     setGameState((prev) => ({
       ...prev,
       scores: newScores,
-      questionNumber: prev.questionNumber + 1,
-      currentQuestion:
-        prev.questionNumber >= prev.totalQuestions
-          ? null
-          : {
-              id: prev.questionNumber + 1,
-              question: `What is the sign for 'Question ${
-                prev.questionNumber + 1
-              }'?`,
-              options: ["Option A", "Option B", "Option C", "Option D"],
-              videoUrl: `/signs/question${prev.questionNumber + 1}.mp4`,
-            },
+      questionNumber: nextQuestionNumber,
+      currentQuestion: nextQuestion,
+      timeLeft: nextQuestion ? 20 : 0,
     }));
 
     setUserInput((prev) => ({ ...prev, selectedAnswer: null }));
 
     if (gameState.questionNumber >= gameState.totalQuestions) {
-      setGameState((prev) => ({ ...prev, phase: "finished" }));
+      setTimeout(() => {
+        setGameState((prev) => ({ ...prev, phase: "finished" }));
+      }, 1000);
     }
   };
 
@@ -184,6 +302,28 @@ const VirtualRoom = () => {
     }));
 
     setUserInput((prev) => ({ ...prev, message: "" }));
+    
+    // Simulate response from other player sometimes
+    if (Math.random() > 0.5 && gameState.players.length > 1) {
+      const responses = [
+        "I think I know this one!",
+        "This is fun!",
+        "Not sure about this question...",
+        "How are you doing so far?",
+        "We're doing great!"
+      ];
+      
+      setTimeout(() => {
+        setGameState(prev => ({
+          ...prev,
+          messages: [...prev.messages, {
+            id: Date.now(),
+            sender: "Player 2",
+            text: responses[Math.floor(Math.random() * responses.length)]
+          }]
+        }));
+      }, 1500 + Math.random() * 1500);
+    }
   };
 
   const copyToClipboard = (text) => {
@@ -196,7 +336,6 @@ const VirtualRoom = () => {
       <View style={styles.logoContainer}>
         <Image
           source={require("../assets/vitisco logo PNG.png")}
-
           style={styles.logo}
           resizeMode="contain"
         />
@@ -250,6 +389,8 @@ const VirtualRoom = () => {
                 ...prev,
                 phase: "initial",
                 roomCode: null,
+                players: [],
+                messages: [],
               }))
             }
           >
@@ -312,14 +453,16 @@ const VirtualRoom = () => {
       </View>
 
       {gameState.currentQuestion?.videoUrl && (
-        <View style={styles.videoContainer}>
-          <Video
-            source={{ uri: gameState.currentQuestion.videoUrl }}
-            style={styles.video}
-            controls={true}
-            resizeMode="cover"
-          />
-        </View>
+ // Replace the Video component with a placeholder
+<View style={styles.videoContainer}>
+  {/* Placeholder for video */}
+  <View style={styles.video}>
+    <Text style={{textAlign: 'center', marginTop: 20}}>
+      [Sign Language Video]
+    </Text>
+    <Ionicons name="videocam" size={50} color="#999" style={{alignSelf: 'center', marginTop: 20}} />
+  </View>
+</View>
       )}
 
       <View style={styles.questionContainer}>
@@ -367,12 +510,15 @@ const VirtualRoom = () => {
       <View style={styles.scoresSection}>
         <Text style={styles.mediumTitle}>Scores</Text>
         <View style={styles.scoresList}>
-          {Object.entries(gameState.scores).map(([player, score]) => (
-            <View key={player} style={styles.scoreRow}>
-              <Text style={styles.regularText}>{player}</Text>
-              <Text style={styles.scoreText}>{score}</Text>
-            </View>
-          ))}
+          {Object.entries(gameState.scores).map(([playerId, score]) => {
+            const playerName = gameState.players.find(p => p.id === playerId)?.name || playerId;
+            return (
+              <View key={playerId} style={styles.scoreRow}>
+                <Text style={styles.regularText}>{playerName}</Text>
+                <Text style={styles.scoreText}>{score}</Text>
+              </View>
+            );
+          })}
         </View>
       </View>
     </View>
@@ -391,25 +537,34 @@ const VirtualRoom = () => {
       <ScrollView style={styles.resultsScrollView}>
         {Object.entries(gameState.scores)
           .sort(([, a], [, b]) => b - a)
-          .map(([player, score], index) => (
-            <View
-              key={player}
-              style={[styles.resultItem, index === 0 && styles.winnerItem]}
-            >
-              <View style={styles.resultNameContainer}>
-                {index === 0 && (
-                  <Ionicons name="trophy" size={16} color="#FFD700" />
-                )}
-                <Text style={styles.resultName}>{player}</Text>
+          .map(([playerId, score], index) => {
+            const playerName = gameState.players.find(p => p.id === playerId)?.name || playerId;
+            return (
+              <View
+                key={playerId}
+                style={[styles.resultItem, index === 0 && styles.winnerItem]}
+              >
+                <View style={styles.resultNameContainer}>
+                  {index === 0 && (
+                    <Ionicons name="trophy" size={16} color="#FFD700" />
+                  )}
+                  <Text style={styles.resultName}>{playerName}</Text>
+                </View>
+                <Text style={styles.resultScore}>{score}</Text>
               </View>
-              <Text style={styles.resultScore}>{score}</Text>
-            </View>
-          ))}
+            );
+          })}
       </ScrollView>
 
       <TouchableOpacity
         style={styles.primaryButton}
-        onPress={() => setGameState((prev) => ({ ...prev, phase: "initial" }))}
+        onPress={() => setGameState((prev) => ({ 
+          ...prev, 
+          phase: "initial",
+          players: [],
+          messages: [],
+          scores: {},
+        }))}
       >
         <Text style={styles.buttonText}>Play Again</Text>
       </TouchableOpacity>
@@ -779,6 +934,9 @@ const styles = StyleSheet.create({
   messageContainer: {
     marginBottom: 8,
   },
+  myMessage: {
+    alignItems: "flex-end",
+  },
   messageSender: {
     fontSize: 12,
     fontWeight: "500",
@@ -789,6 +947,9 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 8,
     maxWidth: "80%",
+  },
+  myMessageContent: {
+    backgroundColor: "#EBF5FF",
   },
   messageText: {
     fontSize: 14,
@@ -817,3 +978,4 @@ const styles = StyleSheet.create({
 });
 
 export default VirtualRoom;
+

@@ -27,6 +27,7 @@
     "expo-gl": "^15.0.4",
     "expo-haptics": "~14.0.1",
     "expo-linear-gradient": "~14.0.2",
+    "expo-media-library": "~17.0.6",
     "expo-speech": "~13.0.1",
     "expo-status-bar": "~2.0.1",
     "fingerpose": "^0.1.0",
