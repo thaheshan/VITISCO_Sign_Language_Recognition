@@ -129,3 +129,12 @@ CREATE TABLE Schedule (
 );
 
 
+ CREATE TABLE UserXP (
+     userId INT,
+     date DATE,
+     xpPoints INT,
+     PRIMARY KEY (userId, date),
+     FOREIGN KEY (userId) REFERENCES User(userId)
+ );
+
+
