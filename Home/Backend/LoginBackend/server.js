@@ -12,13 +12,37 @@ const crypto = require('crypto');
 const nodemailer = require('nodemailer');
 const { body, validationResult } = require('express-validator');
 
+// Add to your state variables
+const [isLoading, setIsLoading] = useState(false);
+const [apiError, setApiError] = useState('');
+
 // Load environment variables
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+const getApiUrl = () => {
+    // For Expo Go, use your computer's local network IP
+    // You'll need to update this with YOUR computer's IP address on the network
+    // This is the IP other devices on your network can use to reach your computer
+    return 'http://192.168.1.25:5000';
+    
+    // Alternative approach using Expo's manifest.debuggerHost (if available)
+    // This works in some Expo environments but not all
+    /*
+    const debuggerHost = Constants.manifest?.debuggerHost;
+    if (debuggerHost) {
+      // Extract the IP address from the debuggerHost 
+      const hostIP = debuggerHost.split(':')[0];
+      return `http://${hostIP}:5000`;
+    }
+    return 'http://YOUR_FALLBACK_IP:5000';
+    */
+  };
 
+const API_BASE_URL = getApiUrl();
+console.log("Using API URL:", API_BASE_URL);
 
 // Security middleware
 app.use(helmet()); // Set various HTTP headers for security
@@ -333,6 +357,11 @@ app.post('/api/verify-otp', [
     res.status(500).json({ error: 'Server error while verifying OTP' });
   }
 });
+
+// Make sure the server is listening on 0.0.0.0 to accept connections from all network interfaces
+app.listen(PORT, '0.0.0.0', () => {
+    console.log(`Server running on port ${PORT}`);
+  });
 
 // Reset password
 app.post('/api/reset-password', [

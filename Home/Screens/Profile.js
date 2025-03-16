@@ -305,7 +305,7 @@ const ProfileScreen = () => {
 
           <View style={styles.divider} />
 
-          <TouchableOpacity style={styles.menuItem}   onPress={() => navigation.navigate('Settings Screen', {}, { animation: 'slide_from_right' })}>
+          <TouchableOpacity style={styles.menuItem}   onPress={() => navigation.navigate('Settings', {}, { animation: 'slide_from_right' })}>
             <Text style={styles.menuItemText}>Settings</Text>
             <Ionicons name="chevron-forward" size={20} color="#555" />
           </TouchableOpacity>

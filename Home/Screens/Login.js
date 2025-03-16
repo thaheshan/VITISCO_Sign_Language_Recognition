@@ -18,6 +18,8 @@ import {
 
 import { Ionicons } from '@expo/vector-icons';
 import axios from 'axios';
+// With this Expo-friendly approach:
+import Constants from 'expo-constants';
 
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -29,8 +31,12 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 // Update your API base URL to work with Expo Go
 // For Expo Go, you need to use your machine's local IP address instead of localhost or 10.0.2.2
 
+// Make this more dynamic
+const API_BASE_URL = Platform.OS === 'web' 
+  ? 'http://localhost:5000' 
+  : 'http://192.168.1.25:5000';  // Use your actual IP address
 
-const API_BASE_URL = 'http://192.168.1.25:5000';
+
 // Replace X with your actual IP address segment
 
 // Example MySQL connection setup for your backend (this would go in your Node.js server file, not in this React Native file)
@@ -96,14 +102,18 @@ axios.get(`${API_BASE_URL}/api/message`)
     setApiError('');
   })
   .catch(error => {
-    console.log("Full error:", error);
-    console.log("Error message:", error.message);
-    console.log("Error response data:", error.response?.data);
-    console.log("Error response status:", error.response?.status);
+    console.log("Full error details:", error);
+    if (error.response) {
+      console.log("Server responded with:", error.response.status, error.response.data);
+    } else if (error.request) {
+      console.log("No response received:", error.request);
+    } else {
+      console.log("Error setting up request:", error.message);
+    }
     setApiError("Could not connect to server. Please try again later.");
   });
-
-
+  
+  
 
 const LoginScreen = ({navigation}) =>  {
     
@@ -139,18 +149,31 @@ const LoginScreen = ({navigation}) =>  {
   // Fetch data from API with proper error handling for Expo Go
   useEffect(() => {
     if (currentScreen === 'welcome') {
-      // Update to use the API_BASE_URL constant
+      console.log("Attempting to connect to:", `${API_BASE_URL}/api/message`);
       axios.get(`${API_BASE_URL}/api/message`)
         .then(response => {
+          console.log("API Connection successful:", response.data);
           setApiMessage(response.data.message);
           setApiError('');
         })
         .catch(error => {
-          console.log("Error fetching data: ", error);
+          console.log("API Connection failed with error:", error.message);
+          
+          // More detailed error logging
+          if (error.response) {
+            console.log("Server responded with error:", error.response.status, error.response.data);
+          } else if (error.request) {
+            console.log("No response received, network issue likely");
+          } else {
+            console.log("Error setting up request:", error.message);
+          }
+          
           setApiError("Could not connect to server. Please try again later.");
         });
     }
   }, [currentScreen]);
+
+
   
   useEffect(() => {
     // Run animation when screen changes
@@ -232,6 +255,35 @@ const LoginScreen = ({navigation}) =>  {
       </View>
     </Animated.View>
   );
+
+  // In the LoginScreen component
+const handleLogin = () => {
+  console.log('Login pressed with:', { username, password });
+  
+  // Show some loading state
+  setIsLoading(true);
+  
+  axios.post(`${API_BASE_URL}/api/login`, { username, password })
+    .then(response => {
+      console.log('Login response:', response.data);
+      setIsLoading(false);
+      // Navigate to Home screen upon successful login
+      navigation.navigate("Home", {}, { animation: 'slide_from_right' });
+    })
+    .catch(error => {
+      setIsLoading(false);
+      console.log('Login error:', error);
+      // Show error message to user
+      if (error.response) {
+        setApiError(error.response.data.error || 'Login failed');
+      } else if (error.request) {
+        setApiError('Network error - check your connection and API URL');
+        console.log('Network error details:', error.request);
+      } else {
+        setApiError('An error occurred during login');
+      }
+    });
+};
 
   // Login Screen
   const LoginScreen = () => (

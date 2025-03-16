@@ -101,14 +101,14 @@ const HomeScreen = () => {
                 <Ionicons name="grid-outline" size={20} color="#FFF" />
               </TouchableOpacity>
               <TouchableOpacity>
-                <Text style={styles.tabText}>DAILY TASKS</Text>
+                <Text style={styles.tabText} >DAILY TASKS</Text>
               </TouchableOpacity>
               <TouchableOpacity>
                 <Text style={[styles.tabText, styles.inactiveTab]}>CHALLENGES</Text>
               </TouchableOpacity>
             </View>
             <TouchableOpacity>
-              <Text style={styles.seeAll}>See all</Text>
+              <Text style={styles.seeAll}  onPress={() => navigation.navigate('Scheduler', {}, { animation: 'slide_from_right' })} >See all</Text>
             </TouchableOpacity>
           </View>
 
@@ -222,10 +222,10 @@ const HomeScreen = () => {
       {/* Popup Menu */}
       <Animated.View style={[styles.popupMenu, { height: menuHeightInterpolation }]}>
         <TouchableOpacity style={styles.menuItem}>
-          <Text style={styles.menuText}   onPress={() => navigation.navigate('TextToSpeech', {}, { animation: 'slide_from_right' })}>Translator</Text>
+          <Text style={styles.menuText}   onPress={() => navigation.navigate('Translator', {}, { animation: 'slide_from_right' })}>Translator</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.menuItem}>
-          <Text style={styles.menuText} >ADD SCHEDULE</Text>
+          <Text style={styles.menuText} onPress={() => navigation.navigate('Scheduler', {}, { animation: 'slide_from_right' })}>ADD SCHEDULE</Text>
         </TouchableOpacity>
       </Animated.View>
 

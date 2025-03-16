@@ -1376,7 +1376,7 @@ const AlphabetLearningScreen = ({ route, navigation }) => {
       title: "Basic Alphabet (අ-ඉ)",
 
       cards: [
-        { letter: 'අ', pronunciation: 'a', example: 'apple', sign: require('./videos/0312 (1)(1).mov'), signText: 'Hand forms letter A shape' },
+        { letter: 'අ', pronunciation: 'a', example: 'apple', sign: require('./videos/Thahee.mp4'), signText: 'Hand forms letter A shape' },
         { letter: 'ඇ', pronunciation: 'ae', example: 'ant', sign: require('./videos/0312 (1).mp4'), signText: 'Open palm moving rightward' },
         { letter: 'ඈ', pronunciation: 'aae', example: 'ask', sign: require('./videos/0312 (1).mp4'), signText: 'Extended palm with circular motion' },
         { letter: 'ඉ', pronunciation: 'i', example: 'if', sign: require('./videos/0312 (1).mp4'), signText: 'Pinky finger pointing upward' },
@@ -1386,6 +1386,8 @@ const AlphabetLearningScreen = ({ route, navigation }) => {
     },
  
   };
+  
+
   
   // Default to lesson 1 if lessonId is undefined or not found in lessonContent
   const safeId = lessonId && lessonContent[lessonId] ? lessonId : 1;
