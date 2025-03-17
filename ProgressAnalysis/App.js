@@ -1,16 +1,13 @@
 
 import React, { useState, useEffect } from 'react';
 import { SafeAreaView, ScrollView, Text, View, TouchableOpacity, Modal, Image, Dimensions } from 'react-native';
-import { LineChart } from 'react-native-chart-kit';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import Bo from './Bo';
 import styles from './styles';
 import RewardCard from './RewardCard';
 import ProgressSection from './ProgressSection';
 import QuizAPI from './QuizAPI';
-
-// Get device dimensions
-const { width, height } = Dimensions.get('window');
+import XPChart from './XPChart';
 
 
 
@@ -18,7 +15,8 @@ const { width, height } = Dimensions.get('window');
 
 
 
-const LanguageProgressModal = ({ visible, onClose, language, data }) => (
+
+const LanguageProgressModal = ({ visible, onClose, language }) => (
   <Modal
     animationType="slide"
     transparent={true}
@@ -37,26 +35,8 @@ const LanguageProgressModal = ({ visible, onClose, language, data }) => (
         <ScrollView>
          <ProgressSection userId={1} languageName={language} />
 
-          <View style={styles.chartSection}>
-            <Text style={styles.sectionTitle}>Weekly progress</Text>
-            <LineChart
-              data={data.weeklyData}
-              width={width - 40}
-              height={200}
-              chartConfig={{
-                backgroundColor: "#fff",
-                backgroundGradientFrom: "#fff",
-                backgroundGradientTo: "#fff",
-                decimalPlaces: 0,
-                color: (opacity = 1) => `rgba(81, 92, 230, ${opacity})`,
-                style: {
-                  borderRadius: 16
-                }
-              }}
-              bezier
-              style={styles.chart}
-            />
-          </View>
+         
+          <XPChart/>
           <QuizAPI userId={3} languageName={language} />
 
          
@@ -69,30 +49,7 @@ const LanguageProgressModal = ({ visible, onClose, language, data }) => (
 const App = () => {
   const [selectedLanguage, setSelectedLanguage] = useState(null);
   const characterImage = require('./assets/logo.png');
-  const languageData = {
-    English: {
-     
-      weeklyData: {
-        labels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
-        datasets: [{ data: [65, 80, 75, 85, 90, 88, 85] }]
-      }
-     
-    },
-    Tamil: {
-      
-      weeklyData: {
-        labels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
-        datasets: [{ data: [55, 60, 65, 70, 75, 72, 70] }]
-      }
-    },
-    Sinhala: {
-     
-      weeklyData: {
-        labels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
-        datasets: [{ data: [45, 50, 55, 58, 60, 62, 60] }]
-      }
-    }
-  };
+
 
   return (
     <SafeAreaView style={styles.container}>
@@ -187,13 +144,14 @@ const App = () => {
           visible={!!selectedLanguage}
           onClose={() => setSelectedLanguage(null)}
           language={selectedLanguage}
-          data={languageData[selectedLanguage]}
+       
 
         />
       )}
     </SafeAreaView>
   );
 };
+
 
 
 
