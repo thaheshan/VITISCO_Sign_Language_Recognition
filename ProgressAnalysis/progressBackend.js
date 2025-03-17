@@ -47,17 +47,17 @@ app.get("/user-progress", (req, res) => {
     SELECT 
       c.categoryName,
       COALESCE(COUNT(DISTINCT CASE 
-          WHEN l.languageId = (SELECT languageId FROM Language WHERE languageName = ?) 
+          WHEN l.languageId = (SELECT languageId FROM language WHERE languageName = ?) 
           AND ul.completionStatus = true THEN l.lessonId 
       END), 0) AS progress,
       COALESCE(COUNT(DISTINCT CASE 
-          WHEN l.languageId = (SELECT languageId FROM Language WHERE languageName = ?) 
+          WHEN l.languageId = (SELECT languageId FROM language WHERE languageName = ?) 
           THEN l.lessonId 
       END), 0) AS total
     FROM 
       Category c
-      LEFT JOIN Lesson l ON c.categoryId = l.categoryId
-      LEFT JOIN UserLesson ul ON l.lessonId = ul.lessonId AND ul.userId = ?
+      LEFT JOIN lesson l ON c.categoryId = l.categoryId
+      LEFT JOIN userlesson ul ON l.lessonId = ul.lessonId AND ul.userId = ?
     GROUP BY 
       c.categoryName
     ORDER BY 
@@ -89,25 +89,25 @@ app.get("/user-xp/:userId", (req, res) => {
       COALESCE(SUM(uq.marksXPPoints), 0) + 
       COALESCE(SUM(vr.winnerXPPoints), 0) AS totalXP
     FROM 
-      User u
+      user u
     LEFT JOIN 
-      UserLesson ul ON u.userId = ul.userId
+      userlesson ul ON u.userId = ul.userId
     LEFT JOIN 
-      Lesson l ON ul.lessonId = l.lessonId
+      lesson l ON ul.lessonId = l.lessonId
     LEFT JOIN 
-      UserChallenge uc ON u.userId = uc.userId
+      userchallenge uc ON u.userId = uc.userId
     LEFT JOIN 
-      Challenge c ON uc.challengeId = c.challengeId
+      challenge c ON uc.challengeId = c.challengeId
     LEFT JOIN 
-      UserQuiz uq ON u.userId = uq.userId
+      userquiz uq ON u.userId = uq.userId
     LEFT JOIN 
-      Quiz q ON uq.quizId = q.quizId
+      quiz q ON uq.quizId = q.quizId
     LEFT JOIN 
-      VirtualRoom vr ON u.userId = vr.hostId
+      virtualroom vr ON u.userId = vr.hostId
     LEFT JOIN 
-      VirtualRoomQuiz vrq ON vr.roomCode = vrq.roomCode
+      virtualroomquiz vrq ON vr.roomCode = vrq.roomCode
     LEFT JOIN 
-      Quiz vc ON vrq.quizId = vc.quizId
+      quiz vc ON vrq.quizId = vc.quizId
     WHERE 
       u.userId = ?;
   `;
@@ -119,6 +119,93 @@ app.get("/user-xp/:userId", (req, res) => {
     res.json(results[0]); // Return the first result object (total XP)
   });
 });
+
+app.get("/user-average", (req, res) => {
+  const { userId, languageName } = req.query;
+
+  const query = `
+    SELECT 
+      AVG(uq.marksPercentage) AS averageMarks,
+      AVG(uq.minutes * 60 + uq.seconds) / 60 AS averageTimeMinutes
+    FROM userquiz uq
+    INNER JOIN quiz q ON uq.quizId = q.quizId
+    INNER JOIN language l ON q.languageId = l.languageId
+    WHERE uq.userId = ? 
+    AND l.languageName = ?;
+  `;
+
+  db.query(query, [userId, languageName], (err, results) => {
+    if (err) {
+      return res.status(500).json({ error: err.message });
+    }
+    
+    console.log("SQL Results:", results);
+
+    // Handle cases where no quiz records exist for the user in the given language
+    const averageMarks = results[0].averageMarks !== null ? results[0].averageMarks : 0;
+    const averageTimeMinutes = results[0].averageTimeMinutes !== null ? results[0].averageTimeMinutes : 0;
+
+    res.json({
+      userId,
+      languageName,
+      averageMarks,
+      averageTimeMinutes
+    });
+  });
+});
+
+
+app.get('/userXPchart/:userId', (req, res) => {
+  const userId = req.params.userId;
+  const query = `
+      SELECT day_name, totalXP FROM (
+         
+          SELECT DATE_FORMAT(date, '%a') AS day_name, xpPoints AS totalXP
+          FROM userxp
+          WHERE userId = ? 
+
+          UNION ALL
+
+     
+          SELECT DAYNAME(CURDATE()) AS day_name, 
+              COALESCE(SUM(l.XPPoints), 0) + 
+              COALESCE(SUM(c.XPPoints), 0) + 
+              COALESCE(SUM(q.XPPoints), 0) + 
+              COALESCE(SUM(vc.XPPoints), 0) + 
+              COALESCE(SUM(uq.marksXPPoints), 0) + 
+              COALESCE(SUM(vr.winnerXPPoints), 0) AS totalXP
+          FROM user u
+          LEFT JOIN userlesson ul ON u.userId = ul.userId
+          LEFT JOIN lesson l ON ul.lessonId = l.lessonId
+          LEFT JOIN userchallenge uc ON u.userId = uc.userId
+          LEFT JOIN challenge c ON uc.challengeId = c.challengeId
+          LEFT JOIN userquiz uq ON u.userId = uq.userId
+          LEFT JOIN quiz q ON uq.quizId = q.quizId
+          LEFT JOIN virtualroom vr ON u.userId = vr.hostId
+          LEFT JOIN virtualroomquiz vrq ON vr.roomCode = vrq.roomCode
+          LEFT JOIN quiz vc ON vrq.quizId = vc.quizId
+          WHERE u.userId = ?
+      ) AS combinedXP
+  `;
+
+  db.query(query, [userId, userId], (err, results) => {
+      if (err) {
+          console.error("Error fetching XP data:", err);
+          return res.status(500).json({ error: "Internal Server Error" });
+      }
+
+      // Extract labels and data for chart
+      const labels = results.map(row => row.day_name); 
+      const data = results.map(row => row.totalXP);
+
+      // Respond with the formatted data for the front-end chart
+      res.json({ labels, datasets: [{ data }] });
+  });
+});
+
+
+
+
 
 
 // Start server
