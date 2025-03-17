@@ -4,10 +4,11 @@ import {
 } from 'react-native';
 
 const SettingsScreen = () => {
+  // State for dark mode and push notifications
   const [isDarkMode, setIsDarkMode] = useState(true);
   const [pushNotifications, setPushNotifications] = useState(true);
 
-  // Color scheme based on mode
+  // Color scheme based on mode 
   const colors = {
     dark: {
       background: '#121212',
@@ -31,85 +32,10 @@ const SettingsScreen = () => {
     }
   };
 
+  // Detrmine current color based on mode
   const currentColors = isDarkMode ? colors.dark : colors.light;
 
-  const styles = StyleSheet.create({
-    container: {
-      flex: 1,
-      backgroundColor: currentColors.background
-    },
-    headerContainer: {
-      backgroundColor: currentColors.headerBackground,
-      paddingTop: StatusBar.currentHeight || 20,
-      paddingBottom: 15,
-      paddingHorizontal: 15,
-    },
-    headerText: {
-      color: 'white',
-      fontSize: 23,
-      fontWeight: 'bold',
-      alignSelf: 'left',
-      padding: 19
-    },
-    settingsSection: {
-      backgroundColor: currentColors.cardBackground,
-      marginTop: 1,
-      paddingVertical: 8
-    },
-    profileSection: {
-      backgroundColor: currentColors.cardBackground,
-      marginTop: 20,
-      marginHorizontal: 15,
-      borderRadius: 10,
-      overflow: 'hidden'
-    },
-    sectionTitle: {
-      color: currentColors.secondaryText,
-      fontSize: 16,
-      marginBottom: 5,
-      marginTop: 5,
-      marginLeft: 20,
-      fontWeight: '500'
-    },
-    settingsItem: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      paddingVertical: 15,
-      paddingHorizontal: 24,
-    },
-    lastItem: {
-      borderBottomWidth: 0
-    },
-    settingsText: {
-      color: currentColors.text,
-      fontSize: 16
-    },
-    userNameText: {
-      color: currentColors.text,
-      fontSize: 18,
-      fontWeight: 'bold',
-      textAlign: 'center',
-      paddingVertical: 20
-    },
-    actionIcon: {
-      color: currentColors.secondaryText,
-      fontSize: 18
-    },
-    divider: {
-      height: 2,
-      backgroundColor: currentColors.border,
-      marginHorizontal: 0
-    },
-    sectionContainer: {
-      backgroundColor: currentColors.cardBackground,
-      marginHorizontal: 20,
-      marginVertical: 10,
-      borderRadius: 10,
-      overflow: 'hidden'
-    }
-  });
-
+  // Helper fuction to render a setting item
   const renderSettingsItem = (label, onPress, icon) => (
     <TouchableOpacity style={styles.settingsItem} onPress={onPress}>
       <Text style={styles.settingsText}>{label}</Text>
@@ -138,6 +64,7 @@ const SettingsScreen = () => {
         <View>
           <Text style={styles.sectionTitle}>Account Settings</Text>
           
+          {/* Render setting items for account settings */}
           {renderSettingsItem('Edit profile', () => {}, '>')}
           {renderSettingsItem('Change password', () => {}, '>')}
           {renderSettingsItem('Add a payment method', () => {}, '+')}
@@ -180,6 +107,84 @@ const SettingsScreen = () => {
     </SafeAreaView>
   );
 };
+
+// Stylesheet for components
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: currentColors.background
+  },
+  headerContainer: {
+    backgroundColor: currentColors.headerBackground,
+    paddingTop: StatusBar.currentHeight || 20,
+    paddingBottom: 15,
+    paddingHorizontal: 15,
+  },
+  headerText: {
+    color: 'white',
+    fontSize: 23,
+    fontWeight: 'bold',
+    alignSelf: 'left',
+    padding: 19
+  },
+  settingsSection: {
+    backgroundColor: currentColors.cardBackground,
+    marginTop: 1,
+    paddingVertical: 8
+  },
+  profileSection: {
+    backgroundColor: currentColors.cardBackground,
+    marginTop: 20,
+    marginHorizontal: 15,
+    borderRadius: 10,
+    overflow: 'hidden'
+  },
+  sectionTitle: {
+    color: currentColors.secondaryText,
+    fontSize: 16,
+    marginBottom: 5,
+    marginTop: 5,
+    marginLeft: 20,
+    fontWeight: '500'
+  },
+  settingsItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 15,
+    paddingHorizontal: 24,
+  },
+  lastItem: {
+    borderBottomWidth: 0
+  },
+  settingsText: {
+    color: currentColors.text,
+    fontSize: 16
+  },
+  userNameText: {
+    color: currentColors.text,
+    fontSize: 18,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    paddingVertical: 20
+  },
+  actionIcon: {
+    color: currentColors.secondaryText,
+    fontSize: 18
+  },
+  divider: {
+    height: 2,
+    backgroundColor: currentColors.border,
+    marginHorizontal: 0
+  },
+  sectionContainer: {
+    backgroundColor: currentColors.cardBackground,
+    marginHorizontal: 20,
+    marginVertical: 10,
+    borderRadius: 10,
+    overflow: 'hidden'
+  }
+});
 
 export default SettingsScreen;
 
