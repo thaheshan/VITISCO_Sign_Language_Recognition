@@ -23,13 +23,13 @@ import { useNavigation } from '@react-navigation/native';
 
 
 const HomeScreen = () => {
-  const navigation = useNavigation();
-  const [showUserId, setShowUserId] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(false);
+  const navigation = useNavigation(); //Hook to access navigation object
+  const [showUserId, setShowUserId] = useState(false); //State to toggle user ID display
+  const [menuOpen, setMenuOpen] = useState(false); //State to toggle menu open/close
   
   // Animation values
-  const addButtonRotation = useRef(new Animated.Value(0)).current;
-  const menuHeight = useRef(new Animated.Value(0)).current;
+  const addButtonRotation = useRef(new Animated.Value(0)).current; //For rotating the add button
+  const menuHeight = useRef(new Animated.Value(0)).current; // For animating the menu height
   
   // Toggle user ID display
   const toggleUserId = () => {
@@ -38,8 +38,9 @@ const HomeScreen = () => {
   
   // Toggle menu animation
   const toggleMenu = () => {
-    const toValue = menuOpen ? 0 : 1;
+    const toValue = menuOpen ? 0 : 1; // Determine the target value for animation
     
+    // Animate both the button rotation and menu height simultaneously
     Animated.parallel([
       Animated.timing(addButtonRotation, {
         toValue,
@@ -53,19 +54,19 @@ const HomeScreen = () => {
       })
     ]).start();
     
-    setMenuOpen(!menuOpen);
+    setMenuOpen(!menuOpen); // Toggle men state
   };
   
   // Interpolate rotation for + to x animation
   const rotateInterpolation = addButtonRotation.interpolate({
     inputRange: [0, 1],
-    outputRange: ['0deg', '45deg']
+    outputRange: ['0deg', '45deg'] //Rotate from 0 to 45 degrees
   });
   
   // Interpolate height for menu animation
   const menuHeightInterpolation = menuHeight.interpolate({
     inputRange: [0, 1],
-    outputRange: [0, 100]
+    outputRange: [0, 100] //Animate height from 0 to 100
   });
 
   return (
@@ -84,7 +85,7 @@ const HomeScreen = () => {
           activeOpacity={0.8}
         >
           <Text style={styles.userText}>
-            {showUserId ? "VIT5643" : "USER ID"}
+          {showUserId ? "VIT5643" : "USER ID"}  
           </Text>
         </TouchableOpacity>
       </View>
@@ -111,7 +112,8 @@ const HomeScreen = () => {
               <Text style={styles.seeAll}  onPress={() => navigation.navigate('Scheduler', {}, { animation: 'slide_from_right' })} >See all</Text>
             </TouchableOpacity>
           </View>
-
+           
+          {/* Task Cards */}
           <View style={styles.taskCards}>
             <TouchableOpacity 
               style={styles.taskCard}
@@ -255,14 +257,15 @@ const HomeScreen = () => {
 };
 
 
-
+// StylesSheet
 const styles = StyleSheet.create({
 
-  
+// Main container style
   container: {
-    flex: 1,
+    flex: 1, 
     backgroundColor: '#B2B5E7',
   },
+  // Header section styles
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -270,6 +273,7 @@ const styles = StyleSheet.create({
     padding: 16,
     paddingTop: 8,
   },
+
   logo: {
     width: 40,
     height: 40,
@@ -281,6 +285,7 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     paddingTop: 40,
   },
+  //User ID button
   userButton: {
     backgroundColor: '#FFFFFF',
     padding: 8,
@@ -303,6 +308,7 @@ const styles = StyleSheet.create({
     padding: 16,
     paddingTop: 8,
   },
+  // Section header style (for titles and "See all" buttons)
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
