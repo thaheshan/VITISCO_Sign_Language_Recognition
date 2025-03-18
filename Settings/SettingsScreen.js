@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { 
   View, Text, StyleSheet, Switch, TouchableOpacity, SafeAreaView, StatusBar,
-  Modal, TextInput, Alert 
+  Modal, TextInput, Alert, ScrollView, KeyboardAvoidingView, Platform
 } from 'react-native';
 
 const SettingsScreen = () => {
@@ -95,91 +95,99 @@ const SettingsScreen = () => {
       visible={isEditProfileVisible}
       onRequestClose={() => setIsEditProfileVisible(false)}
     >
-      <View style={styles.modalContainer}>
-        <View style={[styles.modalContent, {backgroundColor: currentColors.cardBackground}]}>
-          <Text style={[styles.modalTitle, {color: currentColors.text}]}>Edit Profile</Text>
-          
-          <View style={styles.inputContainer}>
-            <Text style={[styles.inputLabel, {color: currentColors.secondaryText}]}>Full Name*</Text>
-            <TextInput
-              style={[styles.input, {
-                backgroundColor: currentColors.inputBackground,
-                color: currentColors.text,
-                borderColor: currentColors.border
-              }]}
-              value={editableProfile.name}
-              onChangeText={(text) => setEditableProfile({...editableProfile, name: text})}
-              placeholder="Enter your full name"
-              placeholderTextColor={currentColors.placeholderText}
-            />
-          </View>
-
-          <View style={styles.inputContainer}>
-            <Text style={[styles.inputLabel, {color: currentColors.secondaryText}]}>Email</Text>
-            <TextInput
-              style={[styles.input, {
-                backgroundColor: currentColors.inputBackground,
-                color: currentColors.text,
-                borderColor: currentColors.border
-              }]}
-              value={editableProfile.email}
-              onChangeText={(text) => setEditableProfile({...editableProfile, email: text})}
-              placeholder="Enter your email address"
-              placeholderTextColor={currentColors.placeholderText}
-              keyboardType="email-address"
-              autoCapitalize="none"
-            />
-          </View>
-
-          <View style={styles.inputContainer}>
-            <Text style={[styles.inputLabel, {color: currentColors.secondaryText}]}>Password</Text>
-            <TextInput
-              style={[styles.input, {
-                backgroundColor: currentColors.inputBackground,
-                color: currentColors.text,
-                borderColor: currentColors.border
-              }]}
-              value={editableProfile.password}
-              onChangeText={(text) => setEditableProfile({...editableProfile, password: text})}
-              placeholder="Enter a new password"
-              placeholderTextColor={currentColors.placeholderText}
-              secureTextEntry={true}
-            />
-          </View>
-
-          <View style={styles.inputContainer}>
-            <Text style={[styles.inputLabel, {color: currentColors.secondaryText}]}>Phone</Text>
-            <TextInput
-              style={[styles.input, {
-                backgroundColor: currentColors.inputBackground,
-                color: currentColors.text,
-                borderColor: currentColors.border
-              }]}
-              value={editableProfile.phone}
-              onChangeText={(text) => setEditableProfile({...editableProfile, phone: text})}
-              placeholder="Enter your phone number"
-              placeholderTextColor={currentColors.placeholderText}
-              keyboardType="phone-pad"
-            />
-          </View>
-
-          <View style={styles.buttonContainer}>
-            <TouchableOpacity 
-              style={[styles.button, {backgroundColor: currentColors.buttonBackground}]} 
-              onPress={handleSaveProfile}
-            >
-              <Text style={[styles.buttonText, {color: currentColors.buttonText}]}>Save Changes</Text>
-            </TouchableOpacity>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        style={styles.modalKeyboardAvoid}
+      >
+        <View style={styles.modalContainer}>
+          <View style={[styles.modalContent, {backgroundColor: currentColors.cardBackground}]}>
+            <Text style={[styles.modalTitle, {color: currentColors.text}]}>Edit Profile</Text>
             
-            <TouchableOpacity 
-              style={[styles.button, {backgroundColor: 'transparent', borderWidth: 1, borderColor: currentColors.border}]} 
-              onPress={() => setIsEditProfileVisible(false)}
-            >
-              <Text style={[styles.buttonText, {color: currentColors.text}]}>Cancel</Text>
-            </TouchableOpacity>
+            <ScrollView>
+              <View style={styles.inputContainer}>
+                <Text style={[styles.inputLabel, {color: currentColors.secondaryText}]}>Full Name*</Text>
+                <TextInput
+                  style={[styles.input, {
+                    backgroundColor: currentColors.inputBackground,
+                    color: currentColors.text,
+                    borderColor: currentColors.border
+                  }]}
+                  value={editableProfile.name}
+                  onChangeText={(text) => setEditableProfile({...editableProfile, name: text})}
+                  placeholder="Enter your full name"
+                  placeholderTextColor={currentColors.placeholderText}
+                  autoFocus={false}
+                />
+              </View>
+
+              <View style={styles.inputContainer}>
+                <Text style={[styles.inputLabel, {color: currentColors.secondaryText}]}>Email</Text>
+                <TextInput
+                  style={[styles.input, {
+                    backgroundColor: currentColors.inputBackground,
+                    color: currentColors.text,
+                    borderColor: currentColors.border
+                  }]}
+                  value={editableProfile.email}
+                  onChangeText={(text) => setEditableProfile({...editableProfile, email: text})}
+                  placeholder="Enter your email address"
+                  placeholderTextColor={currentColors.placeholderText}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                />
+              </View>
+
+              <View style={styles.inputContainer}>
+                <Text style={[styles.inputLabel, {color: currentColors.secondaryText}]}>Password</Text>
+                <TextInput
+                  style={[styles.input, {
+                    backgroundColor: currentColors.inputBackground,
+                    color: currentColors.text,
+                    borderColor: currentColors.border
+                  }]}
+                  value={editableProfile.password}
+                  onChangeText={(text) => setEditableProfile({...editableProfile, password: text})}
+                  placeholder="Enter a new password"
+                  placeholderTextColor={currentColors.placeholderText}
+                  secureTextEntry={true}
+                />
+              </View>
+
+              <View style={styles.inputContainer}>
+                <Text style={[styles.inputLabel, {color: currentColors.secondaryText}]}>Phone</Text>
+                <TextInput
+                  style={[styles.input, {
+                    backgroundColor: currentColors.inputBackground,
+                    color: currentColors.text,
+                    borderColor: currentColors.border
+                  }]}
+                  value={editableProfile.phone}
+                  onChangeText={(text) => setEditableProfile({...editableProfile, phone: text})}
+                  placeholder="Enter your phone number"
+                  placeholderTextColor={currentColors.placeholderText}
+                  keyboardType="phone-pad"
+                />
+              </View>
+            </ScrollView>
+
+            <View style={styles.buttonContainer}>
+              <TouchableOpacity 
+                style={[styles.button, {backgroundColor: currentColors.buttonBackground}]} 
+                onPress={handleSaveProfile}
+              >
+                <Text style={[styles.buttonText, {color: currentColors.buttonText}]}>Save Changes</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity 
+                style={[styles.button, {backgroundColor: 'transparent', borderWidth: 1, borderColor: currentColors.border}]} 
+                onPress={() => setIsEditProfileVisible(false)}
+              >
+                <Text style={[styles.buttonText, {color: currentColors.text}]}>Cancel</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 
@@ -335,14 +343,19 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     overflow: 'hidden'
   },
+  modalKeyboardAvoid: {
+    flex: 1
+  },
   modalContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)'
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    padding: 20
   },
   modalContent: {
-    width: '85%',
+    width: '100%',
+    maxHeight: '80%',
     borderRadius: 10,
     padding: 20,
     shadowColor: '#000',
