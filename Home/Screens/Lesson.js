@@ -1,5 +1,8 @@
 import React, { useState } from 'react';
 import  WelcomeScreen from './LessonScreens/WelcomeScreen';
+import LoadingScreen from './LessonScreens/LoadingScreen';
+import LanguageSelectionScreen from './LessonScreens/LanguageSelectionScreen';
+
 
 export default function App() {
   const [currentScreen, setCurrentScreen] = useState('Welcome');
@@ -20,28 +23,28 @@ export default function App() {
         return <LanguageSelectionScreen navigate={navigate} {...screenParams} />;
       case 'Customization':
         return <CustomizationScreen navigate={navigate} {...screenParams} />;
-      case 'LearningPathwayCustomization':
-        return <LearningPathwayCustomizationScreen navigate={navigate} {...screenParams} />;
-      case 'GamePreparation':
-        return <GamePreparationScreen navigate={navigate} {...screenParams} />;
-      case 'DailyRewards':
-        return <DailyRewardsScreen navigate={navigate} {...screenParams} />;
-      case 'ReadyCountdown':
-        return <ReadyCountdownScreen navigate={navigate} {...screenParams} />;
-      case 'GetStarted':
-        return <GetStartedScreen navigate={navigate} {...screenParams} />;
-      case 'LessonIntro':
-        return <LessonIntroScreen navigate={navigate} {...screenParams} />;
-      case 'WelcomeLessons':
-        return <WelcomeLessonsScreen navigate={navigate} {...screenParams} />;
-      case 'LearningPathway':
-        return <LearningPathwayScreen navigate={navigate} {...screenParams} />;
-      case 'AlphabetLearning':
-        return <AlphabetLearningScreen navigate={navigate} {...screenParams} />;
-      case 'LessonComplete':
-        return <LessonCompleteScreen navigate={navigate} {...screenParams} />;
-      case 'quizzes':
-        return <PracticeQuizScreen navigate={navigate} {...screenParams} />;
+      // case 'LearningPathwayCustomization':
+      //   return <LearningPathwayCustomizationScreen navigate={navigate} {...screenParams} />;
+      // case 'GamePreparation':
+      //   return <GamePreparationScreen navigate={navigate} {...screenParams} />;
+      // case 'DailyRewards':
+      //   return <DailyRewardsScreen navigate={navigate} {...screenParams} />;
+      // case 'ReadyCountdown':
+      //   return <ReadyCountdownScreen navigate={navigate} {...screenParams} />;
+      // case 'GetStarted':
+      //   return <GetStartedScreen navigate={navigate} {...screenParams} />;
+      // case 'LessonIntro':
+      //   return <LessonIntroScreen navigate={navigate} {...screenParams} />;
+      // case 'WelcomeLessons':
+      //   return <WelcomeLessonsScreen navigate={navigate} {...screenParams} />;
+      // case 'LearningPathway':
+      //   return <LearningPathwayScreen navigate={navigate} {...screenParams} />;
+      // case 'AlphabetLearning':
+      //   return <AlphabetLearningScreen navigate={navigate} {...screenParams} />;
+      // case 'LessonComplete':
+      //   return <LessonCompleteScreen navigate={navigate} {...screenParams} />;
+      // case 'quizzes':
+      //   return <PracticeQuizScreen navigate={navigate} {...screenParams} />;
       default:
         return <WelcomeScreen navigate={navigate} />;
     }
