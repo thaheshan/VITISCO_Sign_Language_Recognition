@@ -72,7 +72,7 @@ CREATE TABLE Quiz (
     optionB VARCHAR(50),
     optionC VARCHAR(50),
     optionD VARCHAR(50),
-    question VARCHAR(50),
+    question VARCHAR(500),
     categoryId INT,
     languageId INT,
     FOREIGN KEY (categoryId) REFERENCES Category(categoryId),
