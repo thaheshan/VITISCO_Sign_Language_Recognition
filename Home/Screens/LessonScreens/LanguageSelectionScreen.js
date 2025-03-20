@@ -54,7 +54,10 @@ export default function LanguageSelectionScreen({ navigate }) {
 
         <TouchableOpacity
           style={styles.languageOption}
-          onPress={() => handleLanguageSelect('Customization')}
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+            navigate('Customization');
+          }}
         >
           <View style={styles.languageCard}>
             <Text style={styles.languageTitle}>Tamil</Text>
@@ -69,7 +72,10 @@ export default function LanguageSelectionScreen({ navigate }) {
 
         <TouchableOpacity
           style={styles.languageOption}
-          onPress={() => handleLanguageSelect('Customization')}
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+            navigate('Customization');
+          }}
         >
           <View style={styles.languageCard}>
             <Text style={styles.languageTitle}>English</Text>
@@ -85,15 +91,10 @@ export default function LanguageSelectionScreen({ navigate }) {
         </TouchableOpacity>
       </View>
 
-      <View style={styles.buttonContainer}>
-        <TouchableOpacity
-          style={styles.continueButton}
-          onPress={() => navigation.goBack()}
-        >
-          <Text style={styles.nextButtonText}>Back</Text>
-        </TouchableOpacity>
-      </View>
+
     </SafeAreaView>
+
+    
   );
 
 

@@ -2,6 +2,13 @@ import React, { useState } from 'react';
 import  WelcomeScreen from './LessonScreens/WelcomeScreen';
 import LoadingScreen from './LessonScreens/LoadingScreen';
 import LanguageSelectionScreen from './LessonScreens/LanguageSelectionScreen';
+import CustomizationScreen from './LessonScreens/CustomizationScreen';
+import LanguagePathwayCustomizationScreen from './LessonScreens/LanguagePathwayCustomizationScreen';
+import CountDownScreen from './LessonScreens/CountdownScreen';
+import GetStartedScreen from './LessonScreens/GetStartedScreen';
+import LessonIntroScreen from './LessonScreens/LessonIntroScreen';
+
+
 
 
 export default function App() {
@@ -23,18 +30,18 @@ export default function App() {
         return <LanguageSelectionScreen navigate={navigate} {...screenParams} />;
       case 'Customization':
         return <CustomizationScreen navigate={navigate} {...screenParams} />;
-      // case 'LearningPathwayCustomization':
-      //   return <LearningPathwayCustomizationScreen navigate={navigate} {...screenParams} />;
+      case 'LanguagePathwayCustomization':
+        return <LanguagePathwayCustomizationScreen navigate={navigate} {...screenParams} />;
       // case 'GamePreparation':
       //   return <GamePreparationScreen navigate={navigate} {...screenParams} />;
       // case 'DailyRewards':
       //   return <DailyRewardsScreen navigate={navigate} {...screenParams} />;
-      // case 'ReadyCountdown':
-      //   return <ReadyCountdownScreen navigate={navigate} {...screenParams} />;
-      // case 'GetStarted':
-      //   return <GetStartedScreen navigate={navigate} {...screenParams} />;
-      // case 'LessonIntro':
-      //   return <LessonIntroScreen navigate={navigate} {...screenParams} />;
+      case 'ReadyCountdown':
+        return <CountDownScreen navigate={navigate} {...screenParams} />;
+      case 'GetStarted':
+        return <GetStartedScreen navigate={navigate} {...screenParams} />;
+      case 'LessonIntro':
+        return <LessonIntroScreen navigate={navigate} {...screenParams} />;
       // case 'WelcomeLessons':
       //   return <WelcomeLessonsScreen navigate={navigate} {...screenParams} />;
       // case 'LearningPathway':

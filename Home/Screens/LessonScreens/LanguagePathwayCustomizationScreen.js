@@ -18,61 +18,105 @@ const { width, height } = Dimensions.get('window');
 
 
 
-export default function  CustomizationScreen({ navigate }) {
- const scaleAnim = useRef(new Animated.Value(0.9)).current;
-   
-   useEffect(() => {
-     Animated.spring(scaleAnim, {
-       toValue: 1,
-       friction: 4,
-       useNativeDriver: true,
-     }).start();
-   }, []);
-   
-   return (
-     <SafeAreaView style={styles.container}>
-       <Animated.Text 
-         style={[
-           styles.customizeTitle, 
-           { transform: [{ scale: scaleAnim }] }
-         ]}
-       >
-         Do You Want To Customize Your Learning Pathway?
-       </Animated.Text>
-       
-       <View style={styles.buttonRow}>
-         <TouchableOpacity 
-           style={[styles.optionButton, styles.yesButton]}
-           onPress={() => {
-             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-             navigate('LanguagePathwayCustomization');
-           }}
-         >
-           <Text style={styles.optionButtonText}
-           
-           >YES</Text>
-         </TouchableOpacity>
-         
-         <TouchableOpacity 
-           style={[styles.optionButton, styles.noButton]}
-           onPress={() => {
-             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-             navigate('ReadyCountdown');
-           }}
-         >
-           <Text style={styles.optionButtonText}>NO</Text>
-         </TouchableOpacity>
-       </View>
-       
-       <Image
-         source={require('../../images/jumps.png')}
-         style={styles.characterImage}
-         resizeMode="contain"
-       />
-     </SafeAreaView>
-   );
+export default function LanguagePathwayCustomizationScreen({ navigate }) {
+
+ const [selectedTopics, setSelectedTopics] = useState([]);
+  const [level, setLevel] = useState('Basic');
+  
+  const topics = [
+    { id: 1, name: 'Alphabet', icon: '📝' },
+    { id: 2, name: 'Numbers', icon: '🔢' },
+    { id: 3, name: 'Greetings', icon: '👋' },
+    { id: 4, name: 'Family', icon: '👪' },
+    { id: 5, name: 'Food', icon: '🍎' },
+    { id: 6, name: 'Animals', icon: '🐶' },
+  ];
+  
+  const toggleTopic = (id) => {
+    if (selectedTopics.includes(id)) {
+      setSelectedTopics(selectedTopics.filter(topicId => topicId !== id));
+    } else {
+      setSelectedTopics([...selectedTopics, id]);
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+  };
+  
+  return (
+    <SafeAreaView style={styles.container}>
+      <Text style={styles.customizationHeader}>Customize Your Learning</Text>
+      
+      <View style={styles.levelSelector}>
+        <Text style={styles.sectionTitle}>Select Your Level:</Text>
+        <View style={styles.levelOptions}>
+          {['Beginner', 'Basic', 'Intermediate', 'Advanced'].map((lvl) => (
+            <TouchableOpacity 
+              key={lvl}
+              style={[
+                styles.levelOption,
+                level === lvl && styles.selectedLevel
+              ]}
+              onPress={() => {
+                setLevel(lvl);
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              }}
+            >
+              <Text style={[
+                styles.levelOptionText,
+                level === lvl && styles.selectedLevelText
+              ]}>
+                {lvl}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </View>
+      
+      <View style={styles.topicsSection}>
+        <Text style={styles.sectionTitle}>Select Topics:</Text>
+        <View style={styles.topicsGrid}>
+          {topics.map((topic) => (
+            <TouchableOpacity 
+              key={topic.id}
+              style={[
+                styles.topicItem,
+                selectedTopics.includes(topic.id) && styles.selectedTopic
+              ]}
+              onPress={() => toggleTopic(topic.id)}
+            >
+              <Text style={styles.topicIcon}>{topic.icon}</Text>
+              <Text style={[
+                styles.topicName,
+                selectedTopics.includes(topic.id) && styles.selectedTopicText
+              ]}>
+                {topic.name}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </View>
+      
+      <TouchableOpacity 
+        style={[
+          styles.continueButton,
+          styles.customizationButton,
+          selectedTopics.length === 0 && styles.disabledButton
+        ]}
+        disabled={selectedTopics.length === 0}
+        onPress={() => {
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+          navigation.navigate('GamePreparation');
+        }}
+      >
+        <Text style={styles.nextButtonText}>SAVE & CONTINUE</Text>
+      </TouchableOpacity>
+    </SafeAreaView>
+  );
+
+  
+
 
 }
+
 
 
 const styles = StyleSheet.create({
@@ -1308,4 +1352,3 @@ const styles = StyleSheet.create({
 
 
 });
-

@@ -18,57 +18,62 @@ const { width, height } = Dimensions.get('window');
 
 
 
-export default function  CustomizationScreen({ navigate }) {
- const scaleAnim = useRef(new Animated.Value(0.9)).current;
+export default function  GetStartedScreen({ navigate }) {
+ const textAnim = useRef(new Animated.Value(0)).current;
    
    useEffect(() => {
-     Animated.spring(scaleAnim, {
+     Animated.timing(textAnim, {
        toValue: 1,
-       friction: 4,
+       duration: 1000,
        useNativeDriver: true,
      }).start();
    }, []);
    
    return (
      <SafeAreaView style={styles.container}>
+       <Text style={styles.levelIndicator}>BASIC LEVEL (LEVEL 4)</Text>
+       
        <Animated.Text 
          style={[
-           styles.customizeTitle, 
-           { transform: [{ scale: scaleAnim }] }
+           styles.getStartedTitle, 
+           { 
+             opacity: textAnim,
+             transform: [
+               { 
+                 translateY: textAnim.interpolate({
+                   inputRange: [0, 1],
+                   outputRange: [50, 0]
+                 }) 
+               }
+             ] 
+           }
          ]}
        >
-         Do You Want To Customize Your Learning Pathway?
+         LET'S{'\n'}GET STARTED
        </Animated.Text>
        
-       <View style={styles.buttonRow}>
-         <TouchableOpacity 
-           style={[styles.optionButton, styles.yesButton]}
-           onPress={() => {
-             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-             navigate('LanguagePathwayCustomization');
-           }}
-         >
-           <Text style={styles.optionButtonText}
-           
-           >YES</Text>
-         </TouchableOpacity>
-         
-         <TouchableOpacity 
-           style={[styles.optionButton, styles.noButton]}
-           onPress={() => {
-             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-             navigate('ReadyCountdown');
-           }}
-         >
-           <Text style={styles.optionButtonText}>NO</Text>
-         </TouchableOpacity>
-       </View>
-       
        <Image
-         source={require('../../images/jumps.png')}
+         source={require('../../assets/icon.png')}
          style={styles.characterImage}
          resizeMode="contain"
        />
+       
+       <TouchableOpacity 
+         style={styles.startButton}
+         onPress={() => {
+           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+           navigate('LessonIntro');
+         }}
+       >
+         <Text style={styles.nextButtonText}
+                 onPress={() => {
+                              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                              navigate('Customization');
+                            }}
+
+         
+         >START</Text>
+       </TouchableOpacity>
      </SafeAreaView>
    );
 
@@ -1308,4 +1313,3 @@ const styles = StyleSheet.create({
 
 
 });
-
