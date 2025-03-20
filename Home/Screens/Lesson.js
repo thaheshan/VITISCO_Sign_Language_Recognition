@@ -9,6 +9,8 @@ import GetStartedScreen from './LessonScreens/GetStartedScreen';
 import LessonIntroScreen from './LessonScreens/LessonIntroScreen';
 import LearningPathwayScreen from './LessonScreens/LearningPathwayScreen';
 
+import AlphabetLessonScreen from './LessonScreens/AlphabetLessonScreen';
+
 
 
 
@@ -47,8 +49,8 @@ export default function App() {
       //   return <WelcomeLessonsScreen navigate={navigate} {...screenParams} />;
       case 'LearningPathway':
         return <LearningPathwayScreen navigate={navigate} {...screenParams} />;
-      // case 'AlphabetLearning':
-      //   return <AlphabetLearningScreen navigate={navigate} {...screenParams} />;
+      case 'AlphabetLearning':
+        return <AlphabetLessonScreen navigate={navigate} {...screenParams} />;
       // case 'LessonComplete':
       //   return <LessonCompleteScreen navigate={navigate} {...screenParams} />;
       // case 'quizzes':

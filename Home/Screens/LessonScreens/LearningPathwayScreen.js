@@ -4,26 +4,27 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  Dimensions,
   Image,
   SafeAreaView,
   Animated,
   Easing,
-  ScrollView
+  ScrollView,
+  Dimensions
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
-import Svg, { Path } from 'react-native-svg'; // Added this import that was missing
+import Svg, { Path } from 'react-native-svg';
 
 const { width, height } = Dimensions.get('window');
 
-export default function LearningPathwayScreen({ navigation, route }) {
-  // Fixed the missing route parameter and added navigation
-  const [unlockedLevel, setUnlockedLevel] = useState(route?.params?.initialLevel || 5);
-  const [currentPosition, setCurrentPosition] = useState(0);
-  const [viewMode, setViewMode] = useState('top'); // 'top' or 'side'
+export default function LearningPathwayScreen({ navigate , route }) {
+  const initialLevel = route?.params?.initialLevel ?? 5;
+   
+   const [unlockedLevel, setUnlockedLevel] = useState(initialLevel);
+   const [currentPosition, setCurrentPosition] = useState(0);
+
+  const [viewMode, setViewMode] = useState('top');
   const [showPathDetails, setShowPathDetails] = useState(true);
-  
-  // Animated values
+
   const scrollX = useRef(new Animated.Value(0)).current;
   const avatarAnim = useRef(new Animated.Value(0)).current;
   const viewTransition = useRef(new Animated.Value(0)).current;
@@ -184,7 +185,7 @@ export default function LearningPathwayScreen({ navigation, route }) {
         
         // Navigate to lesson after short delay
         setTimeout(() => {
-          navigation.navigate('AlphabetLearning', { level: nodeIndex + 1 });
+          navigate('LessonIntro', { level: nodeIndex + 1 });
         }, 500);
       });
     } else {
@@ -513,12 +514,17 @@ export default function LearningPathwayScreen({ navigation, route }) {
       <View style={learningPathwayStyles.pathwayButtonContainer}>
         <TouchableOpacity 
           style={learningPathwayStyles.pathwayContinueButton}
-          onPress={() => {
-            // Navigate to current node's level
-            handleNodePress(Math.min(currentPosition + 1, unlockedLevel));
-          }}
+     
         >
-          <View style={learningPathwayStyles.pathwayButtonGradient}>
+          <View style={learningPathwayStyles.pathwayButtonGradient}
+
+onPress={() => {
+  // Navigate to current node's level
+  handleNodePress(Math.min(currentPosition + 1, unlockedLevel));
+  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+  navigate('LessonIntro');
+}}
+          >
             <Text style={learningPathwayStyles.pathwayContinueButtonText}>CONTINUE ADVENTURE</Text>
           </View>
         </TouchableOpacity>

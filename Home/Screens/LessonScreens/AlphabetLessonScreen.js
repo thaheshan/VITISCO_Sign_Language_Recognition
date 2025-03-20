@@ -1,103 +1,388 @@
 import React, { useState, useRef, useEffect } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  Dimensions,
-  Image,
-  SafeAreaView,
-  Animated
+import { 
+  View, 
+  Text, 
+  StyleSheet, 
+  TouchableOpacity, 
+  Dimensions, 
+  Image, 
+  SafeAreaView, 
+  Animated, 
+  Easing,
+  ScrollView
 } from 'react-native';
-
 import * as Haptics from 'expo-haptics';
 
 const { width, height } = Dimensions.get('window');
+import { Video } from 'expo-av';
 
-export default function CountDownScreen({ navigate }) {
-  const [countdown, setCountdown] = useState(10);
-  const scaleAnim = useRef(new Animated.Value(1)).current;
+// ProgressBar Component
+const ProgressBar = ({ current, total }) => {
+  const progress = (current / total) * 100;
+  
+  return (
+    <View style={progressStyles.container}>
+      <View style={progressStyles.progressBarContainer}>
+        <View style={[progressStyles.progressBar, { width: `${progress}%` }]} />
+      </View>
+      <Text style={progressStyles.progressText}>{current} of {total}</Text>
+    </View>
+  );
+};
 
-  useEffect(() => {
-    // Pulse animation
-    const pulseAnimation = Animated.loop(
-      Animated.sequence([
-        Animated.timing(scaleAnim, {
-          toValue: 1.2,
-          duration: 500,
-          useNativeDriver: true,
-        }),
-        Animated.timing(scaleAnim, {
-          toValue: 1,
-          duration: 500,
-          useNativeDriver: true,
-        }),
-      ])
+// Confetti Component
+const Confetti = ({ show }) => {
+  if (!show) return null;
+  
+  const confettiCount = 50;
+  const confettiElements = [];
+  
+  for (let i = 0; i < confettiCount; i++) {
+    const initialX = Math.random() * width;
+    const initialY = -20;
+    const size = Math.random() * 8 + 4;
+    const color = ['#FF5252', '#FFEB3B', '#2196F3', '#4CAF50', '#9C27B0'][Math.floor(Math.random() * 5)];
+    const duration = Math.random() * 2000 + 2000;
+    const delay = Math.random() * 1000;
+    
+    const animX = useRef(new Animated.Value(initialX)).current;
+    const animY = useRef(new Animated.Value(initialY)).current;
+    const rotate = useRef(new Animated.Value(0)).current;
+    
+    useEffect(() => {
+      if (show) {
+        Animated.parallel([
+          Animated.timing(animY, {
+            toValue: height,
+            duration: duration,
+            easing: Easing.ease,
+            delay: delay,
+            useNativeDriver: true
+          }),
+          Animated.timing(animX, {
+            toValue: initialX + (Math.random() * width / 2 - width / 4),
+            duration: duration,
+            easing: Easing.ease,
+            delay: delay,
+            useNativeDriver: true
+          }),
+          Animated.timing(rotate, {
+            toValue: Math.random() * 10,
+            duration: duration,
+            easing: Easing.ease,
+            delay: delay,
+            useNativeDriver: true
+          })
+        ]).start();
+      }
+    }, [show]);
+    
+    const rotateInterpolate = rotate.interpolate({
+      inputRange: [0, 10],
+      outputRange: ['0deg', '360deg']
+    });
+    
+    confettiElements.push(
+      <Animated.View 
+        key={i}
+        style={{
+          position: 'absolute',
+          width: size,
+          height: size,
+          backgroundColor: color,
+          transform: [
+            { translateX: animX },
+            { translateY: animY },
+            { rotate: rotateInterpolate }
+          ]
+        }}
+      />
     );
-    pulseAnimation.start();
+  }
+  
+  return confettiElements;
+};
 
-    // Countdown timer
-    const interval = setInterval(() => {
-      setCountdown((prev) => {
-        if (prev <= 1) {
-          clearInterval(interval);
-          setTimeout(() => {
-            navigate('GetStarted'); // Ensure navigation after timeout
-          }, 500); // Small delay for smoother transition
-          return 0;
-        }
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-        return prev - 1;
+export default function AlphabetLessonScreen({ navigation , route = {} }) {
+
+  const { lessonId = 1, onComplete } = route.params || {};
+  const [currentCard, setCurrentCard] = useState(0);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const cardAnim = useRef(new Animated.Value(0)).current;
+  const videoRef = useRef(null);
+  
+  // Lesson content based on lesson ID
+  const lessonContent = {
+    1: {
+      
+      title: "Basic Alphabet (අ-ඉ)",
+
+      cards: [
+        { letter: 'අ', pronunciation: 'a', example: 'apple', sign: require('../../assets/videos/Thahee.mp4'), signText: 'Hand forms letter A shape' },
+        { letter: 'ඇ', pronunciation: 'ae', example: 'ant', sign: require('../../assets/videos/Thahee.mp4'), signText: 'Open palm moving rightward' },
+        { letter: 'ඈ', pronunciation: 'aae', example: 'ask', sign: require('../../assets/videos/Thahee.mp4'), signText: 'Extended palm with circular motion' },
+        { letter: 'ඉ', pronunciation: 'i', example: 'if', sign: require('../../assets/videos/Thahee.mp4'), signText: 'Pinky finger pointing upward' },
+      ],
+
+      xpReward: 75
+    },
+ 
+  };
+  
+
+  
+  // Default to lesson 1 if lessonId is undefined or not found in lessonContent
+  const safeId = lessonId && lessonContent[lessonId] ? lessonId : 1;
+  const currentLesson = lessonContent[safeId];
+  const alphabetCards = currentLesson.cards;
+  
+  useEffect(() => {
+    // Card flip animation
+    Animated.timing(cardAnim, {
+      toValue: 1,
+      duration: 500,
+      useNativeDriver: true,
+    }).start();
+    
+    // Play video when component mounts or card changes
+    if (videoRef.current) {
+      videoRef.current.setStatusAsync({
+        shouldPlay: true,
+        isLooping: true,
+      }).catch(error => {
+        console.log("Video playback error:", error);
       });
-    }, 1000);
-
+    }
+    
     return () => {
-      clearInterval(interval);
-      pulseAnimation.stop(); // Stop animation when unmounting
+      // Stop video when unmounting
+      if (videoRef.current) {
+        videoRef.current.stopAsync().catch(error => {
+          console.log("Video stop error:", error);
+        });
+      }
     };
-  }, [navigate]);
+  }, [currentCard]);
+  
+  const nextCard = () => {
+    if (currentCard < alphabetCards.length - 1) {
+      // Reset animation value
+      cardAnim.setValue(0);
+      
+      // Stop current video
+      if (videoRef.current) {
+        videoRef.current.stopAsync().catch(error => {
+          console.log("Video stop error:", error);
+        });
+      }
+      
+      // Haptic feedback
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      
+      // Move to next card
+      setCurrentCard(currentCard + 1);
+    } else {
+      // Completed all cards
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      setShowSuccess(true);
+      
+      // Navigate after showing success animation
+      setTimeout(() => {
+        navigation.navigate('LessonComplete', {
+          lessonId: safeId,
+          xpEarned: currentLesson.xpReward,
+          lessonTitle: currentLesson.title,
+          onComplete
+        });
+      }, 2000);
 
+    }
+  };
+  
+  const prevCard = () => {
+    if (currentCard > 0) {
+      // Reset animation value
+      cardAnim.setValue(0);
+      
+      // Stop current video
+      if (videoRef.current) {
+        videoRef.current.stopAsync().catch(error => {
+          console.log("Video stop error:", error);
+        });
+      }
+      
+      // Haptic feedback
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      
+      // Move to previous card
+      setCurrentCard(currentCard - 1);
+    }
+  };
+  
+  // Card animation values
+  const cardScale = cardAnim.interpolate({
+    inputRange: [0, 0.5, 1],
+    outputRange: [0.8, 0.9, 1]
+  });
+  
+  const cardOpacity = cardAnim.interpolate({
+    inputRange: [0, 0.5, 1],
+    outputRange: [0, 0.5, 1]
+  });
+  
+  // Handle errors for missing video files
+  const handleVideoError = (error) => {
+    console.log("Video loading error:", error);
+  };
+  
+  // Render card content based on lesson type
+  const renderCardContent = (card) => {
+    // For alphabet lessons
+    if (card.letter) {
+      return (
+        <>
+          <Text style={styles.alphabetLetter}>{card.letter}</Text>
+          <Text style={styles.alphabetPronunciation}>
+            Pronounced as: "{card.pronunciation}"
+          </Text>
+          <View style={styles.videoContainer}>
+            <Video
+              ref={videoRef}
+              source={card.sign}
+              style={styles.signVideo}
+              resizeMode="contain"
+              isLooping
+              shouldPlay
+              useNativeControls={false}
+              onError={handleVideoError}
+            />
+          </View>
+          <Text style={styles.signText}>
+            {card.signText}
+          </Text>
+          <Text style={styles.exampleText}>
+            Example: {card.example}
+          </Text>
+        </>
+      );
+    }
+    
+    // For greeting lessons
+    if (card.phrase) {
+      return (
+        <>
+          <Text style={styles.phraseLetter}>{card.phrase}</Text>
+          <Text style={styles.phraseMeaning}>
+            Meaning: "{card.meaning}"
+          </Text>
+          <View style={styles.videoContainer}>
+            <Video
+              ref={videoRef}
+              source={card.sign}
+              style={styles.signVideo}
+              resizeMode="contain"
+              isLooping
+              shouldPlay
+              useNativeControls={false}
+              onError={handleVideoError}
+            />
+          </View>
+          <Text style={styles.signText}>
+            {card.signText}
+          </Text>
+          <Text style={styles.usageText}>
+            Usage: {card.usage}
+          </Text>
+        </>
+      );
+    }
+    
+    // For number lessons
+    if (card.number) {
+      return (
+        <>
+          <Text style={styles.numberDigit}>{card.number}</Text>
+          <Text style={styles.numberSinhala}>{card.sinhala}</Text>
+          <Text style={styles.numberPronunciation}>
+            Pronounced as: "{card.pronunciation}"
+          </Text>
+          <View style={styles.videoContainer}>
+            <Video
+              ref={videoRef}
+              source={card.sign}
+              style={styles.signVideo}
+              resizeMode="contain"
+              isLooping
+              shouldPlay
+              useNativeControls={false}
+              onError={handleVideoError}
+            />
+          </View>
+          <Text style={styles.signText}>
+            {card.signText}
+          </Text>
+        </>
+      );
+    }
+    
+    return null;
+  };
+  
   return (
     <SafeAreaView style={styles.container}>
-      <Text style={styles.levelIndicator}>BASIC LEVEL (LEVEL 4)</Text>
-
-      <View style={styles.countdownContainer}>
-        <Text style={styles.countdownText}>BE READY IN</Text>
-        <Animated.View
-          style={[
-            styles.countdownCircle,
-            { transform: [{ scale: scaleAnim }] }
-          ]}
-        >
-          <Text style={styles.countdownNumber}>{countdown}</Text>
-          <Text style={styles.countdownUnit}>SECONDS</Text>
-        </Animated.View>
-      </View>
-
-      <Image
-        source={require('../../assets/starts.png')}
-        style={styles.characterImage}
-        resizeMode="contain"
-      />
-
-      <TouchableOpacity
-        style={styles.skipButton}
-        onPress={() => {
-          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-          navigate('GetStarted');
-        }}
-      >
-        <Text style={styles.skipText}>Skip</Text>
-      </TouchableOpacity>
+      <Text style={styles.levelIndicator}>{currentLesson.title}</Text>
+      
+      <ProgressBar current={currentCard + 1} total={alphabetCards.length} />
+      
+      {!showSuccess ? (
+        <>
+          <Animated.View 
+            style={[
+              styles.alphabetCard,
+              {
+                opacity: cardOpacity,
+                transform: [{ scale: cardScale }]
+              }
+            ]}
+          >
+            {renderCardContent(alphabetCards[currentCard])}
+          </Animated.View>
+          
+          <View style={styles.navigationButtons}>
+            <TouchableOpacity
+              style={[styles.navButton, currentCard === 0 && styles.disabledButton]}
+              onPress={prevCard}
+              disabled={currentCard === 0}
+            >
+              <Text style={styles.navButtonText}>Previous</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity
+              style={styles.navButton}
+              onPress={nextCard}
+            >
+              <Text style={styles.navButtonText}>
+                {currentCard < alphabetCards.length - 1 ? 'Next' : 'Complete'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </>
+      ) : (
+        <View style={styles.successContainer}>
+          <Confetti show={true} />
+          <Text style={styles.successTitle}>Great Job!</Text>
+          <Text style={styles.successMessage}>
+            You've completed the {currentLesson.title} lesson!
+          </Text>
+        </View>
+      )}
     </SafeAreaView>
   );
 }
 
 
-  
-  
-  
-  const styles = StyleSheet.create({
+
+const styles = StyleSheet.create({
     container: {
       flex: 1,
       backgroundColor: '#c5c6e8',
@@ -139,8 +424,8 @@ export default function CountDownScreen({ navigate }) {
       alignItems: 'center',
     },
     characterImage: {
-      width: 0.3,
-      height: 0.23,
+      width: width * 0.7,
+      height: width * 0.7,
       marginVertical: 20,
     },
     progressCircle: {
@@ -1286,12 +1571,12 @@ export default function CountDownScreen({ navigate }) {
       justifyContent: 'center',
       alignItems: 'center',
     },
-  
+    
     signVideo: {
       width: '100%',
       height: '100%',
     },
-  
+    
     signText: {
       fontSize: 16,
       color: '#555',
@@ -1299,7 +1584,7 @@ export default function CountDownScreen({ navigate }) {
       marginBottom: 10,
       fontStyle: 'italic',
     },
-  
+    
     // Update your existing styles if needed
     alphabetCard: {
       width: '90%',
@@ -1321,12 +1606,38 @@ export default function CountDownScreen({ navigate }) {
   
   
   
+    
   
   
   
   
   
-  
-  
-  
+    
+    
   });
+  // Styles for ProgressBar component
+const progressStyles = StyleSheet.create({
+  container: {
+    width: width * 0.9,
+    alignItems: 'center',
+    marginBottom: 10
+  },
+  progressBarContainer: {
+    width: '100%',
+    height: 10,
+    backgroundColor: '#e0e0e0',
+    borderRadius: 5,
+    overflow: 'hidden',
+    marginBottom: 5
+  },
+  progressBar: {
+    height: '100%',
+    backgroundColor: '#4a8fe7',
+    borderRadius: 5
+  },
+  progressText: {
+    fontSize: 14,
+    color: '#666',
+    marginTop: 5
+  }
+});
