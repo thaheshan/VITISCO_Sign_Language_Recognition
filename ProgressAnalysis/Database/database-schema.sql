@@ -39,15 +39,14 @@ CREATE TABLE Lesson (
     FOREIGN KEY (languageId) REFERENCES Language(languageId)
 );
 
-CREATE TABLE UserLesson (
-    userId INT,
-    lessonId INT,
-    completionStatus BOOLEAN,
-    completionDateTime DATETIME,
-    PRIMARY KEY (userId, lessonId),
-    FOREIGN KEY (userId) REFERENCES User(userId),
-    FOREIGN KEY (lessonId) REFERENCES Lesson(lessonId)
-);
+-- CREATE TABLE UserLesson (
+--     userId INT,
+--     lessonId INT,
+--     completionDateTime DATETIME,
+--     PRIMARY KEY (userId, lessonId),
+--     FOREIGN KEY (userId) REFERENCES User(userId),
+--     FOREIGN KEY (lessonId) REFERENCES Lesson(lessonId)
+-- );
 
 CREATE TABLE Challenge (
     challengeId INT PRIMARY KEY AUTO_INCREMENT,
@@ -68,11 +67,11 @@ CREATE TABLE UserChallenge (
 CREATE TABLE Quiz (
     quizId INT PRIMARY KEY AUTO_INCREMENT,
     XPPoints INT,
-    optionA VARCHAR(50),
-    optionB VARCHAR(50),
-    optionC VARCHAR(50),
-    optionD VARCHAR(50),
-    question VARCHAR(500),
+    optionA VARCHAR(100),
+    optionB VARCHAR(100),
+    optionC VARCHAR(100),
+    optionD VARCHAR(100),
+    question VARCHAR(100),
     categoryId INT,
     languageId INT,
     FOREIGN KEY (categoryId) REFERENCES Category(categoryId),
@@ -121,20 +120,36 @@ CREATE TABLE UserVirtualRoom (
 CREATE TABLE Schedule (
     scheduleId INT PRIMARY KEY AUTO_INCREMENT,
     title VARCHAR(50),
-    Description VARCHAR(100),
-    Status VARCHAR(20),
-    DateTime DATETIME,
-    UserId INT,
-    FOREIGN KEY (UserId) REFERENCES User(UserId)
+    description VARCHAR(100),
+    status VARCHAR(20),
+    dateTime DATETIME,
+    userId INT,
+    FOREIGN KEY (userId) REFERENCES User(userId)
 );
 
 
  CREATE TABLE UserXP (
      userId INT,
      date DATE,
-     xpPoints INT,
+     XPPoints INT,
      PRIMARY KEY (userId, date),
      FOREIGN KEY (userId) REFERENCES User(userId)
  );
 
 
+CREATE TABLE UserSession(
+    userId INT;
+    sessionId INT,
+    completionDateTime DATETIME,
+    PRIMARY KEY (userId, sessionId),
+    FOREIGN KEY (userId) REFERENCES User(userId),
+    FOREIGN KEY (sessionId) REFERENCES Session(sessionId)
+);
+
+
+CREATE TABLE Session(
+    sessionId INT,
+    lessonId Int,
+    PRIMARY KEY (sessionId, lessonId),
+    FOREIGN KEY (lessonId) REFERENCES Lesson(lessonId)
+);
