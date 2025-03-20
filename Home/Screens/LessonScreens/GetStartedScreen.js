@@ -61,15 +61,12 @@ export default function  GetStartedScreen({ navigate }) {
        <TouchableOpacity 
          style={styles.startButton}
          onPress={() => {
-           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-           navigate('LessonIntro');
-         }}
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+            navigate('LearningPathway');
+          }}
        >
          <Text style={styles.nextButtonText}
-                 onPress={() => {
-                              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                              navigate('Customization');
-                            }}
+              
 
          
          >START</Text>

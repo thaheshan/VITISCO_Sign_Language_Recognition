@@ -7,6 +7,7 @@ import LanguagePathwayCustomizationScreen from './LessonScreens/LanguagePathwayC
 import CountDownScreen from './LessonScreens/CountdownScreen';
 import GetStartedScreen from './LessonScreens/GetStartedScreen';
 import LessonIntroScreen from './LessonScreens/LessonIntroScreen';
+import LearningPathwayScreen from './LessonScreens/LearningPathwayScreen';
 
 
 
@@ -44,8 +45,8 @@ export default function App() {
         return <LessonIntroScreen navigate={navigate} {...screenParams} />;
       // case 'WelcomeLessons':
       //   return <WelcomeLessonsScreen navigate={navigate} {...screenParams} />;
-      // case 'LearningPathway':
-      //   return <LearningPathwayScreen navigate={navigate} {...screenParams} />;
+      case 'LearningPathway':
+        return <LearningPathwayScreen navigate={navigate} {...screenParams} />;
       // case 'AlphabetLearning':
       //   return <AlphabetLearningScreen navigate={navigate} {...screenParams} />;
       // case 'LessonComplete':

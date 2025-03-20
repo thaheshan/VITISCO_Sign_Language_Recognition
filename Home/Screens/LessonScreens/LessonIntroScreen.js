@@ -94,10 +94,15 @@
           style={styles.startLessonButton}
           onPress={() => {
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-            navigation.navigate('WelcomeLessons');
+            navigate('WelcomeLessons');
           }}
         >
-          <Text style={styles.nextButtonText}>BEGIN LESSON</Text>
+          <Text style={styles.nextButtonText}  
+            onPress={() => {
+                    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                    navigate('GamePreparation');
+                  }}>
+            BEGIN LESSON</Text>
         </TouchableOpacity>
       </SafeAreaView>
     );

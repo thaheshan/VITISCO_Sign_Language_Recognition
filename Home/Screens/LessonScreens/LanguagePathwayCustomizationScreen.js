@@ -104,7 +104,7 @@ export default function LanguagePathwayCustomizationScreen({ navigate }) {
         disabled={selectedTopics.length === 0}
         onPress={() => {
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-          navigation.navigate('GamePreparation');
+          navigate('GamePreparation');
         }}
       >
         <Text style={styles.nextButtonText}>SAVE & CONTINUE</Text>
@@ -112,7 +112,7 @@ export default function LanguagePathwayCustomizationScreen({ navigate }) {
     </SafeAreaView>
   );
 
-  
+
 
 
 }
