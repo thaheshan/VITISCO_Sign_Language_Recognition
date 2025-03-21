@@ -45,16 +45,15 @@ export default function WelcomeScreen({ navigate }) {
         </Animated.Text>
         
         <Animated.View style={{ transform: [{ translateY: slideAnim }] }}>
-          <TouchableOpacity 
-            style={styles.beginButton}
-            onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-              navigation.navigate('Loading');
-            }}
-          >
-          
-            <Text style={styles.nextButtonText}   >BEGIN</Text>
-          </TouchableOpacity>
+        <TouchableOpacity 
+  style={styles.beginButton}
+  onPress={() => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    navigate('Loading');
+  }}
+>
+  <Text style={styles.nextButtonText}>BEGIN</Text>
+</TouchableOpacity>
         </Animated.View>
 
       </SafeAreaView>

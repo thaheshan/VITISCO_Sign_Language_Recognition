@@ -27,7 +27,7 @@ export default registerRootComponent(App);
 registerRootComponent(App);
 // Update your API base URL to work with Expo Go
 // For Expo Go, you need to use your machine's local IP address instead of localhost or 10.0.2.2
-const API_BASE_URL = 'http://192.168.1.X:5000'; // Replace X with your actual IP address segment
+const API_BASE_URL = 'http:// 192.168.58.40:5000';
 
 // Example MySQL connection setup for your backend (this would go in your Node.js server file, not in this React Native file)
 // const mysql = require('mysql2');
