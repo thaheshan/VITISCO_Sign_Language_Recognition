@@ -39,14 +39,6 @@ CREATE TABLE Lesson (
     FOREIGN KEY (languageId) REFERENCES Language(languageId)
 );
 
--- CREATE TABLE UserLesson (
---     userId INT,
---     lessonId INT,
---     completionDateTime DATETIME,
---     PRIMARY KEY (userId, lessonId),
---     FOREIGN KEY (userId) REFERENCES User(userId),
---     FOREIGN KEY (lessonId) REFERENCES Lesson(lessonId)
--- );
 
 CREATE TABLE Challenge (
     challengeId INT PRIMARY KEY AUTO_INCREMENT,
@@ -81,7 +73,7 @@ CREATE TABLE Quiz (
 
 
 CREATE TABLE VirtualRoom (
-    roomCode VARCHAR(20) PRIMARY KEY ,
+    roomCode VARCHAR(20) PRIMARY KEY,
     winnerId INT,
     hostId INT,
     winnerXPPoints INT,
@@ -160,5 +152,5 @@ CREATE TABLE VirtualRoomQuiz (
     quizSessionId INT,
     PRIMARY KEY (roomCode, quizSessionId),
     FOREIGN KEY (roomCode) REFERENCES VirtualRoom(roomCode),
-    FOREIGN KEY (quizSessionId) REFERENCES Quiz(quizSessionId)
+    FOREIGN KEY (quizSessionId) REFERENCES QuizSession(quizSessionId)
 );
