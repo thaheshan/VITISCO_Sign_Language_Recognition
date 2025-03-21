@@ -11,8 +11,8 @@ import LessonScreen from  "./Screens/Lesson.js";
 import ProgressAnalysisScreen from "./Screens/ProgressAnalysis.js";
 import ProfileScreen from "./Screens/Profile.js";
 import SettingsScreen from "./Screens/Settings.js";
-import TranslatorScreen from "./Screens/Translator.js";
-import TextToSpeechScreen from "./Screens/TexttoSpeech.js";
+//import TranslatorScreen from "./Screens/Translator.js";
+//import TextToSpeechScreen from "./Screens/TexttoSpeech.js";
 import NotificationScreen from "./Screens/Feedback.js";
 import LoginScreen from "./Screens/Login.js";
 import SchedulerScreen from  "./Screens/schduler.js";
@@ -58,8 +58,8 @@ const App = () => {
         <Stack.Screen name="ProgressAnalysis" component={ProgressAnalysisScreen} options={{ title: "Progress Analysis" }} />
         <Stack.Screen name="Profile" component={ProfileScreen} />
         <Stack.Screen name="Settings" component={SettingsScreen} />
-        <Stack.Screen name="Translator" component={TranslatorScreen} />
-        <Stack.Screen name="TextToSpeech" component={TextToSpeechScreen} />
+        {/* <Stack.Screen name="Translator" component={TranslatorScreen} /> */}
+        {/* <Stack.Screen name="TextToSpeech" component={TextToSpeechScreen} /> */}
         <Stack.Screen name="Notifications" component={NotificationScreen} />
         <Stack.Screen name="Scheduler" component={SchedulerScreen} />
       </Stack.Navigator>

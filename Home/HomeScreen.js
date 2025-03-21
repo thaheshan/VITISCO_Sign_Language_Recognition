@@ -17,11 +17,6 @@ import AntDesign from '@expo/vector-icons/AntDesign';
 import { useNavigation } from '@react-navigation/native';
 
 
-
-
-
-
-
 const HomeScreen = () => {
   const navigation = useNavigation(); //Hook to access navigation object
   const [showUserId, setShowUserId] = useState(false); //State to toggle user ID display
@@ -91,7 +86,6 @@ const HomeScreen = () => {
       </View>
 
       
-
       {/* Main Content - Scrollable */}
       <ScrollView style={styles.scrollContent} showsVerticalScrollIndicator={false}>
         {/* Daily Tasks Section */}
@@ -255,7 +249,6 @@ const HomeScreen = () => {
     </SafeAreaView>
   );
 };
-
 
 // StylesSheet
 const styles = StyleSheet.create({
