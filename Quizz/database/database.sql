@@ -1,4 +1,4 @@
-USE quiz_db;
+USE quiz;
 
 -- English Letters: Assign correct answer index for each question
 UPDATE questions SET correct_answer_index = 1 WHERE id = 1;  -- A -> 2nd option
