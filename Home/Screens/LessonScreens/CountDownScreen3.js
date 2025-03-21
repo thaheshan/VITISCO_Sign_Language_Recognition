@@ -1,78 +1,103 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  TouchableOpacity, 
-  Dimensions, 
-  Image, 
-  SafeAreaView, 
-  Animated, 
-  Easing,
-  ScrollView
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Dimensions,
+  Image,
+  SafeAreaView,
+  Animated
 } from 'react-native';
+
 import * as Haptics from 'expo-haptics';
 
 const { width, height } = Dimensions.get('window');
 
+export default function CountDownScreen3({ navigate }) {
+  const [countdown, setCountdown] = useState(10);
+  const scaleAnim = useRef(new Animated.Value(1)).current;
 
-export default function WelcomeScreen({ navigate }) {
-
-  // Original component logic here
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-    const slideAnim = useRef(new Animated.Value(100)).current;
-    
-    useEffect(() => {
+  useEffect(() => {
+    // Pulse animation
+    const pulseAnimation = Animated.loop(
       Animated.sequence([
-        Animated.timing(fadeAnim, {
-          toValue: 1,
-          duration: 1000,
+        Animated.timing(scaleAnim, {
+          toValue: 1.2,
+          duration: 500,
           useNativeDriver: true,
         }),
-        Animated.timing(slideAnim, {
-          toValue: 0,
-          duration: 800,
-          easing: Easing.out(Easing.back(1.5)),
+        Animated.timing(scaleAnim, {
+          toValue: 1,
+          duration: 500,
           useNativeDriver: true,
-        })
-      ]).start();
-    }, []);
-    
-    return (
-      <SafeAreaView style={styles.container}>
-        <Animated.Text style={[styles.welcomeTitle, { opacity: fadeAnim }]}>
-
-          WELCOME TO THE LESSONS
-
-        </Animated.Text>
-        
-        <Animated.View style={{ transform: [{ translateY: slideAnim }] }}>
-        <TouchableOpacity 
-
-
-  style={styles.beginButton}
-  onPress={() => {
-
-
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    navigate('Loading');
-
-    
-  }}
->
-  <Text style={styles.nextButtonText}>BEGIN</Text>
-</TouchableOpacity>
-        </Animated.View>
-
-      </SafeAreaView>
-
-      
+        }),
+      ])
     );
-  
+    pulseAnimation.start();
 
+    // Countdown timer
+    const interval = setInterval(() => {
+      setCountdown((prev) => {
+        if (prev <= 1) {
+          clearInterval(interval);
+          setTimeout(() => {
+            navigate('GetStarted3'); // Ensure navigation after timeout
+          }, 500); // Small delay for smoother transition
+          return 0;
+        }
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => {
+      clearInterval(interval);
+      pulseAnimation.stop(); // Stop animation when unmounting
+    };
+  }, [navigate]);
+
+  return (
+    <SafeAreaView style={styles.container}>
+      <Text style={styles.levelIndicator}>BASIC LEVEL (LEVEL 4)</Text>
+
+      <View style={styles.countdownContainer}>
+        <Text style={styles.countdownText}>BE READY IN</Text>
+        <Animated.View
+          style={[
+            styles.countdownCircle,
+            { transform: [{ scale: scaleAnim }] }
+          ]}
+        >
+          <Text style={styles.countdownNumber}>{countdown}</Text>
+          <Text style={styles.countdownUnit}>SECONDS</Text>
+        </Animated.View>
+      </View>
+
+      <Image
+        source={require('../../assets/starts.png')}
+        style={styles.characterImage}
+        resizeMode="contain"
+      />
+
+      <TouchableOpacity
+        style={styles.skipButton}
+        onPress={() => {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+          navigate('GetStarted');
+        }}
+      >
+        <Text style={styles.skipText}>Skip</Text>
+      </TouchableOpacity>
+    </SafeAreaView>
+  );
 }
 
-const styles = StyleSheet.create({
+
+  
+  
+  
+  const styles = StyleSheet.create({
     container: {
       flex: 1,
       backgroundColor: '#c5c6e8',
@@ -114,8 +139,8 @@ const styles = StyleSheet.create({
       alignItems: 'center',
     },
     characterImage: {
-      width: width * 0.7,
-      height: width * 0.7,
+      width: 0.3,
+      height: 0.23,
       marginVertical: 20,
     },
     progressCircle: {
@@ -1261,12 +1286,12 @@ const styles = StyleSheet.create({
       justifyContent: 'center',
       alignItems: 'center',
     },
-    
+  
     signVideo: {
       width: '100%',
       height: '100%',
     },
-    
+  
     signText: {
       fontSize: 16,
       color: '#555',
@@ -1274,7 +1299,7 @@ const styles = StyleSheet.create({
       marginBottom: 10,
       fontStyle: 'italic',
     },
-    
+  
     // Update your existing styles if needed
     alphabetCard: {
       width: '90%',
@@ -1296,13 +1321,12 @@ const styles = StyleSheet.create({
   
   
   
-    
   
   
   
   
   
-    
-    
+  
+  
+  
   });
-  

@@ -1,6 +1,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import {
+  Ionicons,
   View,
   Text,
   StyleSheet,
@@ -14,6 +15,10 @@ import {
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
 
+import { AntDesign } from '@expo/vector-icons';
+
+
+
 const { width, height } = Dimensions.get('window');
 
 
@@ -21,11 +26,26 @@ const { width, height } = Dimensions.get('window');
 export default function LanguageSelectionScreen({ navigate }) {
   const handleLanguageSelect = (language) => {
     // Store the selected language and navigate to the next screen
-    navigation.navigate('Customization', { selectedLanguage: language });
+    navigation.navigate('LearningPathway', { selectedLanguage: language });
   };
 
   return (
     <SafeAreaView style={styles.container}>
+
+       {/* Add back button here */}
+       <TouchableOpacity 
+        style={styles.backButton}
+          onPress={() => {
+              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+              navigate('LearningPathway2');
+            }} // Replace with your actual previous screen
+      >
+        <AntDesign name="arrowleft" size={24} color="#383773" />
+      </TouchableOpacity>
+
+
+
+
       <Text style={styles.welcomeTitle}>Choose Your Language</Text>
 
       <Text style={styles.basicText}>
@@ -56,7 +76,7 @@ export default function LanguageSelectionScreen({ navigate }) {
           style={styles.languageOption}
           onPress={() => {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-            navigate('Customization');
+            navigate('Customization2');
           }}
         >
           <View style={styles.languageCard}>
@@ -74,7 +94,7 @@ export default function LanguageSelectionScreen({ navigate }) {
           style={styles.languageOption}
           onPress={() => {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-            navigate('Customization');
+            navigate('Customization3');
           }}
         >
           <View style={styles.languageCard}>
@@ -1329,7 +1349,14 @@ const styles = StyleSheet.create({
 
 
 
-
+// Add this to your styles object
+backButton: {
+  position: 'absolute',
+  top: 40,
+  left: 20,
+  zIndex: 10,
+  padding: 8,
+},
 
 
 

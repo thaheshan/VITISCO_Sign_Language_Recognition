@@ -18,7 +18,7 @@ import { MaterialIcons, FontAwesome5 } from '@expo/vector-icons';
 
 const { width, height } = Dimensions.get('window');
 
-export default function LearningPathwayScreen({ navigate, route }) {
+export default function LearningPathwayScreen3({ navigate, route }) {
   const initialLevel = route?.params?.initialLevel ?? 5;
    
   const [unlockedLevel, setUnlockedLevel] = useState(initialLevel);
