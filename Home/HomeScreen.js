@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { 
   KeyboardAvoidingView,
   View, 
@@ -9,22 +9,55 @@ import {
   Platform,
   Image, 
   ScrollView,
-  Animated 
+  Animated,
+  Modal,
+  Dimensions,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Feather from '@expo/vector-icons/Feather';
 import AntDesign from '@expo/vector-icons/AntDesign';
 import { useNavigation } from '@react-navigation/native';
-
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const HomeScreen = () => {
-  const navigation = useNavigation(); //Hook to access navigation object
-  const [showUserId, setShowUserId] = useState(false); //State to toggle user ID display
-  const [menuOpen, setMenuOpen] = useState(false); //State to toggle menu open/close
+  const navigation = useNavigation();
+  const [showUserId, setShowUserId] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   
   // Animation values
-  const addButtonRotation = useRef(new Animated.Value(0)).current; //For rotating the add button
-  const menuHeight = useRef(new Animated.Value(0)).current; // For animating the menu height
+  const addButtonRotation = useRef(new Animated.Value(0)).current;
+  const menuHeight = useRef(new Animated.Value(0)).current;
+  
+  // Instructions states
+  const [showInstructions, setShowInstructions] = useState(false);
+  const [currentStep, setCurrentStep] = useState(0);
+  
+  // Check if user is new on component mount
+  useEffect(() => {
+    checkIfFirstTimeUser();
+  }, []);
+  
+  const checkIfFirstTimeUser = async () => {
+    try {
+      const hasSeenInstructions = await AsyncStorage.getItem('@instructions_viewed');
+      if (hasSeenInstructions !== 'true') {
+        setShowInstructions(true);
+      }
+    } catch (e) {
+      console.log('Failed to load user status');
+      setShowInstructions(true);
+    }
+  };
+  
+  const completeInstructions = async () => {
+    try {
+      await AsyncStorage.setItem('@instructions_viewed', 'true');
+      setShowInstructions(false);
+    } catch (e) {
+      console.log('Failed to save instructions status');
+      setShowInstructions(false);
+    }
+  };
   
   // Toggle user ID display
   const toggleUserId = () => {
@@ -33,9 +66,8 @@ const HomeScreen = () => {
   
   // Toggle menu animation
   const toggleMenu = () => {
-    const toValue = menuOpen ? 0 : 1; // Determine the target value for animation
+    const toValue = menuOpen ? 0 : 1;
     
-    // Animate both the button rotation and menu height simultaneously
     Animated.parallel([
       Animated.timing(addButtonRotation, {
         toValue,
@@ -49,23 +81,88 @@ const HomeScreen = () => {
       })
     ]).start();
     
-    setMenuOpen(!menuOpen); // Toggle men state
+    setMenuOpen(!menuOpen);
   };
   
   // Interpolate rotation for + to x animation
   const rotateInterpolation = addButtonRotation.interpolate({
     inputRange: [0, 1],
-    outputRange: ['0deg', '45deg'] //Rotate from 0 to 45 degrees
+    outputRange: ['0deg', '45deg']
   });
   
   // Interpolate height for menu animation
   const menuHeightInterpolation = menuHeight.interpolate({
     inputRange: [0, 1],
-    outputRange: [0, 100] //Animate height from 0 to 100
+    outputRange: [0, 100]
   });
 
-  return (
+  // Instructions data
+  const instructions = [
+    {
+      title: "Home Screen Overview",
+      content: "The top of the screen displays your User ID. Tap to toggle between showing and hiding your ID.",
+      position: { top: 80, left: 20 },
+      pointer: { top: 30, left: Dimensions.get('window').width - 70 }
+    },
+    {
+      title: "Daily Tasks",
+      content: "Here you'll find your daily tasks. Complete these to track your progress.",
+      position: { top: 200, left: 20 },
+      pointer: { top: 170, left: Dimensions.get('window').width / 2 }
+    },
+    {
+      title: "Ongoing Lessons",
+      content: "Track your active courses, quizzes, and virtual room sessions with their due dates and completion percentages.",
+      position: { top: 350, left: 20 },
+      pointer: { top: 320, left: Dimensions.get('window').width - 50 }
+    },
+    {
+      title: "Quizzes",
+      content: "Tap on a quiz card to start or resume a quiz.",
+      position: { top: 350, left: 20 },
+      pointer: { top: 340, left: Dimensions.get('window').width -50 }
+    },
+    {
+      title: "Virtual Room",
+      content: "Tap on a virtual room card to join and play quizzes with other players",
+      position: { bottom: 150, left: 20 },
+      pointer: { bottom: 85, left: Dimensions.get('window').width / 2 }
+    },
+    {
+      title: "Quick Actions Menu",
+      content: "Tap the + button to access quick actions like the Translator and adding to your Schedule.",
+      position: { bottom: 150, left: 20 },
+      pointer: { bottom: 85, left: Dimensions.get('window').width / 2 }
+    },
+    
+    {
+      title: "Navigation Bar",
+      content: "Use these icons to navigate between Home, Progress Analysis, Notifications, and Profile screens.",
+      position: { bottom: 100, left: 20 },
+      pointer: { bottom: 40, left: Dimensions.get('window').width / 4 }
+    }
+  ];
+  
+  // Navigation through instructions
+  const nextStep = () => {
+    if (currentStep < instructions.length - 1) {
+      setCurrentStep(currentStep + 1);
+    } else {
+      completeInstructions();
+    }
+  };
+  
+  const prevStep = () => {
+    if (currentStep > 0) {
+      setCurrentStep(currentStep - 1);
+    }
+  };
+  
+  const skipAll = () => {
+    completeInstructions();
+  };
 
+  return (
     <SafeAreaView style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
@@ -85,7 +182,6 @@ const HomeScreen = () => {
         </TouchableOpacity>
       </View>
 
-      
       {/* Main Content - Scrollable */}
       <ScrollView style={styles.scrollContent} showsVerticalScrollIndicator={false}>
         {/* Daily Tasks Section */}
@@ -103,7 +199,7 @@ const HomeScreen = () => {
               </TouchableOpacity>
             </View>
             <TouchableOpacity>
-              <Text style={styles.seeAll}  onPress={() => navigation.navigate('Scheduler', {}, { animation: 'slide_from_right' })} >See all</Text>
+              <Text style={styles.seeAll} onPress={() => navigation.navigate('Scheduler', {}, { animation: 'slide_from_right' })}>See all</Text>
             </TouchableOpacity>
           </View>
            
@@ -218,7 +314,7 @@ const HomeScreen = () => {
       {/* Popup Menu */}
       <Animated.View style={[styles.popupMenu, { height: menuHeightInterpolation }]}>
         <TouchableOpacity style={styles.menuItem}>
-          <Text style={styles.menuText}   onPress={() => navigation.navigate('Translator', {}, { animation: 'slide_from_right' })}>Translator</Text>
+          <Text style={styles.menuText} onPress={() => navigation.navigate('Translator', {}, { animation: 'slide_from_right' })}>Translator</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.menuItem}>
           <Text style={styles.menuText} onPress={() => navigation.navigate('Scheduler', {}, { animation: 'slide_from_right' })}>ADD SCHEDULE</Text>
@@ -231,7 +327,7 @@ const HomeScreen = () => {
           <Ionicons name="grid-outline" size={24} color="#352561" />
           <View style={styles.activeNavIndicator} />
         </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem}  onPress={() => navigation.navigate("ProgressAnalysis" , {}, { animation: 'slide_from_right' })}>
+        <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate("ProgressAnalysis", {}, { animation: 'slide_from_right' })}>
           <Feather name="pie-chart" size={26} color="#9E9AA7" />
         </TouchableOpacity>
         <TouchableOpacity style={styles.addButton} onPress={toggleMenu}>
@@ -246,14 +342,78 @@ const HomeScreen = () => {
           <Ionicons name="person-outline" size={24} color="#9E9AA7" />
         </TouchableOpacity>
       </View>
+
+      {/* Instructions Modal Overlay */}
+      <Modal
+        transparent={true}
+        visible={showInstructions}
+        animationType="fade"
+        onRequestClose={skipAll}
+      >
+        <View style={styles.instructionsContainer}>
+          {/* Instruction card */}
+          <View style={[styles.instructionCard, instructions[currentStep].position]}>
+            <Text style={styles.instructionTitle}>
+              {instructions[currentStep].title}
+            </Text>
+            <Text style={styles.instructionText}>
+              {instructions[currentStep].content}
+            </Text>
+            
+            {/* Progress dots */}
+            <View style={styles.progressIndicator}>
+              {instructions.map((_, index) => (
+                <View 
+                  key={index} 
+                  style={[
+                    styles.progressDot, 
+                    index === currentStep ? styles.activeDot : {}
+                  ]} 
+                />
+              ))}
+            </View>
+            
+            {/* Navigation buttons */}
+            <View style={styles.instructionButtons}>
+              {currentStep > 0 && (
+                <TouchableOpacity 
+                  style={styles.prevButton} 
+                  onPress={prevStep}
+                >
+                  <Text style={styles.buttonText}>Prev</Text>
+                </TouchableOpacity>
+              )}
+              
+              <TouchableOpacity 
+                style={styles.nextButton} 
+                onPress={nextStep}
+              >
+                <Text style={styles.buttonText}>
+                  {currentStep === instructions.length - 1 ? "Done" : "Next"}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+          
+          {/* Pointer arrow */}
+          <View style={[styles.pointerArrow, instructions[currentStep].pointer]} />
+          
+          {/* Skip button */}
+          <TouchableOpacity 
+            style={styles.skipButton}
+            onPress={skipAll}
+          >
+            <Text style={styles.skipText}>Skip Tutorial</Text>
+          </TouchableOpacity>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 };
 
 // StylesSheet
 const styles = StyleSheet.create({
-
-// Main container style
+  // Main container style
   container: {
     flex: 1, 
     backgroundColor: '#B2B5E7',
@@ -486,6 +646,100 @@ const styles = StyleSheet.create({
   },
   bottomPadding: {
     height: 80,
+  },
+  
+  // Instruction overlay styles
+  instructionsContainer: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+  },
+  instructionCard: {
+    position: 'absolute',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 16,
+    width: '80%',
+    maxWidth: 300,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+    elevation: 5,
+  },
+  instructionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#352561',
+    marginBottom: 8,
+  },
+  instructionText: {
+    fontSize: 15,
+    color: '#333',
+    marginBottom: 16,
+    lineHeight: 22,
+  },
+  progressIndicator: {
+    flexDirection: 'row',
+    marginBottom: 12,
+  },
+  progressDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#B2B5E7',
+    marginRight: 4,
+  },
+  activeDot: {
+    backgroundColor: '#6B5ECD',
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+  },
+  instructionButtons: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+  },
+  prevButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+    backgroundColor: '#B2B5E7',
+    marginRight: 8,
+  },
+  nextButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+    backgroundColor: '#6B5ECD',
+  },
+  buttonText: {
+    color: '#FFFFFF',
+    fontWeight: 'bold',
+    fontSize: 14,
+  },
+  skipButton: {
+    position: 'absolute',
+    top: 40,
+    right: 20,
+    padding: 8,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+  },
+  skipText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+  },
+  pointerArrow: {
+    position: 'absolute',
+    width: 0,
+    height: 0,
+    borderLeftWidth: 10,
+    borderRightWidth: 10,
+    borderBottomWidth: 10,
+    borderLeftColor: 'transparent',
+    borderRightColor: 'transparent',
+    borderBottomColor: '#FFFFFF',
+    transform: [{ rotate: '180deg' }],
   },
 });
 
