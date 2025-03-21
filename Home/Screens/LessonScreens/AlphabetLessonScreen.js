@@ -5,7 +5,6 @@ import {
   StyleSheet, 
   TouchableOpacity, 
   Dimensions, 
-  Image, 
   SafeAreaView, 
   Animated, 
   Easing,
@@ -103,39 +102,170 @@ const Confetti = ({ show }) => {
   return confettiElements;
 };
 
-export default function AlphabetLessonScreen({ navigation , route = {} }) {
-
-  const { lessonId = 1, onComplete } = route.params || {};
+export default function AlphabetLessonScreen({ navigation, route = {} }) {
+  const { lessonId = 1, lessonType = 'alphabet', onComplete } = route.params || {};
   const [currentCard, setCurrentCard] = useState(0);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [characterState, setCharacterState] = useState('intro');
+  const [isIdle, setIsIdle] = useState(false);
+  const [characterVisible, setCharacterVisible] = useState(true);
   const cardAnim = useRef(new Animated.Value(0)).current;
   const videoRef = useRef(null);
+  const characterVideoRef = useRef(null);
+  const idleTimerRef = useRef(null);
   
-  // Lesson content based on lesson ID
+  // Animation refs for character
+  const floatAnim = useRef(new Animated.Value(0)).current;
+  const [characterLoaded, setCharacterLoaded] = useState(false);
+  
+  // Lesson content based on lesson type and ID
   const lessonContent = {
-    1: {
-      
-      title: "Basic Alphabet (අ-ඉ)",
+    alphabet: {
+      1: {
+        title: "Basic Alphabet (අ-ඉ)",
+        cards: [
+          { 
+            letter: 'අ', 
+            pronunciation: 'a', 
+            example: 'apple', 
+            sign: require('../../assets/videos/Thahee.mp4'), 
+            signText: 'Hand forms letter A shape',
+            characterVideo: require('../../assets/videos/Scene - Jackie.mp4')
+          },
+          { 
+            letter: 'ඇ', 
+            pronunciation: 'ae', 
+            example: 'ant', 
+            sign: require('../../assets/videos/Thahee.mp4'), 
+            signText: 'Open palm moving rightward',
+            characterVideo: require('../../assets/videos/Scene - Jackie.mp4')
+          },
+          { 
+            letter: 'ඈ', 
+            pronunciation: 'aae', 
+            example: 'ask', 
+            sign: require('../../assets/videos/Thahee.mp4'), 
+            signText: 'Extended palm with circular motion',
+            characterVideo: require('../../assets/videos/Scene - Jackie.mp4')
+          },
+          { 
+            letter: 'ඉ', 
+            pronunciation: 'i', 
+            example: 'if', 
+            sign: require('../../assets/videos/Thahee.mp4'), 
+            signText: 'Pinky finger pointing upward',
+            characterVideo: require('../../assets/videos/Scene - Jackie.mp4')
+          },
+        ],
+        xpReward: 75
+      },
 
-      cards: [
-        { letter: 'අ', pronunciation: 'a', example: 'apple', sign: require('../../assets/videos/Thahee.mp4'), signText: 'Hand forms letter A shape' },
-        { letter: 'ඇ', pronunciation: 'ae', example: 'ant', sign: require('../../assets/videos/Thahee.mp4'), signText: 'Open palm moving rightward' },
-        { letter: 'ඈ', pronunciation: 'aae', example: 'ask', sign: require('../../assets/videos/Thahee.mp4'), signText: 'Extended palm with circular motion' },
-        { letter: 'ඉ', pronunciation: 'i', example: 'if', sign: require('../../assets/videos/Thahee.mp4'), signText: 'Pinky finger pointing upward' },
-      ],
-
-      xpReward: 75
-    },
- 
+      // Add more phrase lessons here
+    }
   };
   
-
+  // Default character video for waiting and congrats states
+  const defaultCharacterVideos = {
+    waiting: require('../../assets/videos/Scene - Jackie.mp4'),
+    congrats: require('../../assets/videos/Scene - Jackie.mp4')
+  };
   
-  // Default to lesson 1 if lessonId is undefined or not found in lessonContent
-  const safeId = lessonId && lessonContent[lessonId] ? lessonId : 1;
-  const currentLesson = lessonContent[safeId];
-  const alphabetCards = currentLesson.cards;
+  // Get appropriate video based on character state and current card
+  const getCharacterVideo = () => {
+    if (characterState === 'waiting') {
+      return defaultCharacterVideos.waiting;
+    } else if (characterState === 'congrats') {
+      return defaultCharacterVideos.congrats;
+    } else {
+      // Return the video directly from the current card
+      return cards[currentCard].characterVideo;
+    }
+  };
   
+  // Generate speech text based on character state and current card
+  const getSpeechText = () => {
+    const currentCardData = cards[currentCard];
+    
+    if (characterState === 'intro') {
+      if (lessonType === 'alphabet') {
+        return "Hi! I'm here to help you learn the alphabet in sign language. Let's start!";
+      } else if (lessonType === 'numbers') {
+        return "Let's learn how to count using sign language together!";
+      } else if (lessonType === 'phrases') {
+        return "I'll show you useful phrases in sign language. These will help you communicate!";
+      } else {
+        return "Hi! I'm here to help you learn. Let's start with this lesson!";
+      }
+    } else if (characterState === 'congrats') {
+      return "Fantastic job! You've mastered this lesson. Keep practicing to improve your skills!";
+    } else if (characterState === 'waiting') {
+      return "Take your time to practice. I'll wait for you!";
+    } else {
+      // For explaining state - customize based on card content
+      if (currentCardData?.letter) {
+        return `Now watch carefully how to sign the letter "${currentCardData.letter}" in sign language. Try to follow along!`;
+      } else if (currentCardData?.phrase) {
+        return `Let me show you how to sign "${currentCardData.phrase}". This is commonly used when ${currentCardData.usage?.toLowerCase() || 'communicating'}.`;
+      } else if (currentCardData?.number) {
+        return `Here's how to sign the number ${currentCardData.number}. Notice the finger positions and movements.`;
+      } else {
+        return "Watch the video carefully and try to mimic the signs.";
+      }
+    }
+  };
+  
+  // Get the current lesson based on the lessonType and lessonId
+  const currentLessonType = lessonContent[lessonType] || lessonContent.alphabet;
+  const currentLesson = currentLessonType[lessonId] || currentLessonType[1];
+  const cards = currentLesson.cards;
+  
+  // Start floating animation for character
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(floatAnim, {
+          toValue: 1,
+          duration: 1500,
+          easing: Easing.inOut(Easing.sin),
+          useNativeDriver: true
+        }),
+        Animated.timing(floatAnim, {
+          toValue: 0,
+          duration: 1500,
+          easing: Easing.inOut(Easing.sin),
+          useNativeDriver: true
+        })
+      ])
+    ).start();
+  }, []);
+  
+  // Reset idle timer on any interaction
+  const resetIdleTimer = () => {
+    if (idleTimerRef.current) {
+      clearTimeout(idleTimerRef.current);
+    }
+    
+    // Set timer for character to go to waiting state after 15 seconds of inactivity
+    idleTimerRef.current = setTimeout(() => {
+      if (!showSuccess && characterState === 'explaining') {
+        setCharacterState('waiting');
+      }
+    }, 15000);
+  };
+  
+  // Set up idle timer to change character state when user is inactive
+  useEffect(() => {
+    resetIdleTimer();
+    
+    // Clean up timeout on unmount
+    return () => {
+      if (idleTimerRef.current) {
+        clearTimeout(idleTimerRef.current);
+      }
+    };
+  }, [currentCard, characterState, showSuccess]);
+  
+  // Card and video animation setup
   useEffect(() => {
     // Card flip animation
     Animated.timing(cardAnim, {
@@ -144,35 +274,82 @@ export default function AlphabetLessonScreen({ navigation , route = {} }) {
       useNativeDriver: true,
     }).start();
     
-    // Play video when component mounts or card changes
+    // Play lesson video
     if (videoRef.current) {
       videoRef.current.setStatusAsync({
         shouldPlay: true,
         isLooping: true,
       }).catch(error => {
-        console.log("Video playback error:", error);
+        console.log("Lesson video playback error:", error);
       });
     }
     
+    // Play character video
+    if (characterVideoRef.current && characterLoaded) {
+      characterVideoRef.current.setStatusAsync({
+        shouldPlay: true,
+        isLooping: true,
+      }).catch(error => {
+        console.log("Character video playback error:", error);
+      });
+    }
+    
+    // Change character state when mounted
+    if (currentCard === 0) {
+      // Show intro initially, then change to explaining after 2 seconds
+      setCharacterState('intro');
+      setTimeout(() => {
+        setCharacterState('explaining');
+      }, 2000);
+    } else {
+      setCharacterState('explaining');
+    }
+    
     return () => {
-      // Stop video when unmounting
+      // Stop videos when unmounting
       if (videoRef.current) {
         videoRef.current.stopAsync().catch(error => {
-          console.log("Video stop error:", error);
+          console.log("Lesson video stop error:", error);
+        });
+      }
+      
+      if (characterVideoRef.current) {
+        characterVideoRef.current.stopAsync().catch(error => {
+          console.log("Character video stop error:", error);
         });
       }
     };
-  }, [currentCard]);
+  }, [currentCard, characterLoaded]);
+  
+  // Update character video when state changes
+  useEffect(() => {
+    if (characterVideoRef.current && characterLoaded) {
+      characterVideoRef.current.setStatusAsync({
+        shouldPlay: true,
+        isLooping: true,
+      }).catch(error => {
+        console.log("Character video update error:", error);
+      });
+    }
+  }, [characterState]);
   
   const nextCard = () => {
-    if (currentCard < alphabetCards.length - 1) {
+    // Reset idle timer on interaction
+    resetIdleTimer();
+    
+    // Reset to explaining state whenever user interacts
+    if (characterState === 'waiting') {
+      setCharacterState('explaining');
+    }
+    
+    if (currentCard < cards.length - 1) {
       // Reset animation value
       cardAnim.setValue(0);
       
-      // Stop current video
+      // Stop current videos
       if (videoRef.current) {
         videoRef.current.stopAsync().catch(error => {
-          console.log("Video stop error:", error);
+          console.log("Lesson video stop error:", error);
         });
       }
       
@@ -185,29 +362,38 @@ export default function AlphabetLessonScreen({ navigation , route = {} }) {
       // Completed all cards
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       setShowSuccess(true);
+      setCharacterState('congrats');
       
       // Navigate after showing success animation
       setTimeout(() => {
         navigation.navigate('LessonComplete', {
-          lessonId: safeId,
+          lessonId: lessonId,
+          lessonType: lessonType,
           xpEarned: currentLesson.xpReward,
           lessonTitle: currentLesson.title,
           onComplete
         });
-      }, 2000);
-
+      }, 3000);
     }
   };
   
   const prevCard = () => {
+    // Reset idle timer on interaction
+    resetIdleTimer();
+    
+    // Reset to explaining state whenever user interacts
+    if (characterState === 'waiting') {
+      setCharacterState('explaining');
+    }
+    
     if (currentCard > 0) {
       // Reset animation value
       cardAnim.setValue(0);
       
-      // Stop current video
+      // Stop current videos
       if (videoRef.current) {
         videoRef.current.stopAsync().catch(error => {
-          console.log("Video stop error:", error);
+          console.log("Lesson video stop error:", error);
         });
       }
       
@@ -219,6 +405,11 @@ export default function AlphabetLessonScreen({ navigation , route = {} }) {
     }
   };
   
+  // Toggle character visibility
+  const toggleCharacter = () => {
+    setCharacterVisible(!characterVisible);
+  };
+  
   // Card animation values
   const cardScale = cardAnim.interpolate({
     inputRange: [0, 0.5, 1],
@@ -228,6 +419,12 @@ export default function AlphabetLessonScreen({ navigation , route = {} }) {
   const cardOpacity = cardAnim.interpolate({
     inputRange: [0, 0.5, 1],
     outputRange: [0, 0.5, 1]
+  });
+  
+  // Calculate floating movement for character
+  const floatTranslateY = floatAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, -5] // Float 5 units up and down
   });
   
   // Handle errors for missing video files
@@ -245,29 +442,17 @@ export default function AlphabetLessonScreen({ navigation , route = {} }) {
           <Text style={styles.alphabetPronunciation}>
             Pronounced as: "{card.pronunciation}"
           </Text>
-          <View style={styles.videoContainer}>
-            <Video
-              ref={videoRef}
-              source={card.sign}
-              style={styles.signVideo}
-              resizeMode="contain"
-              isLooping
-              shouldPlay
-              useNativeControls={false}
-              onError={handleVideoError}
-            />
-          </View>
-          <Text style={styles.signText}>
-            {card.signText}
-          </Text>
           <Text style={styles.exampleText}>
             Example: {card.example}
+          </Text>
+          <Text style={styles.signText}>
+            {card.signText}
           </Text>
         </>
       );
     }
     
-    // For greeting lessons
+    // For greeting/phrase lessons
     if (card.phrase) {
       return (
         <>
@@ -275,23 +460,11 @@ export default function AlphabetLessonScreen({ navigation , route = {} }) {
           <Text style={styles.phraseMeaning}>
             Meaning: "{card.meaning}"
           </Text>
-          <View style={styles.videoContainer}>
-            <Video
-              ref={videoRef}
-              source={card.sign}
-              style={styles.signVideo}
-              resizeMode="contain"
-              isLooping
-              shouldPlay
-              useNativeControls={false}
-              onError={handleVideoError}
-            />
-          </View>
-          <Text style={styles.signText}>
-            {card.signText}
-          </Text>
           <Text style={styles.usageText}>
             Usage: {card.usage}
+          </Text>
+          <Text style={styles.signText}>
+            {card.signText}
           </Text>
         </>
       );
@@ -306,18 +479,6 @@ export default function AlphabetLessonScreen({ navigation , route = {} }) {
           <Text style={styles.numberPronunciation}>
             Pronounced as: "{card.pronunciation}"
           </Text>
-          <View style={styles.videoContainer}>
-            <Video
-              ref={videoRef}
-              source={card.sign}
-              style={styles.signVideo}
-              resizeMode="contain"
-              isLooping
-              shouldPlay
-              useNativeControls={false}
-              onError={handleVideoError}
-            />
-          </View>
           <Text style={styles.signText}>
             {card.signText}
           </Text>
@@ -329,56 +490,172 @@ export default function AlphabetLessonScreen({ navigation , route = {} }) {
   };
   
   return (
-    <SafeAreaView style={styles.container}>
-      <Text style={styles.levelIndicator}>{currentLesson.title}</Text>
+    <SafeAreaView style={styles.container} onTouchStart={resetIdleTimer}>
+      <View style={styles.header}>
+        <Text style={styles.levelIndicator}>{currentLesson.title}</Text>
+        <TouchableOpacity 
+          style={styles.characterToggle}
+          onPress={toggleCharacter}
+        >
+          <Text style={styles.toggleText}>
+            {characterVisible ? "Hide" : "Show"} Assistant
+          </Text>
+        </TouchableOpacity>
+      </View>
       
-      <ProgressBar current={currentCard + 1} total={alphabetCards.length} />
+      <ProgressBar current={currentCard + 1} total={cards.length} />
       
       {!showSuccess ? (
-        <>
+        <View style={styles.contentContainer}>
           <Animated.View 
             style={[
-              styles.alphabetCard,
+              styles.lessonCard,
               {
                 opacity: cardOpacity,
-                transform: [{ scale: cardScale }]
+                transform: [{ scale: cardScale }],
               }
             ]}
           >
-            {renderCardContent(alphabetCards[currentCard])}
-          </Animated.View>
-          
-          <View style={styles.navigationButtons}>
-            <TouchableOpacity
-              style={[styles.navButton, currentCard === 0 && styles.disabledButton]}
-              onPress={prevCard}
-              disabled={currentCard === 0}
-            >
-              <Text style={styles.navButtonText}>Previous</Text>
-            </TouchableOpacity>
+            {renderCardContent(cards[currentCard])}
             
-            <TouchableOpacity
-              style={styles.navButton}
-              onPress={nextCard}
-            >
-              <Text style={styles.navButtonText}>
-                {currentCard < alphabetCards.length - 1 ? 'Next' : 'Complete'}
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </>
+            {/* Horizontal video container */}
+            <View style={styles.horizontalVideoContainer}>
+              {/* Lesson video */}
+              <View style={styles.videoWrapper}>
+                <Video
+                  ref={videoRef}
+                  source={cards[currentCard].sign}
+                  style={styles.signVideo}
+                  resizeMode="contain"
+                  isLooping
+                  shouldPlay
+                  useNativeControls={false}
+                  onError={handleVideoError}
+                />
+                <Text style={styles.videoLabel}>Sign Demonstration</Text>
+              </View>
+              
+              {/* Character video - conditionally rendered */}
+              {characterVisible && (
+                <View style={styles.characterWrapper}>
+                  <Animated.View style={{ transform: [{ translateY: floatTranslateY }] }}>
+                    <Video
+                      ref={characterVideoRef}
+                      source={getCharacterVideo()}
+                      style={styles.characterVideo}
+                      resizeMode="contain"
+                      isLooping
+                      shouldPlay
+                      useNativeControls={false}
+                      onLoad={() => setCharacterLoaded(true)}
+                      onError={(error) => console.log("Character video error:", error)}
+                    />
+                  </Animated.View>
+                  
+                  {/* Speech bubble */}
+                  <View style={styles.speechBubble}>
+                    <View style={styles.speechBubbleTail} />
+                    <Text style={styles.speechText}>
+                      {getSpeechText()}
+                    </Text>
+                  </View>
+                </View>
+              )}
+            </View>
+          </Animated.View>
+        </View>
       ) : (
         <View style={styles.successContainer}>
           <Confetti show={true} />
+          {characterVisible && (
+            <View style={styles.successCharacterContainer}>
+              <Video
+                ref={characterVideoRef}
+                source={defaultCharacterVideos.congrats}
+                style={styles.successCharacterVideo}
+                resizeMode="contain"
+                isLooping
+                shouldPlay
+                useNativeControls={false}
+              />
+              <View style={styles.speechBubble}>
+                <View style={styles.speechBubbleTail} />
+                <Text style={styles.speechText}>
+                  Fantastic job! You've mastered this lesson. Keep practicing to improve your skills!
+                </Text>
+              </View>
+            </View>
+          )}
           <Text style={styles.successTitle}>Great Job!</Text>
           <Text style={styles.successMessage}>
             You've completed the {currentLesson.title} lesson!
           </Text>
         </View>
       )}
+      
+      <View style={styles.navigationButtons}>
+        <TouchableOpacity
+          style={[styles.navButton, currentCard === 0 && styles.disabledButton]}
+          onPress={prevCard}
+          disabled={currentCard === 0 || showSuccess}
+        >
+          <Text style={styles.navButtonText}>Previous</Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity
+          style={styles.navButton}
+          onPress={nextCard}
+          disabled={showSuccess}
+        >
+          <Text style={styles.navButtonText}>
+            {currentCard < cards.length - 1 ? 'Next' : 'Complete'}
+          </Text>
+        </TouchableOpacity>
+      </View>
     </SafeAreaView>
   );
 }
+
+
+
+// Improved styles for the character component
+const characterStyles = StyleSheet.create({
+  container: {
+    position: 'absolute',
+    right: -width * 0.3, // Start offscreen
+    bottom: 10,
+    width: width * 0.35, // Adjusted for better proportion
+    height: height * 0.3,
+    zIndex: 10,
+    alignItems: 'center',
+  },
+  characterVideo: {
+    width: '100%',
+    height: '100%',
+    backgroundColor: 'transparent', // Ensures transparent background in video
+  },
+  speechBubble: {
+    position: 'absolute',
+    top: -60,
+    left: -20,
+    backgroundColor: 'white',
+    padding: 10,
+    borderRadius: 15,
+    width: width * 0.55,
+    minHeight: 60,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  speechText: {
+    fontSize: 14,
+    color: '#333',
+    textAlign: 'center',
+  },
+});
+
 
 
 
@@ -1602,6 +1879,149 @@ const styles = StyleSheet.create({
     },
   
   
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    container: {
+      flex: 1,
+      backgroundColor: '#f5f5f5',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingVertical: 20,
+    },
+    contentContainer: {
+      flex: 1,
+      width: '100%',
+      alignItems: 'center',
+      justifyContent: 'center',
+      position: 'relative',
+    },
+    levelIndicator: {
+      fontSize: 22,
+      fontWeight: 'bold',
+      marginBottom: 10,
+      color: '#333',
+    },
+    alphabetCard: {
+      backgroundColor: 'white',
+      borderRadius: 15,
+      padding: 20,
+      width: width * 0.8,
+      alignItems: 'center',
+      justifyContent: 'center',
+      shadowColor: "#000",
+      shadowOffset: {
+        width: 0,
+        height: 2,
+      },
+      shadowOpacity: 0.25,
+      shadowRadius: 3.84,
+      elevation: 5,
+    },
+ 
+ 
+    videoContainer: {
+      width: '90%',
+      height: 180,
+      marginVertical: 15,
+      borderRadius: 10,
+      overflow: 'hidden',
+      backgroundColor: '#eee',
+    },
+    signVideo: {
+      width: '100%',
+      height: '100%',
+    },
+    signText: {
+      fontSize: 16,
+      marginVertical: 10,
+      textAlign: 'center',
+      color: '#666',
+      fontStyle: 'italic',
+    },
+    exampleText: {
+      fontSize: 16,
+      marginTop: 10,
+      color: '#555',
+    },
+    navigationButtons: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      width: '80%',
+      marginTop: 20,
+    },
+
+ 
+    successContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      width: '100%',
+    },
+    successTitle: {
+      fontSize: 32,
+      fontWeight: 'bold',
+      color: '#4CAF50',
+      marginBottom: 20,
+    },
+    successMessage: {
+      fontSize: 18,
+      textAlign: 'center',
+      paddingHorizontal: 20,
+      color: '#555',
+    },
+    phraseLetter: {
+      fontSize: 32,
+      fontWeight: 'bold',
+      marginBottom: 10,
+      color: '#4CAF50',
+    },
+    phraseMeaning: {
+      fontSize: 18,
+      marginBottom: 15,
+      color: '#555',
+    },
+    usageText: {
+      fontSize: 16,
+      marginTop: 10,
+      color: '#555',
+      fontStyle: 'italic',
+    },
+    numberDigit: {
+      fontSize: 72,
+      fontWeight: 'bold',
+      marginBottom: 10,
+      color: '#FF9800',
+    },
+    numberSinhala: {
+      fontSize: 36,
+      marginBottom: 10,
+      color: '#FF9800',
+    },
+    numberPronunciation: {
+      fontSize: 18,
+      marginBottom: 15,
+      color: '#555',
+    },
   
   
   
@@ -1612,6 +2032,428 @@ const styles = StyleSheet.create({
   
   
   
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    container: {
+      flex: 1,
+      backgroundColor: '#F5F5F5',
+    },
+    levelIndicator: {
+      fontSize: 24,
+      fontWeight: 'bold',
+      textAlign: 'center',
+      marginTop: 15,
+      marginBottom: 10,
+      color: '#333',
+    },
+    contentContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      position: 'relative', // For absolute positioning of character
+      paddingHorizontal: width * 0.05, // Give space for character
+    },
+    alphabetCard: {
+      width: width * 0.8,
+      maxWidth: 400,
+      minHeight: height * 0.5,
+      backgroundColor: 'white',
+      borderRadius: 20,
+      padding: 20,
+      alignItems: 'center',
+      justifyContent: 'center',
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.3,
+      shadowRadius: 4.65,
+      elevation: 8,
+      marginLeft: width * 0.05, // Shift left to make space for character
+    },
+    alphabetLetter: {
+      fontSize: 48,
+      fontWeight: 'bold',
+      marginBottom: 10,
+      color: '#333',
+    },
+    alphabetPronunciation: {
+      fontSize: 18,
+      marginBottom: 20,
+      color: '#666',
+    },
+    videoContainer: {
+      width: width * 0.7,
+      height: height * 0.25,
+      borderRadius: 10,
+      overflow: 'hidden',
+      marginVertical: 15,
+      backgroundColor: '#E0E0E0',
+    },
+    signVideo: {
+      width: '100%',
+      height: '100%',
+    },
+    signText: {
+      fontSize: 16,
+      textAlign: 'center',
+      marginVertical: 10,
+      color: '#555',
+      fontStyle: 'italic',
+    },
+    exampleText: {
+      fontSize: 16,
+      marginTop: 10,
+      color: '#666',
+    },
+    // Phrase specific styles
+    phraseLetter: {
+      fontSize: 28,
+      fontWeight: 'bold',
+      marginBottom: 10,
+      color: '#333',
+      textAlign: 'center',
+    },
+    phraseMeaning: {
+      fontSize: 18,
+      marginBottom: 20,
+      color: '#666',
+    },
+    usageText: {
+      fontSize: 16,
+      marginTop: 10,
+      color: '#666',
+    },
+    // Number specific styles
+    numberDigit: {
+      fontSize: 48,
+      fontWeight: 'bold',
+      marginBottom: 5,
+      color: '#333',
+    },
+    numberSinhala: {
+      fontSize: 32,
+      marginBottom: 5,
+      color: '#444',
+    },
+    numberPronunciation: {
+      fontSize: 18,
+      marginBottom: 20,
+      color: '#666',
+    },
+    // Success screen styles
+    successContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      position: 'relative',
+    },
+    successTitle: {
+      fontSize: 32,
+      fontWeight: 'bold',
+      color: '#4CAF50',
+      marginBottom: 15,
+    },
+    successMessage: {
+      fontSize: 18,
+      textAlign: 'center',
+      color: '#555',
+      marginHorizontal: 20,
+    },
+    // Navigation buttons
+    navigationButtons: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      paddingHorizontal: 20,
+      paddingBottom: 20,
+      paddingTop: 10,
+    },
+    navButton: {
+      backgroundColor: '#2196F3',
+      paddingVertical: 12,
+      paddingHorizontal: 30,
+      borderRadius: 25,
+      minWidth: 120,
+      alignItems: 'center',
+    },
+    disabledButton: {
+      backgroundColor: '#BDBDBD',
+    },
+    navButtonText: {
+      color: 'white',
+      fontSize: 16,
+      fontWeight: 'bold',
+    },
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    container: {
+      flex: 1,
+      backgroundColor: '#f8f9fa',
+    },
+    header: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingHorizontal: 20,
+      paddingVertical: 10,
+    },
+    levelIndicator: {
+      fontSize: 18,
+      fontWeight: 'bold',
+      color: '#4a4a4a',
+    },
+    characterToggle: {
+      backgroundColor: '#e0e0e0',
+      paddingHorizontal: 12,
+      paddingVertical: 6,
+      borderRadius: 20,
+    },
+    toggleText: {
+      fontSize: 14,
+      color: '#4a4a4a',
+    },
+    contentContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      paddingHorizontal: 20,
+    },
+    lessonCard: {
+      width: '100%',
+      backgroundColor: 'white',
+      borderRadius: 15,
+      padding: 20,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.1,
+      shadowRadius: 8,
+      elevation: 5,
+      alignItems: 'center',
+    },
+    horizontalVideoContainer: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      width: '100%',
+      marginTop: 20,
+    },
+    videoWrapper: {
+      width: '48%',
+      alignItems: 'center',
+    },
+    characterWrapper: {
+      width: '48%',
+      alignItems: 'center',
+    },
+    signVideo: {
+      width: '100%',
+      height: 180,
+      borderRadius: 10,
+      backgroundColor: '#f0f0f0',
+    },
+    characterVideo: {
+      width: '100%',
+      height: 150,
+      borderRadius: 10,
+      backgroundColor: '#f0f0f0',
+    },
+    videoLabel: {
+      marginTop: 5,
+      fontSize: 12,
+      color: '#666',
+      textAlign: 'center',
+    },
+    speechBubble: {
+      backgroundColor: '#e8f5ff',
+      borderRadius: 15,
+      padding: 10,
+      marginTop: 10,
+      maxWidth: '100%',
+      position: 'relative',
+    },
+    speechBubbleTail: {
+      position: 'absolute',
+      top: -8,
+      left: '45%',
+      width: 0,
+      height: 0,
+      borderLeftWidth: 8,
+      borderRightWidth: 8,
+      borderBottomWidth: 8,
+      borderLeftColor: 'transparent',
+      borderRightColor: 'transparent',
+      borderBottomColor: '#e8f5ff',
+    },
+    speechText: {
+      fontSize: 12,
+      color: '#333',
+      textAlign: 'center',
+    },
+    alphabetLetter: {
+      fontSize: 50,
+      fontWeight: 'bold',
+      color: '#2c3e50',
+      marginBottom: 10,
+    },
+    alphabetPronunciation: {
+      fontSize: 16,
+      color: '#7f8c8d',
+      marginBottom: 5,
+    },
+    exampleText: {
+      fontSize: 16,
+      color: '#7f8c8d',
+      marginBottom: 10,
+    },
+    signText: {
+      fontSize: 14,
+      color: '#7f8c8d',
+      fontStyle: 'italic',
+      textAlign: 'center',
+      marginTop: 5,
+    },
+    phraseLetter: {
+      fontSize: 28,
+      fontWeight: 'bold',
+      color: '#2c3e50',
+      marginBottom: 10,
+    },
+    phraseMeaning: {
+      fontSize: 16,
+      color: '#7f8c8d',
+      marginBottom: 5,
+    },
+    usageText: {
+      fontSize: 16,
+      color: '#7f8c8d',
+      marginBottom: 10,
+    },
+    numberDigit: {
+      fontSize: 50,
+      fontWeight: 'bold',
+      color: '#2c3e50',
+      marginBottom: 10,
+    },
+    numberSinhala: {
+      fontSize: 22,
+      color: '#2c3e50',
+      marginBottom: 5,
+    },
+    numberPronunciation: {
+      fontSize: 16,
+      color: '#7f8c8d',
+      marginBottom: 10,
+    },
+    navigationButtons: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      paddingHorizontal: 20,
+      paddingBottom: 20,
+      paddingTop: 10,
+    },
+    navButton: {
+      backgroundColor: '#4a6fa5',
+      paddingVertical: 12,
+      paddingHorizontal: 30,
+      borderRadius: 25,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.1,
+      shadowRadius: 4,
+      elevation: 3,
+    },
+    disabledButton: {
+      backgroundColor: '#b0bec5',
+    },
+    navButtonText: {
+      color: 'white',
+      fontWeight: 'bold',
+      fontSize: 16,
+    },
+    successContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      paddingHorizontal: 20,
+    },
+    successCharacterContainer: {
+      alignItems: 'center',
+      marginBottom: 20,
+      width: '60%',
+    },
+    successCharacterVideo: {
+      width: '100%',
+      height: 150,
+      borderRadius: 10,
+    },
+    successTitle: {
+      fontSize: 32,
+      fontWeight: 'bold',
+      color: '#2c3e50',
+      marginBottom: 15,
+    },
+    successMessage: {
+      fontSize: 18,
+      color: '#7f8c8d',
+      textAlign: 'center',
+    },
+
+
+
+
     
     
   });
@@ -1639,5 +2481,121 @@ const progressStyles = StyleSheet.create({
     fontSize: 14,
     color: '#666',
     marginTop: 5
-  }
+  },
+  container: {
+    marginVertical: 10,
+    width: '90%',
+    alignSelf: 'center',
+  },
+  progressBarContainer: {
+    height: 10,
+    backgroundColor: '#E0E0E0',
+    borderRadius: 5,
+    overflow: 'hidden',
+  },
+  progressBar: {
+    height: '100%',
+    backgroundColor: '#4CAF50',
+  },
+  progressText: {
+    marginTop: 5,
+    fontSize: 14,
+    color: '#757575',
+    textAlign: 'center',
+  },
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+});
+
+
+
+// Styles for the AI Character
+const aiStyles = StyleSheet.create({
+  container: {
+    position: 'absolute',
+    flexDirection: 'column',
+    alignItems: 'center',
+    width: 150,
+  },
+  character: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  head: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: '#4FC3F7',
+    justifyContent: 'center',
+    alignItems: 'center',
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    padding: 5,
+  },
+  eye: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: 'white',
+    margin: 5,
+  },
+  mouth: {
+    width: 20,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: 'white',
+    marginTop: 5,
+  },
+  body: {
+    width: 40,
+    height: 30,
+    backgroundColor: '#4FC3F7',
+    borderBottomLeftRadius: 10,
+    borderBottomRightRadius: 10,
+  },
+  armsContainer: {
+    flexDirection: 'row',
+    position: 'absolute',
+    top: 60,
+  },
+  arm: {
+    width: 40,
+    height: 8,
+    backgroundColor: '#4FC3F7',
+    borderRadius: 4,
+    marginHorizontal: 15,
+  },
+  speechBubble: {
+    marginTop: 20,
+    padding: 10,
+    backgroundColor: 'white',
+    borderRadius: 15,
+    borderWidth: 1,
+    borderColor: '#BDBDBD',
+    maxWidth: 200,
+  },
+  speechText: {
+    fontSize: 14,
+    color: '#333333',
+    textAlign: 'center',
+  },
 });
