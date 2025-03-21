@@ -48,7 +48,7 @@ export default function LanguagePathwayCustomizationScreen({ navigate }) {
       <View style={styles.levelSelector}>
         <Text style={styles.sectionTitle}>Select Your Level:</Text>
         <View style={styles.levelOptions}>
-          {['Beginner', 'Basic', 'Intermediate', 'Advanced'].map((lvl) => (
+          {['Beginner', 'Intermediate', 'Advanced'].map((lvl) => (
             <TouchableOpacity 
               key={lvl}
               style={[
@@ -95,20 +95,23 @@ export default function LanguagePathwayCustomizationScreen({ navigate }) {
         </View>
       </View>
       
+  
       <TouchableOpacity 
-        style={[
-          styles.continueButton,
-          styles.customizationButton,
-          selectedTopics.length === 0 && styles.disabledButton
-        ]}
-        disabled={selectedTopics.length === 0}
-        onPress={() => {
-          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-          navigate('GamePreparation');
-        }}
-      >
-        <Text style={styles.nextButtonText}>SAVE & CONTINUE</Text>
-      </TouchableOpacity>
+    style={[
+      styles.continueButton,
+      styles.customizationButton,
+      selectedTopics.length === 0 && styles.disabledButton
+    ]}
+    disabled={selectedTopics.length === 0}
+    onPress={() => {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      navigate('GamePreparation');
+    }}
+  >
+    <Text style={styles.nextButtonText}>SAVE & CONTINUE</Text>
+  </TouchableOpacity>
+
+
     </SafeAreaView>
   );
 
@@ -121,11 +124,11 @@ export default function LanguagePathwayCustomizationScreen({ navigate }) {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    flex: 2,
     backgroundColor: '#c5c6e8',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: 20,
+    justifyContent: 'flex-start',
+    padding: 40,
   },
 
   welcomeTitle: {
@@ -1137,10 +1140,11 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
+    paddingTop : -20,
     backgroundColor: '#c5c6e8',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: 20,
+    padding: 300,
   },
   welcomeLessonsTitle: {
     fontSize: 22,
@@ -1337,6 +1341,56 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginVertical: 20,
   },
+
+
+
+
+
+
+// Update these style properties in your StyleSheet
+
+continueButton: {
+  backgroundColor: '#5d5b8d',
+  paddingVertical: 12,
+  paddingHorizontal: 40,
+  borderRadius: 8,
+  marginTop: 20,
+  shadowColor: '#000',
+  shadowOffset: { width: 0, height: 2 },
+  shadowOpacity: 0.3,
+  shadowRadius: 3,
+  elevation: 5,
+  alignSelf: 'center', // This centers the button horizontally
+  justifyContent: 'center', // This centers content vertically
+  alignItems: 'center', // This centers content horizontally
+},
+
+customizationButton: {
+  width: '100%', // This makes the button take full width
+  marginTop: 30,
+  alignItems: 'center', // Ensure horizontal centering within the full width
+},
+
+nextButtonText: {
+  color: 'white',
+  fontSize: 16,
+  fontWeight: 'bold',
+  textAlign: 'center', // This ensures the text is centered within the button
+},
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
