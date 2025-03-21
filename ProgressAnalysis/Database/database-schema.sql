@@ -78,18 +78,17 @@ CREATE TABLE Quiz (
     FOREIGN KEY (languageId) REFERENCES Language(languageId)
 );
 
-CREATE TABLE UserQuiz (
+CREATE TABLE UserQuizSession (
     userId INT,
-    quizId INT,
-    completionStatus BOOLEAN,
+    quizSessionId INT,
     completionDateTime DATETIME,
     marksPercentage DECIMAL(5,2),
     marksXPPoints INT,
     minutes INT,   
     seconds INT,
-    PRIMARY KEY (userId, quizId),
+    PRIMARY KEY (userId, quizSessionId),
     FOREIGN KEY (userId) REFERENCES User(userId),
-    FOREIGN KEY (quizId) REFERENCES Quiz(quizId)
+    FOREIGN KEY (quizSessionId) REFERENCES QuizSession(quizSessionId)
 );
 
 CREATE TABLE VirtualRoom (
@@ -102,7 +101,7 @@ CREATE TABLE VirtualRoom (
 );
 
 CREATE TABLE VirtualRoomQuiz (
-    roomCode INT,
+    roomCode VARCHAR(20),
     quizId INT,
     PRIMARY KEY (roomCode, quizId),
     FOREIGN KEY (roomCode) REFERENCES VirtualRoom(roomCode),
@@ -152,4 +151,10 @@ CREATE TABLE Session(
     lessonId Int,
     PRIMARY KEY (sessionId, lessonId),
     FOREIGN KEY (lessonId) REFERENCES Lesson(lessonId)
+);
+CREATE TABLE QuizSession( 
+    quizSessionId INT, 
+    quizId Int, 
+    PRIMARY KEY (quizSessionId, quizId), 
+    FOREIGN KEY (quizId) REFERENCES Quiz(quizId) 
 );
