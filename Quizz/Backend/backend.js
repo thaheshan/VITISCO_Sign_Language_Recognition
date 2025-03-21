@@ -11,8 +11,13 @@ app.use(express.json());
 const db = mysql.createConnection({
   host: 'localhost',
   user: 'root', // Change as per your MySQL setup
+<<<<<<< Updated upstream
   password: '', // Change as per your MySQL setup
   database: 'vitisco' // Database name
+=======
+  password: 'root7', // Change as per your MySQL setup
+  database: 'quiz' // Database name
+>>>>>>> Stashed changes
 });
 
 // Connect to the database
