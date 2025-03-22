@@ -122,10 +122,10 @@ export default function AtoDScreen({ navigation, route = {} }) {
   const lessonContent = {
     alphabet: {
       1: {
-        title: "Basic Alphabet (E-H)",
+        title: "Basic Alphabet (EtoH)",
         cards: [
           { 
-            letter: 'අ', 
+            letter: 'AAAAAA', 
             pronunciation: 'a', 
             example: 'apple', 
             sign: require('../../../assets/videos/Thahee.mp4'), 

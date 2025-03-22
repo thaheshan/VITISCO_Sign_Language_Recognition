@@ -1,48 +1,125 @@
-
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
+  Modal,
   Dimensions,
-  Image,
-  SafeAreaView,
   Animated,
-  Easing,
-  ScrollView
+  Easing
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
 
 const { width, height } = Dimensions.get('window');
 
-
-
-export default function LanguagePathwayCustomizationScreen3({ navigate }) {
-
- const [selectedTopics, setSelectedTopics] = useState([]);
-  const [level, setLevel] = useState('Basic');
+export default function LanguagePathwayCustomizationScreen({ navigate }) {
+  const [selectedTopics, setSelectedTopics] = useState([]);
+  const [level, setLevel] = useState('Beginner');
+  const [showPremiumPopup, setShowPremiumPopup] = useState(false);
+  const [popupMessage, setPopupMessage] = useState('');
   
+  // Animation values
+  const popupScale = new Animated.Value(0.5);
+  const popupOpacity = new Animated.Value(0);
+  const glowAnimation = new Animated.Value(0);
+  
+  // Define topics
   const topics = [
-    { id: 1, name: 'Sinhala Alphabet', icon: '📝' },
-    { id: 2, name: 'Numbers', icon: '🔢' },
-    { id: 3, name: 'Greetings', icon: '👋' },
-    { id: 4, name: 'Family', icon: '👪' },
-    { id: 5, name: 'Food', icon: '🍎' },
-    { id: 6, name: 'Animals', icon: '🐶' },
+    { id: 1, name: 'English Alphabet', icon: '📝', isPremium: false },
+    { id: 2, name: 'Numbers', icon: '🔢', isPremium: true },
+    { id: 3, name: 'Greetings', icon: '👋', isPremium: true },
+    { id: 4, name: 'Family', icon: '👪', isPremium: true },
+    { id: 5, name: 'Food', icon: '🍎', isPremium: true },
+    { id: 6, name: 'Animals', icon: '🐶', isPremium: true },
   ];
   
-  const toggleTopic = (id) => {
-    if (selectedTopics.includes(id)) {
-      setSelectedTopics(selectedTopics.filter(topicId => topicId !== id));
+  // Animation for premium popup
+  useEffect(() => {
+    if (showPremiumPopup) {
+      Animated.parallel([
+        Animated.timing(popupScale, {
+          toValue: 1,
+          duration: 300,
+          easing: Easing.elastic(1.2),
+          useNativeDriver: true
+        }),
+        Animated.timing(popupOpacity, {
+          toValue: 1,
+          duration: 200,
+          useNativeDriver: true
+        })
+      ]).start();
+      
+      // Start the glow animation
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(glowAnimation, {
+            toValue: 1,
+            duration: 1500,
+            easing: Easing.inOut(Easing.sine),
+            useNativeDriver: true
+          }),
+          Animated.timing(glowAnimation, {
+            toValue: 0,
+            duration: 1500,
+            easing: Easing.inOut(Easing.sine),
+            useNativeDriver: true
+          })
+        ])
+      ).start();
     } else {
-      setSelectedTopics([...selectedTopics, id]);
+      // Reset animations when popup is hidden
+      popupScale.setValue(0.5);
+      popupOpacity.setValue(0);
+      glowAnimation.setValue(0);
+    }
+  }, [showPremiumPopup]);
+  
+  // Handle level selection
+  const handleLevelSelect = (lvl) => {
+    if (lvl !== 'Beginner') {
+      setPopupMessage(`${lvl} level is available in the premium version!`);
+      setShowPremiumPopup(true);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+    } else {
+      setLevel(lvl);
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
   };
   
+  // Toggle topic selection
+  const toggleTopic = (id) => {
+    const topic = topics.find(topic => topic.id === id);
+    
+    if (topic.isPremium && topic.name !== 'Tamil Alphabet') {
+      setPopupMessage(`"${topic.name}" is available in the premium version!`);
+      setShowPremiumPopup(true);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+    } else {
+      if (selectedTopics.includes(id)) {
+        setSelectedTopics(selectedTopics.filter(topicId => topicId !== id));
+      } else {
+        setSelectedTopics([...selectedTopics, id]);
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      }
+    }
+  };
+  
+  // Calculate shadow styles based on animation
+  const glowShadow = {
+    shadowOpacity: glowAnimation.interpolate({
+      inputRange: [0, 1],
+      outputRange: [0.5, 0.9]
+    }),
+    shadowRadius: glowAnimation.interpolate({
+      inputRange: [0, 1],
+      outputRange: [5, 15]
+    })
+  };
+  
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       <Text style={styles.customizationHeader}>Customize Your Learning</Text>
       
       <View style={styles.levelSelector}>
@@ -53,12 +130,10 @@ export default function LanguagePathwayCustomizationScreen3({ navigate }) {
               key={lvl}
               style={[
                 styles.levelOption,
-                level === lvl && styles.selectedLevel
+                level === lvl && styles.selectedLevel,
+                lvl !== 'Beginner' && styles.premiumOption
               ]}
-              onPress={() => {
-                setLevel(lvl);
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              }}
+              onPress={() => handleLevelSelect(lvl)}
             >
               <Text style={[
                 styles.levelOptionText,
@@ -66,6 +141,11 @@ export default function LanguagePathwayCustomizationScreen3({ navigate }) {
               ]}>
                 {lvl}
               </Text>
+              {lvl !== 'Beginner' && (
+                <View style={styles.premiumBadge}>
+                  <Text style={styles.premiumBadgeText}>PRO</Text>
+                </View>
+              )}
             </TouchableOpacity>
           ))}
         </View>
@@ -79,7 +159,8 @@ export default function LanguagePathwayCustomizationScreen3({ navigate }) {
               key={topic.id}
               style={[
                 styles.topicItem,
-                selectedTopics.includes(topic.id) && styles.selectedTopic
+                selectedTopics.includes(topic.id) && styles.selectedTopic,
+                topic.isPremium && topic.name !== 'Tamil Alphabet' && styles.premiumTopic
               ]}
               onPress={() => toggleTopic(topic.id)}
             >
@@ -90,153 +171,98 @@ export default function LanguagePathwayCustomizationScreen3({ navigate }) {
               ]}>
                 {topic.name}
               </Text>
+              {topic.isPremium && topic.name !== 'Tamil Alphabet' && (
+                <View style={styles.topicPremiumBadge}>
+                  <Text style={styles.premiumBadgeText}>PRO</Text>
+                </View>
+              )}
             </TouchableOpacity>
           ))}
         </View>
       </View>
       
-  
       <TouchableOpacity 
-    style={[
-      styles.continueButton,
-      styles.customizationButton,
-      selectedTopics.length === 0 && styles.disabledButton
-    ]}
-    disabled={selectedTopics.length === 0}
-    onPress={() => {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      navigate('Welcome3');
-    }}
-  >
-    <Text style={styles.nextButtonText}>SAVE & CONTINUE</Text>
-  </TouchableOpacity>
-
-
-    </SafeAreaView>
+        style={[
+          styles.continueButton,
+          styles.customizationButton,
+          selectedTopics.length === 0 && styles.disabledButton
+        ]}
+        disabled={selectedTopics.length === 0}
+        onPress={() => {
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+          navigate('Welcome2');
+        }}
+      >
+        <Text style={styles.nextButtonText}>SAVE & CONTINUE</Text>
+      </TouchableOpacity>
+      
+      {/* Premium Popup Modal */}
+      <Modal
+        transparent={true}
+        visible={showPremiumPopup}
+        animationType="none"
+        onRequestClose={() => setShowPremiumPopup(false)}
+      >
+        <TouchableOpacity 
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setShowPremiumPopup(false)}
+        >
+          <Animated.View 
+            style={[
+              styles.premiumPopup,
+              {
+                opacity: popupOpacity,
+                transform: [{ scale: popupScale }],
+                shadowOpacity: glowShadow.shadowOpacity,
+                shadowRadius: glowShadow.shadowRadius
+              }
+            ]}
+          >
+            <TouchableOpacity activeOpacity={1}>
+              <View style={styles.popupContent}>
+                <Text style={styles.premiumIcon}>✨</Text>
+                <Text style={styles.premiumTitle}>Premium Feature</Text>
+                <Text style={styles.premiumMessage}>{popupMessage}</Text>
+                
+                <View style={styles.premiumFeatures}>
+                  <Text style={styles.featureItem}>✓ All topics & levels</Text>
+                  <Text style={styles.featureItem}>✓ Advanced exercises</Text>
+                  <Text style={styles.featureItem}>✓ Offline learning</Text>
+                </View>
+                
+                <TouchableOpacity 
+                  style={styles.upgradeButton}
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                    setShowPremiumPopup(false);
+                  }}
+                >
+                  <Text style={styles.upgradeButtonText}>UPGRADE NOW</Text>
+                </TouchableOpacity>
+                
+                <TouchableOpacity 
+                  style={styles.laterButton}
+                  onPress={() => setShowPremiumPopup(false)}
+                >
+                  <Text style={styles.laterButtonText}>Maybe Later</Text>
+                </TouchableOpacity>
+              </View>
+            </TouchableOpacity>
+          </Animated.View>
+        </TouchableOpacity>
+      </Modal>
+    </View>
   );
-
-
-
-
 }
-
-
 
 const styles = StyleSheet.create({
   container: {
-    flex: 2,
+    flex: 1,
     backgroundColor: '#c5c6e8',
     alignItems: 'center',
     justifyContent: 'flex-start',
-    padding: 40,
-  },
-
-  welcomeTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    marginTop: 80,
-    marginBottom: 20,
-    color: '#383773',
-  },
-  beginButton: {
-    backgroundColor: '#5d5b8d',
-    paddingVertical: 12,
-    paddingHorizontal: 50,
-    borderRadius: 8,
-    marginTop: 40,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 3,
-    elevation: 5,
-    alignSelf: 'center',
-  },
-  nextButtonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: 'bold',
-    textAlign: 'center',
-  },
-  loadingContent: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  characterImage: {
-    width: 0.3,
-    height: 0.23,
-    marginVertical: 20,
-  },
-  progressCircle: {
-    width: 70,
-    height: 70,
-    borderRadius: 35,
-    borderWidth: 3,
-    borderColor: '#5d5b8d',
-    justifyContent: 'center',
-    alignItems: 'center',
-    margin: 20,
-  },
-  progressPercent: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#383773',
-  },
-  loadingText: {
-    fontSize: 16,
-    textAlign: 'center',
-    marginBottom: 30,
-    color: '#383773',
-  },
-  loadingBarContainer: {
-    width: '80%',
-    height: 10,
-    backgroundColor: '#ffffff',
-    borderRadius: 5,
-    overflow: 'hidden',
-  },
-  loadingBar: {
-    height: '100%',
-    backgroundColor: '#5d5b8d',
-    borderRadius: 5,
-  },
-  customizeTitle: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    marginTop: 60,
-    marginBottom: 30,
-    color: '#383773',
-    paddingHorizontal: 20,
-  },
-  buttonRow: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 20,
-    width: '100%',
-    marginBottom: 30,
-  },
-  optionButton: {
-    paddingVertical: 12,
-    paddingHorizontal: 30,
-    borderRadius: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 3,
-    elevation: 5,
-  },
-  yesButton: {
-    backgroundColor: '#5d5b8d',
-  },
-  noButton: {
-    backgroundColor: '#9291b9',
-  },
-  optionButtonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: 'bold',
+    padding: 20,
   },
   customizationHeader: {
     fontSize: 22,
@@ -268,6 +294,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     minWidth: width / 4.5,
     alignItems: 'center',
+    position: 'relative',
   },
   selectedLevel: {
     borderColor: '#5d5b8d',
@@ -280,6 +307,29 @@ const styles = StyleSheet.create({
   selectedLevelText: {
     color: '#5d5b8d',
     fontWeight: 'bold',
+  },
+  premiumOption: {
+    borderColor: '#ffd700',
+    backgroundColor: 'rgba(255, 215, 0, 0.05)',
+  },
+  premiumBadge: {
+    position: 'absolute',
+    top: -10,
+    right: -10,
+    backgroundColor: '#ffd700',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 2,
+    elevation: 3,
+  },
+  premiumBadgeText: {
+    fontSize: 10,
+    fontWeight: 'bold',
+    color: '#383773',
   },
   topicsSection: {
     width: '100%',
@@ -298,10 +348,29 @@ const styles = StyleSheet.create({
     borderColor: '#c5c6e8',
     marginBottom: 15,
     alignItems: 'center',
+    position: 'relative',
   },
   selectedTopic: {
     borderColor: '#5d5b8d',
     backgroundColor: 'rgba(93, 91, 141, 0.1)',
+  },
+  premiumTopic: {
+    borderColor: '#ffd700',
+    backgroundColor: 'rgba(255, 215, 0, 0.05)',
+  },
+  topicPremiumBadge: {
+    position: 'absolute',
+    top: -10,
+    right: -10,
+    backgroundColor: '#ffd700',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 2,
+    elevation: 3,
   },
   topicIcon: {
     fontSize: 28,
@@ -327,1082 +396,98 @@ const styles = StyleSheet.create({
     shadowRadius: 3,
     elevation: 5,
     alignSelf: 'center',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   customizationButton: {
     width: '100%',
     marginTop: 30,
+    alignItems: 'center',
   },
   disabledButton: {
     backgroundColor: '#c5c6e8',
     shadowOpacity: 0.1,
   },
-  gamePreparationTitle: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    marginTop: 60,
-    color: '#383773',
-  },
-  preparationLoading: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  preparationText: {
-    fontSize: 16,
-    color: '#383773',
-    marginVertical: 20,
-  },
-  preparationSteps: {
-    alignSelf: 'stretch',
-    padding: 20,
-    backgroundColor: 'white',
-    borderRadius: 15,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 3,
-  },
-  preparationStep: {
-    fontSize: 16,
-    color: '#555',
-    marginVertical: 5,
-  },
-  gearIcon: {
-    fontSize: 50,
-  },
-  gameReadyContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  gameReadyText: {
-    fontSize: 16,
-    textAlign: 'center',
-    color: '#383773',
-    marginBottom: 30,
-    lineHeight: 26,
-  },
-  adventureButton: {
-    backgroundColor: '#5d5b8d',
-    paddingVertical: 12,
-    paddingHorizontal: 30,
-    borderRadius: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 3,
-    elevation: 5,
-  },
-  dailyRewardTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#383773',
-    marginTop: 60,
-  },
-  rewardChest: {
-    marginVertical: 30,
-  },
-  chestIcon: {
-    fontSize: 80,
-  },
-  dailyRewardText: {
-    fontSize: 16,
-    textAlign: 'center',
-    color: '#383773',
-    marginBottom: 30,
-    lineHeight: 26,
-  },
-  claimButton: {
-    backgroundColor: '#8e8cc0',
-    paddingVertical: 12,
-    paddingHorizontal: 40,
-    borderRadius: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 3,
-    elevation: 5,
-  },
-  rewardRevealContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  rewardRevealText: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: '#383773',
-    marginBottom: 20,
-  },
-  rewardItem: {
-    fontSize: 16,
-    color: '#383773',
-    marginVertical: 10,
-  },
-  confettiContainer: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    zIndex: 10,
-  },
-  confetti: {
-    width: width,
-    height: height,
-  },
-  levelIndicator: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#383773',
-    marginTop: 20,
-    alignSelf: 'center',
-  },
-  countdownContainer: {
-    flex: 1,
-    justifyContent: 'flex-start',
-    alignItems: 'center',
-    marginTop: 40,
-  },
-  countdownText: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#383773',
-    marginBottom: 20,
-  },
-  countdownCircle: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    borderWidth: 3,
-    borderColor: '#5d5b8d',
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 5,
-    elevation: 8,
-  },
-  countdownNumber: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#383773',
-  },
-  countdownUnit: {
-    fontSize: 10,
-    color: '#383773',
-    opacity: 0.8,
-  },
-  getStartedTitle: {
-    fontSize: 40,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    color: '#383773',
-    marginTop: 40,
-    lineHeight: 50,
-  },
-  startButton: {
-    backgroundColor: '#5d5b8d',
-    paddingVertical: 12,
-    paddingHorizontal: 50,
-    borderRadius: 8,
-    marginBottom: 40,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 3,
-    elevation: 5,
-    alignSelf: 'center',
-  },
-  lessonIntroContainer: {
-    flex: 1,
-    width: '100%',
-    justifyContent: 'center',
-    paddingHorizontal: 15,
-  },
-  lessonIntroTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#383773',
-    marginBottom: 20,
-    textAlign: 'center',
-  },
-  lessonInfoCard: {
-    backgroundColor: 'white',
-    borderRadius: 15,
-    padding: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.1,
-    shadowRadius: 5,
-    elevation: 5,
-    marginBottom: 20,
-  },
-  lessonInfoHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: '#EEE',
-    paddingBottom: 10,
-  },
-  lessonInfoTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#383773',
-  },
-  lessonInfoDuration: {
-    fontSize: 14,
-    color: '#5d5b8d',
-    fontWeight: '600',
-  },
-  lessonInfoContent: {
-    marginBottom: 10,
-  },
-  lessonInfoDescription: {
-    fontSize: 16,
-    color: '#555',
-    lineHeight: 22,
-    marginBottom: 15,
-  },
-  lessonTopics: {
-    marginTop: 10,
-  },
-  lessonTopicItem: {
-    fontSize: 15,
-    color: '#555',
-    marginVertical: 3,
-  },
-  rewardsPreview: {
-    backgroundColor: 'rgba(93, 91, 141, 0.1)',
-    borderRadius: 15,
-    padding: 15,
-    borderWidth: 1,
-    borderColor: 'rgba(93, 91, 141, 0.3)',
-  },
-  rewardsTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#383773',
-    marginBottom: 10,
-  },
-  rewardsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-  },
-  rewardItem: {
-    alignItems: 'center',
-  },
-  rewardIcon: {
-    fontSize: 24,
-    marginBottom: 5,
-  },
-  rewardValue: {
-    fontSize: 14,
-    color: '#555',
-  },
-  startLessonButton: {
-    backgroundColor: '#5d5b8d',
-    paddingVertical: 12,
-    paddingHorizontal: 30,
-    borderRadius: 8,
-    marginBottom: 30,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 3,
-    elevation: 5,
-  },
-  welcomeLessonsTitle: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: '#383773',
-    textAlign: 'center',
-    marginTop: 60,
-    marginBottom: 40,
-  },
-  pathwayHeader: {
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  pathwaySubtitle: {
-    fontSize: 16,
-    color: '#555',
-    marginTop: 5,
-  },
-  pathwayContainer: {
-    flex: 1,
-    width: '100%',
-    position: 'relative',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 20,
-  },
-  pathwayCircle: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: '#5d5b8d',
-    justifyContent: 'center',
-    alignItems: 'center',
-    position: 'absolute',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 3,
-    elevation: 3,
-  },
-  giftNode: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: '#8e8cc0',
-    justifyContent: 'center',
-    alignItems: 'center',
-    position: 'absolute',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 5,
-  },
-  largeNode: {
-    width: 70,
-    height: 70,
-    borderRadius: 35,
-    backgroundColor: '#383773',
-    justifyContent: 'center',
-    alignItems: 'center',
-    position: 'absolute',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.3,
-    shadowRadius: 5,
-    elevation: 6,
-  },
-  lockedNode: {
-    backgroundColor: '#c5c6e8',
-  },
-  nodeButton: {
-    width: '100%',
-    height: '100%',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  nodeNumber: {
-    color: 'white',
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  largeNodeText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  lockIcon: {
-    fontSize: 18,
-    color: 'white',
-  },
-  nodeIcon: {
-    width: 24,
-    height: 24,
-  },
-  pathwayNode: {
-    position: 'absolute',
-    zIndex: 10,
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#fff',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  avatarIcon: {
-    width: 30,
-    height: 30,
-  },
-  pathConnector: {
-    position: 'absolute',
-    backgroundColor: '#c5c6e8',
-    zIndex: -1,
-  },
-  progressContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    width: '100%',
-    marginVertical: 20,
-  },
-  progressBackground: {
-    flex: 1,
-    height: 12,
-    backgroundColor: '#ffffff',
-    borderRadius: 10,
-    marginRight: 10,
-    overflow: 'hidden',
-  },
-  progressFill: {
-    height: '100%',
-    backgroundColor: '#5d5b8d',
-    borderRadius: 10,
-  },
-  progressText: {
-    marginLeft: 10,
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: '#383773',
-  },
-  alphabetCard: {
-    backgroundColor: 'white',
-    borderRadius: 20,
-    padding: 30,
-    width: '90%',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 5,
-    marginVertical: 20,
-  },
-  alphabetLetter: {
-    fontSize: 80,
-    fontWeight: 'bold',
-    color: '#5d5b8d',
-    marginBottom: 20,
-  },
-  alphabetPronunciation: {
-    fontSize: 18,
-    color: '#555',
-    marginBottom: 20,
-  },
-  signImage: {
-    width: 150,
-    height: 150,
-    marginVertical: 20,
-  },
-  exampleText: {
-    fontSize: 16,
-    color: '#555',
-    marginTop: 10,
-  },
-  navigationButtons: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '90%',
-    marginBottom: 30,
-  },
-  navButton: {
-    backgroundColor: '#5d5b8d',
-    paddingVertical: 12,
-    paddingHorizontal: 30,
-    borderRadius: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 3,
-    elevation: 3,
-  },
-  navButtonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  successContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  successTitle: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#5d5b8d',
-    marginBottom: 20,
-  },
-  successMessage: {
-    fontSize: 16,
-    textAlign: 'center',
-    color: '#555',
-    lineHeight: 26,
-  },
-  lessonCompleteTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#5d5b8d',
-    marginTop: 60,
-  },
-  trophyContainer: {
-    marginVertical: 30,
-  },
-  trophyIcon: {
-    fontSize: 80,
-  },
-  rewardsContainer: {
-    backgroundColor: 'white',
-    borderRadius: 15,
-    padding: 20,
-    width: '90%',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.1,
-    shadowRadius: 5,
-    elevation: 4,
-  },
-  header: {
-    marginTop: 30,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  backButton: {
-    position: 'absolute',
-    left: 0,
-    padding: 10,
-  },
-  backButtonText: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#383773',
-  },
-  basicText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#333',
-  },
-  letterContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  letterText: {
-    fontSize: 100,
-    fontWeight: 'bold',
-    color: '#000',
-  },
-  letterImage: {
-    width: 500,
-    height: 400,
-    marginTop: -60,
-  },
-  nextButton: {
-    backgroundColor: '#5d5b8d',
-    paddingVertical: 12,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  pathwayNode: {
-    position: 'absolute',
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: '#fff',
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 5,
-    elevation: 8,
-  },
-  currentNode: {
-    transform: [{ scale: 1.2 }],
-    backgroundColor: '#5d5b8d',
-  },
-  milestoneFlag: {
-    position: 'absolute',
-    top: -40,
-    left: -20,
-    backgroundColor: '#ffd700',
-    padding: 8,
-    borderRadius: 8,
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  flagIcon: {
-    width: 24,
-    height: 24,
-    marginLeft: 5,
-  },
-  milestoneText: {
-    fontSize: 12,
-    fontWeight: 'bold',
-    color: '#383773',
-  },
-  buttonParticles: {
-    position: 'absolute',
-    width: 200,
-    height: 200,
-    zIndex: -1,
-  },
-  pathwayContainer: {
-    transform: [{ perspective: 1000 }],
-    flex: 1,
-    width: '100%',
-    marginTop: 20,
-  },
-  pathConnector: {
-    backgroundColor: '#fff',
-    position: 'absolute',
-    zIndex: -1,
-    shadowColor: '#fff',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 3,
-  },
-  avatarIcon: {
-    position: 'absolute',
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-  },
-  pathwayHeader: {
-    alignItems: 'center',
-    padding: 20,
-  },
-  pathwaySubtitle: {
-    fontSize: 16,
-    color: '#555',
-    marginTop: 5,
-  },
-  pathwayContainer: {
-    flex: 1,
-    width: '100%',
-    marginTop: 40,
-  },
-
-  pathSvg: {
-    position: 'absolute',
-  },
-  nodeContainer: {
-    position: 'absolute',
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 5,
-  },
-  nodeButton: {
-    borderRadius: 25,
-    overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 5,
-  },
-  nodeGradient: {
-    width: '100%',
-    height: '100%',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  currentNode: {
-    shadowColor: '#383773',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.4,
-    shadowRadius: 8,
-    elevation: 8,
-  },
-  completedNode: {
-    shadowOpacity: 0.15,
-  },
-  lockedNode: {
-    shadowOpacity: 0.1,
-  },
-  nodeNumber: {
-    color: 'white',
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  nodeIcon: {
-    fontSize: 18,
-    color: 'white',
-  },
-  nodeLabel: {
-    position: 'absolute',
-    top: 45,
-    backgroundColor: 'rgba(255, 255, 255, 0.8)',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  nodeLabelText: {
-    fontSize: 12,
-    color: '#383773',
-    fontWeight: '600',
-  },
-  avatarContainer: {
-    position: 'absolute',
-    width: 60,
-    height: 60,
-    zIndex: 10,
-  },
-  avatarImage: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    borderWidth: 2,
-    borderColor: 'white',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 5,
-  },
-  avatarShadow: {
-    position: 'absolute',
-    bottom: -5,
-    left: 15,
-    width: 30,
-    height: 10,
-    borderRadius: 10,
-    backgroundColor: 'rgba(0, 0, 0, 0.2)',
-    transform: [{ scaleX: 1.5 }],
-  },
-  cloud: {
-    position: 'absolute',
-    borderRadius: 20,
-    overflow: 'hidden',
-  },
-  cloudBlur: {
-    flex: 1,
-    borderRadius: 20,
-  },
-  cloudInner: {
-    flex: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.7)',
-  },
-  terrainBase: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: height * 0.3,
-  },
-  terrainGradient: {
-    flex: 1,
-  },
-  mapEndClouds: {
-    position: 'absolute',
-    right: 0,
-    width: width,
-    height: '100%',
-  },
-  cloudCover: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  mysteryText: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#383773',
-    textShadowColor: 'rgba(255, 255, 255, 0.7)',
-    textShadowOffset: { width: 1, height: 1 },
-    textShadowRadius: 2,
-  },
-  buttonContainer: {
-    alignItems: 'center',
-    paddingVertical: 20,
-  },
-  continueButton: {
-    width: width * 0.8,
-    height: 50,
-    borderRadius: 25,
-    overflow: 'hidden',
-    shadowColor: '#383773',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.3,
-    shadowRadius: 5,
-    elevation: 6,
-  },
-  buttonGradient: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-
-  elevationIndicator: {
-    position: 'absolute',
-    bottom: -5,
-    width: 2,
-    backgroundColor: 'rgba(93, 91, 141, 0.5)',
-  },
-  elevationGradient: {
-    flex: 1,
-  },
-  container: {
-    flex: 1,
-    paddingTop : -20,
-    backgroundColor: '#c5c6e8',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: 300,
-  },
-  welcomeLessonsTitle: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: '#383773',
-    textAlign: 'center',
-    marginTop: 60,
-    marginBottom: 40,
-  },
-  characterImage: {
-    width: width * 0.7,
-    height: width * 0.7,
-    marginVertical: 20,
-  },
-  continueButton: {
-    backgroundColor: '#5d5b8d',
-    paddingVertical: 12,
-    paddingHorizontal: 40,
-    borderRadius: 8,
-    marginTop: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 3,
-    elevation: 5,
-    alignSelf: 'center',
-  },
   nextButtonText: {
     color: 'white',
     fontSize: 16,
     fontWeight: 'bold',
     textAlign: 'center',
   },
-  confettiContainer: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    zIndex: 10,
-  },
-
-  container: {
+  
+  // Premium popup styles
+  modalOverlay: {
     flex: 1,
-    backgroundColor: '#c5c6e8',
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    justifyContent: 'center',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: 20,
   },
-  welcomeTitle: {
+  premiumPopup: {
+    width: width * 0.85,
+    backgroundColor: 'white',
+    borderRadius: 20,
+    overflow: 'hidden',
+    shadowColor: '#ffd700',
+    shadowOffset: { width: 0, height: 0 },
+    elevation: 10,
+  },
+  popupContent: {
+    padding: 25,
+    alignItems: 'center',
+  },
+  premiumIcon: {
+    fontSize: 50,
+    marginBottom: 15,
+  },
+  premiumTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    textAlign: 'center',
-    marginTop: 60,
-    marginBottom: 20,
     color: '#383773',
+    marginBottom: 10,
   },
-  basicText: {
+  premiumMessage: {
     fontSize: 16,
+    color: '#555',
     textAlign: 'center',
-    color: '#383773',
-    marginBottom: 30,
-  },
-  languagesContainer: {
-    width: '100%',
-    alignItems: 'center',
-    justifyContent: 'center',
-    flex: 1,
-  },
-  languageOption: {
-    width: '85%',
     marginBottom: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 3,
-    elevation: 5,
   },
-  languageCard: {
-    backgroundColor: 'white',
-    borderRadius: 15,
-    padding: 20,
-    alignItems: 'center',
+  premiumFeatures: {
+    width: '100%',
+    backgroundColor: 'rgba(93, 91, 141, 0.05)',
+    padding: 15,
+    borderRadius: 10,
+    marginBottom: 20,
   },
-  languageTitle: {
-    fontSize: 22,
-    fontWeight: 'bold',
+  featureItem: {
+    fontSize: 14,
     color: '#383773',
     marginBottom: 8,
+    fontWeight: '500',
   },
-  languageNative: {
-    fontSize: 24,
-    color: '#5d5b8d',
-    marginBottom: 15,
-  },
-  flagContainer: {
-    flexDirection: 'row',
-    height: 30,
-    width: '80%',
-    borderRadius: 5,
-    overflow: 'hidden',
-    marginTop: 10,
-  },
-  flagSection: {
-    flex: 1,
-    height: '100%',
-  },
-  ukFlag: {
-    width: '80%',
-    height: 30,
-    backgroundColor: '#00247D',
-    position: 'relative',
-  },
-  ukFlagBackground: {
-    position: 'absolute',
-    width: '100%',
-    height: '100%',
-    backgroundColor: '#00247D',
-  },
-  ukFlagCross1: {
-    position: 'absolute',
-    width: '100%',
-    height: 6,
-    backgroundColor: 'white',
-    top: '50%',
-    marginTop: -3,
-  },
-  ukFlagCross2: {
-    position: 'absolute',
-    width: 6,
-    height: '100%',
-    backgroundColor: 'white',
-    left: '50%',
-    marginLeft: -3,
-  },
-  buttonContainer: {
+  upgradeButton: {
+    backgroundColor: '#ffd700',
+    paddingVertical: 12,
+    paddingHorizontal: 30,
+    borderRadius: 25,
     width: '100%',
     alignItems: 'center',
-    marginBottom: 30,
-  },
-  continueButton: {
-    backgroundColor: '#5d5b8d',
-    paddingVertical: 12,
-    paddingHorizontal: 40,
-    borderRadius: 8,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 3,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
     elevation: 5,
+    marginBottom: 10,
   },
-  nextButtonText: {
-    color: 'white',
+  upgradeButtonText: {
+    color: '#383773',
     fontSize: 16,
     fontWeight: 'bold',
-    textAlign: 'center',
   },
-  videoContainer: {
-    width: '100%',
-    height: 200,
-    marginVertical: 15,
-    borderRadius: 12,
-    overflow: 'hidden',
-    backgroundColor: '#f0f0f0',
-    justifyContent: 'center',
-    alignItems: 'center',
+  laterButton: {
+    paddingVertical: 10,
   },
-
-  signVideo: {
-    width: '100%',
-    height: '100%',
-  },
-
-  signText: {
-    fontSize: 16,
-    color: '#555',
-    textAlign: 'center',
-    marginBottom: 10,
-    fontStyle: 'italic',
-  },
-
-  // Update your existing styles if needed
-  alphabetCard: {
-    width: '90%',
-    backgroundColor: 'white',
-    borderRadius: 15,
-    padding: 20,
-    elevation: 5,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginVertical: 20,
-  },
-
-
-
-
-
-
-// Update these style properties in your StyleSheet
-
-continueButton: {
-  backgroundColor: '#5d5b8d',
-  paddingVertical: 12,
-  paddingHorizontal: 40,
-  borderRadius: 8,
-  marginTop: 20,
-  shadowColor: '#000',
-  shadowOffset: { width: 0, height: 2 },
-  shadowOpacity: 0.3,
-  shadowRadius: 3,
-  elevation: 5,
-  alignSelf: 'center', // This centers the button horizontally
-  justifyContent: 'center', // This centers content vertically
-  alignItems: 'center', // This centers content horizontally
-},
-
-customizationButton: {
-  width: '100%', // This makes the button take full width
-  marginTop: 30,
-  alignItems: 'center', // Ensure horizontal centering within the full width
-},
-
-nextButtonText: {
-  color: 'white',
-  fontSize: 16,
-  fontWeight: 'bold',
-  textAlign: 'center', // This ensures the text is centered within the button
-},
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+  laterButtonText: {
+    color: '#777',
+    fontSize: 14,
+  }
 });

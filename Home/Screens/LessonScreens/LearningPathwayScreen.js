@@ -77,31 +77,32 @@ export default function LearningPathwayScreen({ route }) {
 const navigateToLesson = (nodeIndex) => {
   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
   
-  // Node to screen mapping based on the App.js nodeContentMap
+  // Updated node to screen mapping - ensure each node maps to a unique screen or provides unique parameters
   const nodeToScreenMap = {
     0: 'AtoD',      // Node 1
     1: 'EtoH',      // Node 2
-    2: 'ItoL',      // Node 3 
+    2: 'ItoL',      // Node 3
     3: 'Quiz1',     // Node 4 (Knowledge Check)
     4: 'MtoP',      // Node 5
     5: 'QtoT',      // Node 6
     6: 'UtoZ',      // Node 7
     7: 'Quiz4',     // Node 8 (Application)
-    8: 'AtoD',      // Node 9 (can repeat with harder content)
-    9: 'EtoH',      // Node 10
-    10: 'ItoL',     // Node 11
-    11: 'Quiz6'     // Node 12 (Final Assessment)
+    8: 'ExpertTechniques', // Node 9
+    9: 'ProblemSolving',   // Node 10
+    10: 'MasteryChallenges', // Node 11
+    11: 'FinalAssessment'  // Node 12 (Final Assessment)
   };
 
-  // If there's no direct mapping, default to a generic screen
+  // Get screen name from mapping or use default
   const screenToNavigate = nodeToScreenMap[nodeIndex] || 'LessonIntro';
 
-  // Navigate to the appropriate screen with lesson parameters
+  // Make sure you pass unique parameters for each node
   navigation.navigate(screenToNavigate, { 
     level: nodeIndex + 1,
     lessonName: nodeNames[nodeIndex],
     theme: nodeThemes[nodeIndex % nodeThemes.length].name,
-    isFromPathway: true  // Flag to indicate this navigation came from the pathway
+    isFromPathway: true,
+    nodeId: nodeIndex  // Add a unique identifier for each node
   });
 };
 
