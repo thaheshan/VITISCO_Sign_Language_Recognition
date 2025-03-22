@@ -37,7 +37,7 @@ export default function LanguageSelectionScreen({ navigate }) {
         style={styles.backButton}
           onPress={() => {
               Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-              navigate('LearningPathway2');
+              navigate('Welcome');
             }} // Replace with your actual previous screen
       >
         <AntDesign name="arrowleft" size={24} color="#383773" />

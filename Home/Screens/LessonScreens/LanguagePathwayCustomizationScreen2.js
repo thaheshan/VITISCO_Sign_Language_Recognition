@@ -105,7 +105,7 @@ export default function LanguagePathwayCustomizationScreen2({ navigate }) {
     disabled={selectedTopics.length === 0}
     onPress={() => {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      navigate('Welcome2');
+      navigate('Welcome4');
     }}
   >
     <Text style={styles.nextButtonText}>SAVE & CONTINUE</Text>
