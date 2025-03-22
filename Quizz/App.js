@@ -300,8 +300,214 @@ const QuizApp = () => {
       ],
       correctAnswer: 0, // J is correct
     },
-    // Additional questions up to Z (abbreviated for brevity)
-    // ... Questions 11-26 would go here in production code
+    {
+      id: 11,
+      title: 'Select the correct sign for K',
+      options: [
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+      ],
+      gridView: true,
+      correctAnswer: 3, // Fourth image is correct
+    },
+
+    {
+      id: 12,
+      title: 'Select the correct sign for L',
+      options: [
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+      ],
+      gridView: true,
+      correctAnswer: 0, // First image is correct
+    },
+
+    //IMAGE OF M
+    {
+      id: 13,
+      title: 'Find the sign ',
+      image: require('./assets/sign1.png'),
+      options: [
+        { id: 'A', text: 'A' },
+        { id: 'B', text: 'M' },
+        { id: 'C', text: 'C' },
+      ],
+      correctAnswer: 1, // M is correct
+    },
+
+    {
+      id: 14,
+      title: 'Select the correct sign for N',
+      options: [
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+      ],
+      gridView: true,
+      correctAnswer: 2, // Third image is correct
+    },
+
+    {
+      id: 15,
+      title: 'Select the correct sign for O',
+      options: [
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+      ],
+      gridView: true,
+      correctAnswer: 1, // Second image is correct
+    },
+
+    //IMAGE OF P
+    {
+      id: 16,
+      title: 'Find the sign ',
+      image: require('./assets/sign1.png'),
+      options: [
+        { id: 'A', text: 'P' },
+        { id: 'B', text: 'I' },
+        { id: 'C', text: 'J' },
+      ],
+      correctAnswer: 0, // P is correct
+    },
+
+    {
+      id: 17,
+      title: 'Select the correct sign for Q',
+      options: [
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+      ],
+      gridView: true,
+      correctAnswer: 3, // Fourth image is correct
+    },
+
+    {
+      id: 18,
+      title: 'Select the correct sign for R',
+      options: [
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+      ],
+      gridView: true,
+      correctAnswer: 0, // First image is correct
+    },
+
+    //IMAGE OF S
+    {
+      id: 19,
+      title: 'Find the sign ',
+      image: require('./assets/sign1.png'),
+      options: [
+        { id: 'A', text: 'S' },
+        { id: 'B', text: 'B' },
+        { id: 'C', text: 'F' },
+      ],
+      correctAnswer: 0, // S is correct
+    },
+
+    {
+      id: 20,
+      title: 'Select the correct sign for T',
+      options: [
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+      ],
+      gridView: true,
+      correctAnswer: 2, // Third image is correct
+    },
+
+    {
+      id: 21,
+      title: 'Select the correct sign for U',
+      options: [
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+      ],
+      gridView: true,
+      correctAnswer: 1, // Second image is correct
+    },
+
+    {
+      id: 22,
+      title: 'Select the correct sign for V',
+      options: [
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+      ],
+      gridView: true,
+      correctAnswer: 3, // Fourth image is correct
+    },
+
+    //IMAGE OF W
+    {
+      id: 23,
+      title: 'Find the sign ',
+      image: require('./assets/sign1.png'),
+      options: [
+        { id: 'A', text: 'O' },
+        { id: 'B', text: 'S' },
+        { id: 'C', text: 'W' },
+      ],
+      correctAnswer: 2, // W is correct
+    },
+
+    {
+      id: 24,
+      title: 'Select the correct sign for X',
+      options: [
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+      ],
+      gridView: true,
+      correctAnswer: 0, // First image is correct
+    },
+
+    {
+      id: 25,
+      title: 'Select the correct sign for Y',
+      options: [
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+      ],
+      gridView: true,
+      correctAnswer: 2, // Third image is correct
+    },
+
+    //IMAGE OF Z
+    {
+      id: 26,
+      title: 'Find the sign ',
+      image: require('./assets/sign1.png'),
+      options: [
+        { id: 'A', text: 'X' },
+        { id: 'B', text: 'Z' },
+        { id: 'C', text: 'G' },
+      ],
+      correctAnswer: 1, // Z is correct
+    },
+
   ];
 
   // Tamil quiz questions data (local data)
@@ -317,6 +523,230 @@ const QuizApp = () => {
       ],
       correctAnswer: 0, // அ is correct
     },
+    //ஆ
+    {
+      id: 2,
+      title: 'Select the correct sign for Tamil letter "ஆ"',
+      options: [
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+      ],
+      gridView: true,
+      correctAnswer: 0, // அ is correct
+    },
+    //இ
+    {
+      id: 3,
+      title: 'Select the correct sign for Tamil letter "இ"',
+      options: [
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+      ],
+      gridView: true,
+      correctAnswer: 0, // அ is correct
+    },
+    //ஈ
+    {
+      id: 2,
+      title: 'Select the correct sign for Tamil letter "ஈ"',
+      options: [
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+      ],
+      gridView: true,
+      correctAnswer: 0, // அ is correct
+    },
+    //உ
+    {
+      id: 5,
+      title: 'Select the correct sign for Tamil letter "உ"',
+      options: [
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+      ],
+      gridView: true,
+      correctAnswer: 0, // அ is correct
+    },
+    //ஊ
+    {
+        id: 2,
+        title: 'Select the correct sign for Tamil letter "ஊ"',
+        options: [
+          { image: require('./assets/sign1.png') },
+          { image: require('./assets/sign1.png') },
+          { image: require('./assets/sign1.png') },
+          { image: require('./assets/sign1.png') },
+        ],
+        gridView: true,
+        correctAnswer: 0, // அ is correct
+    },
+    //எ
+    {
+      id: 6,
+      title: 'Select the correct Tamil letter for this sign',
+      image: require('./assets/sign1.png'),
+      options: [
+        { id: 'A', text: 'ஊ' },
+        { id: 'B', text: 'எ' },
+        { id: 'C', text: 'ஒ' },
+      ],
+      correctAnswer: 0, // அ is correct
+    },
+
+    //ஏ	
+    {
+      id: 6,
+      title: 'Select the correct Tamil letter for this sign',
+      image: require('./assets/sign1.png'),
+      options: [
+        { id: 'A', text: 'ஊ' },
+        { id: 'B', text: 'எ' },
+        { id: 'C', text: 'ஒ' },
+      ],
+      correctAnswer: 0, // அ is correct
+    },
+
+    //ஐ	
+    {
+      id: 2,
+      title: 'Select the correct sign for Tamil letter "ஐ	"',
+      options: [
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+      ],
+      gridView: true,
+      correctAnswer: 0, // அ is correct
+    },
+
+    //ஒ	
+    {
+      id: 6,
+      title: 'Select the correct Tamil letter for this sign',
+      image: require('./assets/sign1.png'),
+      options: [
+        { id: 'A', text: 'ஊ' },
+        { id: 'B', text: 'எ' },
+        { id: 'C', text: 'ஒ' },
+      ],
+      correctAnswer: 0, // அ is correct
+    },
+
+    //ஓ	
+    {
+      id: 6,
+      title: 'Select the correct Tamil letter for this sign',
+      image: require('./assets/sign1.png'),
+      options: [
+        { id: 'A', text: 'ஊ' },
+        { id: 'B', text: 'எ' },
+        { id: 'C', text: 'ஒ' },
+      ],
+      correctAnswer: 0, // அ is correct
+    },
+
+    //ஔ
+    {
+      id: 2,
+      title: 'Select the correct sign for Tamil letter "ஔ"',
+      options: [
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+      ],
+      gridView: true,
+      correctAnswer: 0, // அ is correct
+    },
+    //க	
+    {
+      id: 2,
+      title: 'Select the correct sign for Tamil letter "க"',
+      options: [
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+      ],
+      gridView: true,
+      correctAnswer: 0, // அ is correct
+    },
+    //ச	
+    {
+      id: 2,
+      title: 'Select the correct sign for Tamil letter "ச"',
+      options: [
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+      ],
+      gridView: true,
+      correctAnswer: 0, // அ is correct
+    },
+    //ட
+    {
+      id: 2,
+      title: 'Select the correct sign for Tamil letter "ட"',
+      options: [
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+      ],
+      gridView: true,
+      correctAnswer: 0, // அ is correct
+    },
+    //த
+    {
+      id: 2,
+      title: 'Select the correct sign for Tamil letter "த"',
+      options: [
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+      ],
+      gridView: true,
+      correctAnswer: 0, // அ is correct
+    },
+    //ப
+    {
+      id: 2,
+      title: 'Select the correct sign for Tamil letter "ப"',
+      options: [
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+      ],
+      gridView: true,
+      correctAnswer: 0, // அ is correct
+    },
+    //ற
+    {
+      id: 2,
+      title: 'Select the correct sign for Tamil letter "ற"',
+      options: [
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+        { image: require('./assets/sign1.png') },
+      ],
+      gridView: true,
+      correctAnswer: 0, // அ is correct
+    },
+
+    
     // Additional Tamil questions would go here in production code
   ];
 
