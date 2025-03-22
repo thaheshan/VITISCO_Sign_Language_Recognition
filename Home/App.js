@@ -8,7 +8,7 @@ import HomeScreen from "./HomeScreen.js";
 import QuizScreen from "./Screens/Quiz.js";
 import VirtualRoomScreen from "./Screens/VirtualRoom.js";
 import LessonScreen from  "./Screens/Lesson.js";
-import ProgressAnalysisScreen from "./Screens/ProgressAnalysis.js";
+import ProgressAnalysisScreen from "./Screens/ProgressAnlaysis/ProgressApp.js";
 import ProfileScreen from "./Screens/Profile.js";
 import SettingsScreen from "./Screens/Settings.js";
 import TranslatorScreen from "./Screens/Translator.js";
