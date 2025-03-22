@@ -102,7 +102,7 @@ const Confetti = ({ show }) => {
   return confettiElements;
 };
 
-export default function AlphabetLessonScreen({ navigation, route = {} }) {
+export default function AtoDScreen({ navigation, route = {} }) {
   const { lessonId = 1, lessonType = 'alphabet', onComplete } = route.params || {};
   const [currentCard, setCurrentCard] = useState(0);
   const [showSuccess, setShowSuccess] = useState(false);
@@ -122,39 +122,39 @@ export default function AlphabetLessonScreen({ navigation, route = {} }) {
   const lessonContent = {
     alphabet: {
       1: {
-        title: "Basic Alphabet (අ-ඉ)",
+        title: "Basic Alphabet (I-L)",
         cards: [
           { 
             letter: 'අ', 
             pronunciation: 'a', 
             example: 'apple', 
-            sign: require('../../assets/videos/Thahee.mp4'), 
+            sign: require('../../../assets/videos/Thahee.mp4'), 
             signText: 'Hand forms letter A shape',
-            characterVideo: require('../../assets/videos/Scene - Jackie.mp4')
+            characterVideo: require('../../../assets/videos/Scene - Jackie.mp4')
           },
           { 
             letter: 'ඇ', 
             pronunciation: 'ae', 
             example: 'ant', 
-            sign: require('../../assets/videos/Thahee.mp4'), 
+            sign: require('../../../assets/videos/Thahee.mp4'), 
             signText: 'Open palm moving rightward',
-            characterVideo: require('../../assets/videos/Scene - Jackie.mp4')
+            characterVideo: require('../../../assets/videos/Scene - Jackie.mp4')
           },
           { 
             letter: 'ඈ', 
             pronunciation: 'aae', 
             example: 'ask', 
-            sign: require('../../assets/videos/Thahee.mp4'), 
+            sign: require('../../../assets/videos/Thahee.mp4'), 
             signText: 'Extended palm with circular motion',
-            characterVideo: require('../../assets/videos/Scene - Jackie.mp4')
+            characterVideo: require('../../../assets/videos/Scene - Jackie.mp4')
           },
           { 
             letter: 'ඉ', 
             pronunciation: 'i', 
             example: 'if', 
-            sign: require('../../assets/videos/Thahee.mp4'), 
+            sign: require('../../../assets/videos/Thahee.mp4'), 
             signText: 'Pinky finger pointing upward',
-            characterVideo: require('../../assets/videos/Scene - Jackie.mp4')
+            characterVideo: require('../../../assets/videos/Scene - Jackie.mp4')
           },
         ],
         xpReward: 75
@@ -166,8 +166,8 @@ export default function AlphabetLessonScreen({ navigation, route = {} }) {
   
   // Default character video for waiting and congrats states
   const defaultCharacterVideos = {
-    waiting: require('../../assets/videos/Scene - Jackie.mp4'),
-    congrats: require('../../assets/videos/Scene - Jackie.mp4')
+    waiting: require('../../../assets/videos/Scene - Jackie.mp4'),
+    congrats: require('../../../assets/videos/Scene - Jackie.mp4')
   };
   
   // Get appropriate video based on character state and current card

@@ -18,7 +18,7 @@ import { MaterialIcons, FontAwesome5 } from '@expo/vector-icons';
 
 const { width, height } = Dimensions.get('window');
 
-export default function LearningPathwayScreen3({ navigate, route }) {
+export default function LearningPathwayScreen2({ navigate, route }) {
   const initialLevel = route?.params?.initialLevel ?? 5;
    
   const [unlockedLevel, setUnlockedLevel] = useState(initialLevel);
@@ -243,7 +243,7 @@ export default function LearningPathwayScreen3({ navigate, route }) {
         setTimeout(() => {
 
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                        navigate('LessonIntro' , { level: nodeIndex + 1 });
+                        navigate('AtoD' , { level: nodeIndex + 1 });
         }, 700);
       });
     } else {
