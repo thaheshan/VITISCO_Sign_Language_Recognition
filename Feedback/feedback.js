@@ -27,9 +27,17 @@ const NotificationScreen = () => {
   const [timeFilter, setTimeFilter] = useState("all"); // 'all', 'today', 'yesterday'
 
   // Animation values
-  const tabTranslateX = useRef(new Animated.Value(0)).current;
+  const tabPosition = useRef(new Animated.Value(0)).current;
+  const swipeOffset = useRef(new Animated.Value(0)).current;
   const modalScale = useRef(new Animated.Value(0.8)).current;
   const modalOpacity = useRef(new Animated.Value(0)).current;
+
+  // Tab indices for easier reference
+  const tabIndices = {
+    Notifications: 0,
+    Feedbacks: 1,
+    Suggestions: 2,
+  };
 
   // Sample data for lessons
   const lessons = [
@@ -75,14 +83,12 @@ const NotificationScreen = () => {
 
   // Function to switch between tabs
   const switchTab = (tab) => {
-    let toValue = 0;
-    if (tab === "Feedbacks") toValue = -width;
-    if (tab === "Suggestions") toValue = -2 * width;
+    const toValue = -width * tabIndices[tab];
 
-    Animated.spring(tabTranslateX, {
+    Animated.spring(tabPosition, {
       toValue,
       friction: 8,
-      tension: 60,
+      tension: 70,
       useNativeDriver: true,
     }).start();
 
@@ -128,29 +134,46 @@ const NotificationScreen = () => {
     });
   };
 
-  // Swipe gesture handler for tab switching
+  // Gesture handlers for tab swiping
   const onGestureEvent = Animated.event(
-    [{ nativeEvent: { translationX: tabTranslateX } }],
+    [{ nativeEvent: { translationX: swipeOffset } }],
     { useNativeDriver: true }
   );
 
   const onHandlerStateChange = (event) => {
     if (event.nativeEvent.oldState === State.ACTIVE) {
       const { translationX } = event.nativeEvent;
+      swipeOffset.setValue(0); // Reset swipe offset
 
-      // Determine which tab to select based on swipe direction
-      if (translationX > 50) {
-        if (activeTab === "Suggestions") switchTab("Feedbacks");
-        else if (activeTab === "Feedbacks") switchTab("Notifications");
-      } else if (translationX < -50) {
-        if (activeTab === "Notifications") switchTab("Feedbacks");
-        else if (activeTab === "Feedbacks") switchTab("Suggestions");
-      } else {
-        // If swipe is not significant, reset to current tab
-        switchTab(activeTab);
+      // Determine threshold for swipe (20% of screen width)
+      const threshold = width * 0.2;
+
+      // Get current tab index
+      const currentIndex = tabIndices[activeTab];
+
+      // Calculate next tab index based on swipe direction
+      let nextIndex = currentIndex;
+
+      if (translationX > threshold && currentIndex > 0) {
+        // Swiped right, go to previous tab
+        nextIndex = currentIndex - 1;
+      } else if (translationX < -threshold && currentIndex < 2) {
+        // Swiped left, go to next tab
+        nextIndex = currentIndex + 1;
       }
+
+      // Find tab name from index
+      const nextTab = Object.keys(tabIndices).find(
+        (key) => tabIndices[key] === nextIndex
+      );
+
+      // Switch to the tab
+      switchTab(nextTab);
     }
   };
+
+  // Calculate combined translation for swipe animation
+  const combinedTranslateX = Animated.add(tabPosition, swipeOffset);
 
   // Component for the progress circle
   const ProgressCircle = ({ percentage }) => {
@@ -396,7 +419,7 @@ const NotificationScreen = () => {
           <Animated.View
             style={[
               styles.tabsContent,
-              { transform: [{ translateX: tabTranslateX }] },
+              { transform: [{ translateX: combinedTranslateX }] },
             ]}
           >
             <View style={styles.tabPage}>{renderNotificationsTab()}</View>
