@@ -9,12 +9,12 @@ const XPChart = () => {
   const [data, setData] = useState({ weeklyData: { labels: [], datasets: [{ data: [] }] } });
   const [loading, setLoading] = useState(true); // Track loading state
   const width = Dimensions.get('window').width;
-  const userId = 2;
+  const userId = 7;
 
   useEffect(() => {
     const fetchXPData = async () => {
       try {
-        const response = await axios.get(`http://192.168.8.189:5000/userXPchart/${userId}`);
+        const response = await axios.get(`https://future-champion-452808-r4.uw.r.appspot.com/userXPchart/${userId}`);
         setData({ weeklyData: response.data });
       } catch (error) {
         console.error("Error fetching XP chart data:", error);
