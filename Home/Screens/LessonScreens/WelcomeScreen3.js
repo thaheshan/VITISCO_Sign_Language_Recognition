@@ -41,23 +41,18 @@ export default function WelcomeScreen({ navigate }) {
     return (
       <SafeAreaView style={styles.container}>
         <Animated.Text style={[styles.welcomeTitle, { opacity: fadeAnim }]}>
-
-          WELCOME TO THE LESSONS
-
+          WELCOME TO THE  LESSONS FOR SINHALA FROM ENGLISH THROUGH SIGN LANGUAGE SYSTEM.
         </Animated.Text>
         
         <Animated.View style={{ transform: [{ translateY: slideAnim }] }}>
         <TouchableOpacity 
-
-
   style={styles.beginButton}
   onPress={() => {
-
-
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    navigate('Loading');
+    navigate('ReadyCountdown');
 
     
+
   }}
 >
   <Text style={styles.nextButtonText}>BEGIN</Text>

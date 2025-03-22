@@ -16,7 +16,7 @@ import * as Haptics from 'expo-haptics';
 const { width, height } = Dimensions.get('window');
 
 
-export default function WelcomeScreen({ navigate }) {
+export default function WelcomeScreen2({ navigate }) {
 
   // Original component logic here
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -41,23 +41,15 @@ export default function WelcomeScreen({ navigate }) {
     return (
       <SafeAreaView style={styles.container}>
         <Animated.Text style={[styles.welcomeTitle, { opacity: fadeAnim }]}>
-
-          WELCOME TO THE LESSONS
-
+          WELCOME TO THE LESSONS FOR Tamil FROM ENGLISH THROUGH SIGN LANGUAGE SYSTEM.
         </Animated.Text>
         
         <Animated.View style={{ transform: [{ translateY: slideAnim }] }}>
         <TouchableOpacity 
-
-
   style={styles.beginButton}
   onPress={() => {
-
-
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    navigate('Loading');
-
-    
+    navigate('ReadyCountdown3');
   }}
 >
   <Text style={styles.nextButtonText}>BEGIN</Text>

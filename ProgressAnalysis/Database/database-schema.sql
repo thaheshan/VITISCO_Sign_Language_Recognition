@@ -39,14 +39,6 @@ CREATE TABLE Lesson (
     FOREIGN KEY (languageId) REFERENCES Language(languageId)
 );
 
--- CREATE TABLE UserLesson (
---     userId INT,
---     lessonId INT,
---     completionDateTime DATETIME,
---     PRIMARY KEY (userId, lessonId),
---     FOREIGN KEY (userId) REFERENCES User(userId),
---     FOREIGN KEY (lessonId) REFERENCES Lesson(lessonId)
--- );
 
 CREATE TABLE Challenge (
     challengeId INT PRIMARY KEY AUTO_INCREMENT,
@@ -78,21 +70,10 @@ CREATE TABLE Quiz (
     FOREIGN KEY (languageId) REFERENCES Language(languageId)
 );
 
-CREATE TABLE UserQuizSession (
-    userId INT,
-    quizSessionId INT,
-    completionDateTime DATETIME,
-    marksPercentage DECIMAL(5,2),
-    marksXPPoints INT,
-    minutes INT,   
-    seconds INT,
-    PRIMARY KEY (userId, quizSessionId),
-    FOREIGN KEY (userId) REFERENCES User(userId),
-    FOREIGN KEY (quizSessionId) REFERENCES QuizSession(quizSessionId)
-);
+
 
 CREATE TABLE VirtualRoom (
-    roomCode INT PRIMARY KEY AUTO_INCREMENT,
+    roomCode VARCHAR(20) PRIMARY KEY,
     winnerId INT,
     hostId INT,
     winnerXPPoints INT,
@@ -100,17 +81,11 @@ CREATE TABLE VirtualRoom (
     FOREIGN KEY (hostId) REFERENCES User(userId)
 );
 
-CREATE TABLE VirtualRoomQuiz (
-    roomCode VARCHAR(20),
-    quizId INT,
-    PRIMARY KEY (roomCode, quizId),
-    FOREIGN KEY (roomCode) REFERENCES VirtualRoom(roomCode),
-    FOREIGN KEY (quizId) REFERENCES Quiz(quizId)
-);
+
 
 CREATE TABLE UserVirtualRoom (
     userId INT,
-    roomCode INT,
+    roomCode VARCHAR(20),
     PRIMARY KEY (userId, roomCode),
     FOREIGN KEY (userId) REFERENCES User(userId),
     FOREIGN KEY (roomCode) REFERENCES VirtualRoom(roomCode)
@@ -136,14 +111,6 @@ CREATE TABLE Schedule (
  );
 
 
-CREATE TABLE UserSession(
-    userId INT;
-    sessionId INT,
-    completionDateTime DATETIME,
-    PRIMARY KEY (userId, sessionId),
-    FOREIGN KEY (userId) REFERENCES User(userId),
-    FOREIGN KEY (sessionId) REFERENCES Session(sessionId)
-);
 
 
 CREATE TABLE Session(
@@ -152,9 +119,38 @@ CREATE TABLE Session(
     PRIMARY KEY (sessionId, lessonId),
     FOREIGN KEY (lessonId) REFERENCES Lesson(lessonId)
 );
+
+CREATE TABLE UserSession(
+    userId INT,
+    sessionId INT,
+    completionDateTime DATETIME,
+    PRIMARY KEY (userId, sessionId),
+    FOREIGN KEY (userId) REFERENCES User(userId),
+    FOREIGN KEY (sessionId) REFERENCES Session(sessionId)
+);
+
 CREATE TABLE QuizSession( 
     quizSessionId INT, 
     quizId Int, 
     PRIMARY KEY (quizSessionId, quizId), 
     FOREIGN KEY (quizId) REFERENCES Quiz(quizId) 
+);
+CREATE TABLE UserQuizSession (
+    userId INT,
+    quizSessionId INT,
+    completionDateTime DATETIME,
+    marksPercentage DECIMAL(5,2),
+    marksXPPoints INT,
+    minutes INT,   
+    seconds INT,
+    PRIMARY KEY (userId, quizSessionId),
+    FOREIGN KEY (userId) REFERENCES User(userId),
+    FOREIGN KEY (quizSessionId) REFERENCES QuizSession(quizSessionId)
+);
+CREATE TABLE VirtualRoomQuiz (
+    roomCode VARCHAR(20),
+    quizSessionId INT,
+    PRIMARY KEY (roomCode, quizSessionId),
+    FOREIGN KEY (roomCode) REFERENCES VirtualRoom(roomCode),
+    FOREIGN KEY (quizSessionId) REFERENCES QuizSession(quizSessionId)
 );

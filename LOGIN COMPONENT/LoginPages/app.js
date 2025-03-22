@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
+  AppRegistry,
   StyleSheet,
   Text,
   View,
@@ -27,7 +28,9 @@ export default registerRootComponent(App);
 registerRootComponent(App);
 // Update your API base URL to work with Expo Go
 // For Expo Go, you need to use your machine's local IP address instead of localhost or 10.0.2.2
-const API_BASE_URL = 'http:// 192.168.58.40:5000';
+const API_BASE_URL = 'http://192.168.58.40:5000';
+
+
 
 // Example MySQL connection setup for your backend (this would go in your Node.js server file, not in this React Native file)
 // const mysql = require('mysql2');
@@ -35,11 +38,14 @@ const API_BASE_URL = 'http:// 192.168.58.40:5000';
 //   host: 'localhost',
 //   user: 'root',
 //   password: 'yourpassword',
-//   database: 'vitisco_db',
+//   database: 'vitisco',
 //   waitForConnections: true,
 //   connectionLimit: 10,
 //   queueLimit: 0
 // });
+
+
+
 
 // Logo component with animation
 const Logo = ({ small = false }) => {

@@ -18,13 +18,13 @@ const { width, height } = Dimensions.get('window');
 
 
 
-export default function LanguagePathwayCustomizationScreen({ navigate }) {
+export default function LanguagePathwayCustomizationScreen3({ navigate }) {
 
  const [selectedTopics, setSelectedTopics] = useState([]);
   const [level, setLevel] = useState('Basic');
   
   const topics = [
-    { id: 1, name: 'Tamil Alphabet', icon: '📝' },
+    { id: 1, name: 'Sinhala Alphabet', icon: '📝' },
     { id: 2, name: 'Numbers', icon: '🔢' },
     { id: 3, name: 'Greetings', icon: '👋' },
     { id: 4, name: 'Family', icon: '👪' },
@@ -105,7 +105,7 @@ export default function LanguagePathwayCustomizationScreen({ navigate }) {
     disabled={selectedTopics.length === 0}
     onPress={() => {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      navigate('Welcome2');
+      navigate('Welcome3');
     }}
   >
     <Text style={styles.nextButtonText}>SAVE & CONTINUE</Text>

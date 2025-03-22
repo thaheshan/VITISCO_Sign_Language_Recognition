@@ -16,6 +16,30 @@ const { body, validationResult } = require('express-validator');
 const [isLoading, setIsLoading] = useState(false);
 const [apiError, setApiError] = useState('');
 
+
+
+require("dotenv").config();
+
+
+// Middleware
+app.use(cors());
+app.use(express.json());
+
+// Database connection
+const db = mysql.createConnection({
+  host: "localhost",
+  user: "root",
+  password: "",
+  database: "vitisco",
+});
+
+db.connect((err) => {
+  if (err) {
+    console.error("Database connection failed: " + err.stack);
+    return;
+  }
+  console.log("Connected to MySQL database");
+});
 // Load environment variables
 dotenv.config();
 

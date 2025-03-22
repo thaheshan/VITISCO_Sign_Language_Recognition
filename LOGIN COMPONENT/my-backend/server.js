@@ -1,508 +1,669 @@
+// server.js
+require("dotenv").config();
+
 const express = require('express');
-const bodyParser = require('body-parser');
 const cors = require('cors');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
+const morgan = require('morgan');
 const mysql = require('mysql2/promise');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const nodemailer = require('nodemailer');
 const crypto = require('crypto');
+const nodemailer = require('nodemailer');
+const { body, validationResult } = require('express-validator');
 
-// Initialize Express App
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// MySQL Connection Pool
+// Middleware setup
+app.use(cors());
+app.use(express.json());
+app.use(helmet()); // Set various HTTP headers for security
+app.use(cors({
+  origin: process.env.FRONTEND_URL || '*', // Restrict to your frontend domain in production
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
+// Rate limiting to prevent brute force attacks
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // limit each IP to 100 requests per windowMs
+  message: 'Too many requests from this IP, please try again later.'
+});
+app.use('/api/', limiter);
+
+// Request logging
+app.use(morgan('combined'));
+
+// Parse JSON bodies
+app.use(express.json({ limit: '1mb' })); // Limit payload size
+
+// Get API URL
+const getApiUrl = () => {
+  // For Expo Go, use your computer's local network IP
+  return process.env.API_URL || 'http://192.168.1.25:5000';
+};
+
+const API_BASE_URL = getApiUrl();
+console.log("Using API URL:", API_BASE_URL);
+
+// Create database connection pool
 const pool = mysql.createPool({
-    host: 'localhost',
-    user: 'root',
-    password: 'password', // Replace with your MySQL password
-    database: 'vitisco',
-    waitForConnections: true,
-    connectionLimit: 10,
-    queueLimit: 0
+  host: process.env.DB_HOST || 'localhost',
+  user: process.env.DB_USER || 'root',
+  password: process.env.DB_PASSWORD || '',
+  database: process.env.DB_NAME || 'vitisco',
+  waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0,
+  // Add these for better debug information and handling
+  enableKeepAlive: true,
+  keepAliveInitialDelay: 0,
+  debug: process.env.NODE_ENV === 'development'
 });
 
 // Test database connection
-async function testConnection() {
-    try {
-        const connection = await pool.getConnection();
-        console.log('MySQL Connected!');
-        connection.release();
-    } catch (error) {
-        console.error('MySQL connection error:', error);
+const testDbConnection = async () => {
+  try {
+    const connection = await pool.getConnection();
+    console.log('Database connected successfully');
+    connection.release();
+    return true;
+  } catch (error) {
+    console.error('Database connection failed:', error);
+    console.error('Error code:', error.code);
+    console.error('Error errno:', error.errno);
+    console.error('Error sqlMessage:', error.sqlMessage);
+    console.error('Error sqlState:', error.sqlState);
+    
+    // Provide helpful error messages based on common error codes
+    if (error.code === 'ECONNREFUSED') {
+      console.error('Cannot connect to MySQL server. Make sure it is running.');
+    } else if (error.code === 'ER_ACCESS_DENIED_ERROR') {
+      console.error('Access denied. Check your username and password.');
+    } else if (error.code === 'ER_BAD_DB_ERROR') {
+      console.error('Database "vitisco" does not exist. Create it first in phpMyAdmin.');
     }
-}
+    
+    return false;
+  }
+};
 
-testConnection();
+// Immediately execute connection test 
+(async () => {
+  const connected = await testDbConnection();
+  if (!connected) {
+    console.error('Warning: Starting server without database connection.');
+    // You could choose to exit here with:
+    // process.exit(1);
+  }
+})();
 
-// Create tables if they don't exist
-async function setupDatabase() {
-    try {
-        // Users table
-        await pool.execute(`
-            CREATE TABLE IF NOT EXISTS users (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                username VARCHAR(50) NOT NULL UNIQUE,
-                email VARCHAR(100) NOT NULL UNIQUE,
-                password VARCHAR(255) NOT NULL,
-                profileName VARCHAR(100),
-                birthDate VARCHAR(30),
-                phoneNumber VARCHAR(20),
-                gender VARCHAR(20),
-                nativeLanguage VARCHAR(50),
-                preferredLanguage VARCHAR(50),
-                created TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        `);
-
-        // OTP table with expiration
-        await pool.execute(`
-            CREATE TABLE IF NOT EXISTS otps (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                email VARCHAR(100) NOT NULL,
-                otp VARCHAR(255) NOT NULL,
-                created TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                expires TIMESTAMP DEFAULT (CURRENT_TIMESTAMP + INTERVAL 10 MINUTE),
-                INDEX idx_email (email),
-                INDEX idx_expires (expires)
-            )
-        `);
-
-        console.log('Database tables created successfully');
-    } catch (error) {
-        console.error('Database setup error:', error);
-    }
-}
-
-setupDatabase();
-
-// Middleware
-app.use(cors());
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
-
-// Utility: Email Transporter Setup
+// Setup email transporter
 const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-        user: 'your-email@gmail.com', // Replace with your email
-        pass: 'your-app-password'     // Replace with your app password
-    }
+  host: process.env.SMTP_HOST,
+  port: process.env.SMTP_PORT,
+  secure: process.env.SMTP_SECURE === 'true',
+  auth: {
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASS
+  }
 });
 
-// Utility: Generate JWT
+// Generate JWT token
 const generateToken = (user) => {
-    return jwt.sign(
-        { id: user.id, username: user.username, email: user.email },
-        'VITISCO_JWT_SECRET', // Replace with a secure secret key
-        { expiresIn: '24h' }
-    );
+  return jwt.sign(
+    { id: user.id, username: user.username, email: user.email },
+    process.env.JWT_SECRET || 'your-secret-key',
+    { expiresIn: '1h' }
+  );
 };
 
-// Utility: Generate OTP
+// Authentication middleware
+const authenticateToken = (req, res, next) => {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+  
+  if (!token) return res.status(401).json({ error: 'Access denied. No token provided.' });
+  
+  try {
+    const verified = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
+    req.user = verified;
+    next();
+  } catch (error) {
+    res.status(403).json({ error: 'Invalid or expired token.' });
+  }
+};
+
+// Store OTP codes (in memory - would use Redis in production)
+const otpStore = new Map();
+
+// Generate OTP
 const generateOTP = () => {
-    return Math.floor(1000 + Math.random() * 9000).toString();
+  return Math.floor(1000 + Math.random() * 9000).toString();
 };
 
-// Utility: Send Email with OTP
-const sendOTPEmail = async (email, otp) => {
-    try {
-        const mailOptions = {
-            from: 'your-email@gmail.com',
-            to: email,
-            subject: 'VITISCO Password Reset OTP',
-            html: `
-                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 5px;">
-                    <h2 style="color: #4B3F72; text-align: center;">VITISCO Password Reset</h2>
-                    <p>Your one-time password for resetting your VITISCO account is:</p>
-                    <h1 style="text-align: center; letter-spacing: 5px; color: #4B3F72;">${otp}</h1>
-                    <p>This code will expire in 10 minutes.</p>
-                    <p>If you did not request this password reset, please ignore this email.</p>
-                </div>
-            `
-        };
-        
-        await transporter.sendMail(mailOptions);
-        return true;
-    } catch (error) {
-        console.error('Email sending error:', error);
-        return false;
-    }
-};
-
-// Middleware: Authenticate JWT
-const authenticate = async (req, res, next) => {
-    const token = req.headers.authorization?.split(' ')[1];
-    
-    if (!token) {
-        return res.status(401).json({ message: 'Authentication token required' });
-    }
-    
-    try {
-        const decoded = jwt.verify(token, 'VITISCO_JWT_SECRET');
-        req.user = decoded;
-        next();
-    } catch (error) {
-        return res.status(401).json({ message: 'Invalid token' });
-    }
-};
-
-// Clean expired OTPs (can be called periodically)
-async function cleanExpiredOTPs() {
-    try {
-        await pool.execute('DELETE FROM otps WHERE expires < NOW()');
-    } catch (error) {
-        console.error('Clean OTPs error:', error);
-    }
-}
-
-// Routes
-
-// Test API endpoint
+// Basic route for testing
 app.get('/api/message', (req, res) => {
-    res.json({ message: 'Welcome to VITISCO - Connect, Learn, and Grow!' });
+  res.json({ message: 'Welcome to Vitisco API!' });
 });
 
-// User login
-app.post('/api/login', async (req, res) => {
-    try {
-        const { username, password } = req.body;
-        
-        // Validate input
-        if (!username || !password) {
-            return res.status(400).json({ message: 'Please provide username and password' });
-        }
-        
-        // Find user by username
-        const [users] = await pool.execute(
-            'SELECT * FROM users WHERE username = ?',
-            [username]
-        );
-        
-        if (users.length === 0) {
-            return res.status(401).json({ message: 'Invalid username or password' });
-        }
-        
-        const user = users[0];
-        
-        // Compare passwords
-        const isMatch = await bcrypt.compare(password, user.password);
-        if (!isMatch) {
-            return res.status(401).json({ message: 'Invalid username or password' });
-        }
-        
-        // Generate token
-        const token = generateToken(user);
-        
-        // Return user data and token
-        res.json({
-            message: 'Login successful',
-            token,
-            user: {
-                id: user.id,
-                username: user.username,
-                email: user.email,
-                profileName: user.profileName
-            }
-        });
-    } catch (error) {
-        console.error('Login error:', error);
-        res.status(500).json({ message: 'Server error' });
-    }
+// Database connection test route
+app.get('/api/db-test', async (req, res) => {
+  try {
+    const connection = await pool.getConnection();
+    connection.release();
+    res.json({ message: 'Database connection successful!' });
+  } catch (error) {
+    console.error('Database test error:', error);
+    res.status(500).json({ 
+      error: 'Database connection failed', 
+      details: error.message,
+      code: error.code
+    });
+  }
 });
 
-// User signup
-app.post('/api/signup', async (req, res) => {
-    try {
-        const {
-            username,
-            email,
-            password,
-            profileName,
-            birthDate,
-            phoneNumber,
-            gender,
-            nativeLanguage,
-            preferredLanguage
-        } = req.body;
-        
-        // Validate input
-        if (!username || !email || !password) {
-            return res.status(400).json({ message: 'Please provide required fields' });
-        }
-        
-        // Check if user already exists
-        const [existingUsers] = await pool.execute(
-            'SELECT * FROM users WHERE username = ? OR email = ?',
-            [username, email]
-        );
-        
-        if (existingUsers.length > 0) {
-            return res.status(400).json({ message: 'Username or email already in use' });
-        }
-        
-        // Hash password
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(password, salt);
-        
-        // Create new user
-        const [result] = await pool.execute(
-            `INSERT INTO users (username, email, password, profileName, birthDate, 
-            phoneNumber, gender, nativeLanguage, preferredLanguage) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-            [
-                username,
-                email,
-                hashedPassword,
-                profileName || null,
-                birthDate || null,
-                phoneNumber || null,
-                gender || null,
-                nativeLanguage || null,
-                preferredLanguage || null
-            ]
-        );
-        
-        // Get the newly created user
-        const [newUsers] = await pool.execute(
-            'SELECT * FROM users WHERE id = ?',
-            [result.insertId]
-        );
-        
-        const newUser = newUsers[0];
-        
-        // Generate token
-        const token = generateToken(newUser);
-        
-        // Return success message and token
-        res.status(201).json({
-            message: 'User created successfully',
-            token,
-            user: {
-                id: newUser.id,
-                username: newUser.username,
-                email: newUser.email
-            }
-        });
-    } catch (error) {
-        console.error('Signup error:', error);
-        res.status(500).json({ message: 'Server error' });
+// User registration endpoint with validation
+app.post('/api/signup', [
+  body('username').trim().isLength({ min: 3, max: 30 }).withMessage('Username must be 3-30 characters'),
+  body('email').isEmail().normalizeEmail().withMessage('Enter a valid email'),
+  body('password').isLength({ min: 8 }).withMessage('Password must be at least 8 characters'),
+  body('profileName').trim().notEmpty().withMessage('Profile name is required'),
+  body('birthDate').isDate().withMessage('Enter a valid birth date'),
+  body('phoneNumber').isMobilePhone().withMessage('Enter a valid phone number'),
+  body('gender').isIn(['male', 'female']).withMessage('Gender must be male or female'),
+  body('nativeLanguage').trim().notEmpty().withMessage('Native language is required'),
+  body('preferredLanguage').trim().notEmpty().withMessage('Preferred language is required')
+], async (req, res) => {
+  // Check for validation errors
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+  
+  const { username, email, password, profileName, birthDate, phoneNumber, gender, nativeLanguage, preferredLanguage } = req.body;
+  
+  try {
+    // Check if user already exists - QUERY 1
+    const [existingUsers] = await pool.query(
+      'SELECT * FROM users WHERE username = ? OR email = ?',
+      [username, email]
+    );
+    
+    if (existingUsers.length > 0) {
+      return res.status(409).json({
+        error: 'User already exists with this username or email'
+      });
     }
+    
+    // Hash password
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+    
+    // Create new user - QUERY 2
+    const [result] = await pool.query(
+      `INSERT INTO users 
+      (username, email, password, profile_name, birth_date, phone_number, gender, native_language, preferred_language) 
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [username, email, hashedPassword, profileName, birthDate, phoneNumber, gender, nativeLanguage, preferredLanguage]
+    );
+    
+    // Create user profile record - QUERY 3
+    await pool.query(
+      `INSERT INTO user_profiles 
+      (user_id, avatar_url, bio, created_at) 
+      VALUES (?, ?, ?, NOW())`,
+      [result.insertId, null, null]
+    );
+    
+    // Generate token for auto-login
+    const user = { id: result.insertId, username, email };
+    const token = generateToken(user);
+    
+    res.status(201).json({
+      message: 'User registered successfully',
+      userId: result.insertId,
+      token
+    });
+    
+  } catch (error) {
+    console.error('Registration error:', error);
+    res.status(500).json({ error: 'Server error during registration' });
+  }
 });
 
-// Request OTP for password reset
-app.post('/api/request-otp', async (req, res) => {
-    try {
-        const { email } = req.body;
-        
-        // Validate input
-        if (!email) {
-            return res.status(400).json({ message: 'Please provide email' });
-        }
-        
-        // Check if user exists
-        const [users] = await pool.execute(
-            'SELECT * FROM users WHERE email = ?',
-            [email]
-        );
-        
-        if (users.length === 0) {
-            return res.status(404).json({ message: 'User not found' });
-        }
-        
-        // Generate OTP
-        const otp = generateOTP();
-        
-        // Hash OTP for storage
-        const hashedOTP = await bcrypt.hash(otp, 10);
-        
-        // Delete existing OTP if any
-        await pool.execute(
-            'DELETE FROM otps WHERE email = ?',
-            [email]
-        );
-        
-        // Save OTP to database
-        await pool.execute(
-            'INSERT INTO otps (email, otp) VALUES (?, ?)',
-            [email, hashedOTP]
-        );
-        
-        // Send OTP via email
-        const emailSent = await sendOTPEmail(email, otp);
-        if (!emailSent) {
-            return res.status(500).json({ message: 'Failed to send OTP email' });
-        }
-        
-        res.json({ message: 'OTP sent to your email' });
-    } catch (error) {
-        console.error('OTP request error:', error);
-        res.status(500).json({ message: 'Server error' });
+// Login endpoint
+app.post('/api/login', [
+  body('username').trim().notEmpty().withMessage('Username is required'),
+  body('password').notEmpty().withMessage('Password is required')
+], async (req, res) => {
+  // Check for validation errors
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+  
+  const { username, password } = req.body;
+  
+  try {
+    // Find user - QUERY 4
+    const [users] = await pool.query(
+      'SELECT * FROM users WHERE username = ? OR email = ?',
+      [username, username]
+    );
+    
+    if (users.length === 0) {
+      return res.status(401).json({ error: 'Invalid username or password' });
     }
+    
+    const user = users[0];
+    
+    // Validate password
+    const validPassword = await bcrypt.compare(password, user.password);
+    if (!validPassword) {
+      return res.status(401).json({ error: 'Invalid username or password' });
+    }
+    
+    // Log login attempt - QUERY 5
+    await pool.query(
+      'INSERT INTO login_logs (user_id, success, ip_address, timestamp) VALUES (?, ?, ?, NOW())',
+      [user.id, 1, req.ip]
+    );
+    
+    // Generate token
+    const token = generateToken(user);
+    
+    // Fetch user profile data - QUERY 6
+    const [profiles] = await pool.query(
+      'SELECT * FROM user_profiles WHERE user_id = ?',
+      [user.id]
+    );
+    
+    const userData = {
+      id: user.id,
+      username: user.username,
+      email: user.email,
+      profileName: user.profile_name,
+      profile: profiles.length > 0 ? profiles[0] : null
+    };
+    
+    res.json({
+      message: 'Login successful',
+      user: userData,
+      token
+    });
+    
+  } catch (error) {
+    console.error('Login error:', error);
+    res.status(500).json({ error: 'Server error during login' });
+  }
 });
 
-// Resend OTP
-app.post('/api/resend-otp', async (req, res) => {
-    try {
-        const { email } = req.body;
-        
-        // Validate input
-        if (!email) {
-            return res.status(400).json({ message: 'Please provide email' });
-        }
-        
-        // Check if user exists
-        const [users] = await pool.execute(
-            'SELECT * FROM users WHERE email = ?',
-            [email]
-        );
-        
-        if (users.length === 0) {
-            return res.status(404).json({ message: 'User not found' });
-        }
-        
-        // Generate new OTP
-        const otp = generateOTP();
-        
-        // Hash OTP for storage
-        const hashedOTP = await bcrypt.hash(otp, 10);
-        
-        // Delete existing OTP
-        await pool.execute(
-            'DELETE FROM otps WHERE email = ?',
-            [email]
-        );
-        
-        // Save new OTP to database
-        await pool.execute(
-            'INSERT INTO otps (email, otp) VALUES (?, ?)',
-            [email, hashedOTP]
-        );
-        
-        // Send OTP via email
-        const emailSent = await sendOTPEmail(email, otp);
-        if (!emailSent) {
-            return res.status(500).json({ message: 'Failed to send OTP email' });
-        }
-        
-        res.json({ message: 'New OTP sent to your email' });
-    } catch (error) {
-        console.error('Resend OTP error:', error);
-        res.status(500).json({ message: 'Server error' });
+// Request password reset (send OTP)
+app.post('/api/request-otp', [
+  body('email').isEmail().normalizeEmail().withMessage('Valid email is required')
+], async (req, res) => {
+  // Check for validation errors
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+  
+  const { email } = req.body;
+  
+  try {
+    // Check if user exists - QUERY 7
+    const [users] = await pool.query(
+      'SELECT * FROM users WHERE email = ?', 
+      [email]
+    );
+    
+    if (users.length === 0) {
+      // Don't reveal if email exists or not for security
+      return res.json({ message: 'If your email is registered, you will receive a reset code' });
     }
+    
+    const user = users[0];
+    
+    // Generate OTP
+    const otp = generateOTP();
+    
+    // Store OTP with expiry (10 minutes)
+    otpStore.set(email, {
+      otp,
+      expires: Date.now() + 10 * 60 * 1000
+    });
+    
+    // Send email with OTP
+    const mailOptions = {
+      from: process.env.SMTP_FROM || 'noreply@vitisco.com',
+      to: email,
+      subject: 'Password Reset Code for Vitisco',
+      text: `Your verification code is: ${otp}. This code will expire in 10 minutes.`,
+      html: `<p>Your verification code is: <strong>${otp}</strong></p><p>This code will expire in 10 minutes.</p>`
+    };
+    
+    await transporter.sendMail(mailOptions);
+    
+    res.json({ message: 'If your email is registered, you will receive a reset code' });
+    
+  } catch (error) {
+    console.error('OTP request error:', error);
+    res.status(500).json({ error: 'Server error while processing your request' });
+  }
 });
 
 // Verify OTP
-app.post('/api/verify-otp', async (req, res) => {
-    try {
-        const { email, otp } = req.body;
-        
-        // Validate input
-        if (!email || !otp) {
-            return res.status(400).json({ message: 'Please provide email and OTP' });
-        }
-        
-        // Clean expired OTPs
-        await cleanExpiredOTPs();
-        
-        // Find OTP record
-        const [otpRecords] = await pool.execute(
-            'SELECT * FROM otps WHERE email = ?',
-            [email]
-        );
-        
-        if (otpRecords.length === 0) {
-            return res.status(400).json({ message: 'Invalid or expired OTP' });
-        }
-        
-        const otpRecord = otpRecords[0];
-        
-        // Verify OTP
-        const isValidOTP = await bcrypt.compare(otp, otpRecord.otp);
-        if (!isValidOTP) {
-            return res.status(400).json({ message: 'Invalid OTP' });
-        }
-        
-        // Generate temporary token for password reset
-        const resetToken = jwt.sign(
-            { email },
-            'VITISCO_RESET_SECRET',
-            { expiresIn: '15m' }
-        );
-        
-        res.json({
-            message: 'OTP verified successfully',
-            resetToken
-        });
-    } catch (error) {
-        console.error('Verify OTP error:', error);
-        res.status(500).json({ message: 'Server error' });
+app.post('/api/verify-otp', [
+  body('email').isEmail().normalizeEmail().withMessage('Valid email is required'),
+  body('otp').isLength({ min: 4, max: 4 }).withMessage('OTP must be 4 digits')
+], async (req, res) => {
+  // Check for validation errors
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+  
+  const { email, otp } = req.body;
+  
+  try {
+    // Check if OTP exists and is valid
+    const storedOtpData = otpStore.get(email);
+    
+    if (!storedOtpData || storedOtpData.otp !== otp || Date.now() > storedOtpData.expires) {
+      return res.status(400).json({ error: 'Invalid or expired OTP' });
     }
+    
+    // Generate reset token
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    
+    // Store reset token in database - QUERY 8
+    await pool.query(
+      'UPDATE users SET reset_token = ?, reset_token_expires = DATE_ADD(NOW(), INTERVAL 1 HOUR) WHERE email = ?',
+      [resetToken, email]
+    );
+    
+    // Remove OTP from store
+    otpStore.delete(email);
+    
+    res.json({
+      message: 'OTP verified successfully',
+      resetToken
+    });
+    
+  } catch (error) {
+    console.error('OTP verification error:', error);
+    res.status(500).json({ error: 'Server error while verifying OTP' });
+  }
 });
 
 // Reset password
-app.post('/api/reset-password', async (req, res) => {
-    try {
-        const { email, password } = req.body;
-        
-        // Validate input
-        if (!email || !password) {
-            return res.status(400).json({ message: 'Please provide email and new password' });
-        }
-        
-        // Check if user exists
-        const [users] = await pool.execute(
-            'SELECT * FROM users WHERE email = ?',
-            [email]
-        );
-        
-        if (users.length === 0) {
-            return res.status(404).json({ message: 'User not found' });
-        }
-        
-        // Hash new password
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(password, salt);
-        
-        // Update user password
-        await pool.execute(
-            'UPDATE users SET password = ? WHERE email = ?',
-            [hashedPassword, email]
-        );
-        
-        // Delete OTP record
-        await pool.execute(
-            'DELETE FROM otps WHERE email = ?',
-            [email]
-        );
-        
-        res.json({ message: 'Password reset successful' });
-    } catch (error) {
-        console.error('Reset password error:', error);
-        res.status(500).json({ message: 'Server error' });
+app.post('/api/reset-password', [
+  body('email').isEmail().normalizeEmail().withMessage('Valid email is required'),
+  body('password').isLength({ min: 8 }).withMessage('Password must be at least 8 characters')
+], async (req, res) => {
+  // Check for validation errors
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+  
+  const { email, password } = req.body;
+  
+  try {
+    // Hash new password
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+    
+    // Update password in database - QUERY 9
+    const [result] = await pool.query(
+      'UPDATE users SET password = ?, reset_token = NULL, reset_token_expires = NULL WHERE email = ?',
+      [hashedPassword, email]
+    );
+    
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: 'User not found' });
     }
+    
+    res.json({ message: 'Password reset successful' });
+    
+  } catch (error) {
+    console.error('Password reset error:', error);
+    res.status(500).json({ error: 'Server error while resetting password' });
+  }
 });
 
-// Protected route example (requires authentication)
-app.get('/api/profile', authenticate, async (req, res) => {
-    try {
-        const [users] = await pool.execute(
-            'SELECT id, username, email, profileName, birthDate, phoneNumber, gender, nativeLanguage, preferredLanguage, created FROM users WHERE id = ?',
-            [req.user.id]
-        );
-        
-        if (users.length === 0) {
-            return res.status(404).json({ message: 'User not found' });
-        }
-        
-        res.json(users[0]);
-    } catch (error) {
-        console.error('Profile fetch error:', error);
-        res.status(500).json({ message: 'Server error' });
+// Resend OTP
+app.post('/api/resend-otp', [
+  body('email').isEmail().normalizeEmail().withMessage('Valid email is required')
+], async (req, res) => {
+  // Check for validation errors
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+  
+  const { email } = req.body;
+  
+  try {
+    // Check if user exists - QUERY 10
+    const [users] = await pool.query(
+      'SELECT * FROM users WHERE email = ?',
+      [email]
+    );
+    
+    if (users.length === 0) {
+      // Don't reveal if email exists or not for security
+      return res.json({ message: 'If your email is registered, you will receive a new reset code' });
     }
+    
+    // Generate new OTP
+    const otp = generateOTP();
+    
+    // Store OTP with expiry (10 minutes)
+    otpStore.set(email, {
+      otp,
+      expires: Date.now() + 10 * 60 * 1000
+    });
+    
+    // Send email with OTP
+    const mailOptions = {
+      from: process.env.SMTP_FROM || 'noreply@vitisco.com',
+      to: email,
+      subject: 'New Password Reset Code for Vitisco',
+      text: `Your new verification code is: ${otp}. This code will expire in 10 minutes.`,
+      html: `<p>Your new verification code is: <strong>${otp}</strong></p><p>This code will expire in 10 minutes.</p>`
+    };
+    
+    await transporter.sendMail(mailOptions);
+    
+    res.json({ message: 'If your email is registered, you will receive a new reset code' });
+    
+  } catch (error) {
+    console.error('OTP resend error:', error);
+    res.status(500).json({ error: 'Server error while processing your request' });
+  }
 });
 
-// Start the server
-app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
+// Protected route - Get user profile
+app.get('/api/user-profile', authenticateToken, async (req, res) => {
+  try {
+    // Fetch user profile data - QUERY 11
+    const [profiles] = await pool.query(
+      'SELECT * FROM user_profiles WHERE user_id = ?',
+      [req.user.id]
+    );
+    
+    if (profiles.length === 0) {
+      return res.status(404).json({ error: 'Profile not found' });
+    }
+    
+    // Fetch user data - QUERY 12
+    const [users] = await pool.query(
+      'SELECT id, username, email, profile_name, birth_date, phone_number, gender, native_language, preferred_language FROM users WHERE id = ?',
+      [req.user.id]
+    );
+    
+    const userData = {
+      ...users[0],
+      profile: profiles[0]
+    };
+    
+    res.json({
+      user: userData
+    });
+    
+  } catch (error) {
+    console.error('Profile fetch error:', error);
+    res.status(500).json({ error: 'Server error while fetching profile' });
+  }
 });
+
+// Update user profile
+app.put('/api/user-profile', authenticateToken, [
+  body('profileName').trim().optional(),
+  body('bio').trim().optional(),
+  body('avatarUrl').optional().isURL().withMessage('Avatar URL must be valid')
+], async (req, res) => {
+  // Check for validation errors
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+  
+  const { profileName, bio, avatarUrl } = req.body;
+  
+  try {
+    // Start a transaction
+    const connection = await pool.getConnection();
+    await connection.beginTransaction();
+    
+    try {
+      // Update user data if profileName provided - QUERY 13
+      if (profileName) {
+        await connection.query(
+          'UPDATE users SET profile_name = ? WHERE id = ?',
+          [profileName, req.user.id]
+        );
+      }
+      
+      // Update profile data - QUERY 14
+      if (bio !== undefined || avatarUrl !== undefined) {
+        const updateFields = [];
+        const updateValues = [];
+        
+        if (bio !== undefined) {
+          updateFields.push('bio = ?');
+          updateValues.push(bio);
+        }
+        
+        if (avatarUrl !== undefined) {
+          updateFields.push('avatar_url = ?');
+          updateValues.push(avatarUrl);
+        }
+        
+        updateFields.push('updated_at = NOW()');
+        updateValues.push(req.user.id);
+        
+        await connection.query(
+          `UPDATE user_profiles SET ${updateFields.join(', ')} WHERE user_id = ?`,
+          [...updateValues]
+        );
+      }
+      
+      await connection.commit();
+      
+      res.json({ message: 'Profile updated successfully' });
+      
+    } catch (error) {
+      await connection.rollback();
+      throw error;
+    } finally {
+      connection.release();
+    }
+    
+  } catch (error) {
+    console.error('Profile update error:', error);
+    res.status(500).json({ error: 'Server error while updating profile' });
+  }
+});
+
+// Change password
+app.post('/api/change-password', authenticateToken, [
+  body('currentPassword').notEmpty().withMessage('Current password is required'),
+  body('newPassword').isLength({ min: 8 }).withMessage('New password must be at least 8 characters')
+], async (req, res) => {
+  // Check for validation errors
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+  
+  const { currentPassword, newPassword } = req.body;
+  
+  try {
+    // Get user with password - QUERY 15
+    const [users] = await pool.query(
+      'SELECT * FROM users WHERE id = ?',
+      [req.user.id]
+    );
+    
+    if (users.length === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    const user = users[0];
+    
+    // Validate current password
+    const validPassword = await bcrypt.compare(currentPassword, user.password);
+    if (!validPassword) {
+      return res.status(400).json({ error: 'Current password is incorrect' });
+    }
+    
+    // Hash new password
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(newPassword, salt);
+    
+    // Update password - QUERY 16
+    await pool.query(
+      'UPDATE users SET password = ? WHERE id = ?',
+      [hashedPassword, req.user.id]
+    );
+    
+    res.json({ message: 'Password changed successfully' });
+    
+  } catch (error) {
+    console.error('Password change error:', error);
+    res.status(500).json({ error: 'Server error while changing password' });
+  }
+});
+
+// Logout (client-side implementation, just for completeness)
+app.post('/api/logout', authenticateToken, (req, res) => {
+  // JWT tokens are stateless, so we don't need to do anything server-side
+  // The client should discard the token
+  res.json({ message: 'Logged out successfully' });
+});
+
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({ error: 'Something went wrong!' });
+});
+
+// 404 middleware for unhandled routes
+app.use((req, res) => {
+  res.status(404).json({ error: 'Resource not found' });
+});
+
+// Start the server - Make sure to listen on all interfaces
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`Server running on port ${PORT}`);
+});
+
+// Export app for testing purposes
+module.exports = app;
+

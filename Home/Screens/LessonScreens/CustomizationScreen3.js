@@ -18,117 +18,70 @@ const { width, height } = Dimensions.get('window');
 
 
 
-export default function LanguagePathwayCustomizationScreen({ navigate }) {
-
- const [selectedTopics, setSelectedTopics] = useState([]);
-  const [level, setLevel] = useState('Basic');
-  
-  const topics = [
-    { id: 1, name: 'Tamil Alphabet', icon: '📝' },
-    { id: 2, name: 'Numbers', icon: '🔢' },
-    { id: 3, name: 'Greetings', icon: '👋' },
-    { id: 4, name: 'Family', icon: '👪' },
-    { id: 5, name: 'Food', icon: '🍎' },
-    { id: 6, name: 'Animals', icon: '🐶' },
-  ];
-  
-  const toggleTopic = (id) => {
-    if (selectedTopics.includes(id)) {
-      setSelectedTopics(selectedTopics.filter(topicId => topicId !== id));
-    } else {
-      setSelectedTopics([...selectedTopics, id]);
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    }
-  };
-  
-  return (
-    <SafeAreaView style={styles.container}>
-      <Text style={styles.customizationHeader}>Customize Your Learning</Text>
-      
-      <View style={styles.levelSelector}>
-        <Text style={styles.sectionTitle}>Select Your Level:</Text>
-        <View style={styles.levelOptions}>
-          {['Beginner', 'Intermediate', 'Advanced'].map((lvl) => (
-            <TouchableOpacity 
-              key={lvl}
-              style={[
-                styles.levelOption,
-                level === lvl && styles.selectedLevel
-              ]}
-              onPress={() => {
-                setLevel(lvl);
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              }}
-            >
-              <Text style={[
-                styles.levelOptionText,
-                level === lvl && styles.selectedLevelText
-              ]}>
-                {lvl}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-      </View>
-      
-      <View style={styles.topicsSection}>
-        <Text style={styles.sectionTitle}>Select Topics:</Text>
-        <View style={styles.topicsGrid}>
-          {topics.map((topic) => (
-            <TouchableOpacity 
-              key={topic.id}
-              style={[
-                styles.topicItem,
-                selectedTopics.includes(topic.id) && styles.selectedTopic
-              ]}
-              onPress={() => toggleTopic(topic.id)}
-            >
-              <Text style={styles.topicIcon}>{topic.icon}</Text>
-              <Text style={[
-                styles.topicName,
-                selectedTopics.includes(topic.id) && styles.selectedTopicText
-              ]}>
-                {topic.name}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-      </View>
-      
-  
-      <TouchableOpacity 
-    style={[
-      styles.continueButton,
-      styles.customizationButton,
-      selectedTopics.length === 0 && styles.disabledButton
-    ]}
-    disabled={selectedTopics.length === 0}
-    onPress={() => {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      navigate('Welcome2');
-    }}
-  >
-    <Text style={styles.nextButtonText}>SAVE & CONTINUE</Text>
-  </TouchableOpacity>
-
-
-    </SafeAreaView>
-  );
-
-
-
+export default function  CustomizationScreen3({ navigate }) {
+ const scaleAnim = useRef(new Animated.Value(0.9)).current;
+   
+   useEffect(() => {
+     Animated.spring(scaleAnim, {
+       toValue: 1,
+       friction: 4,
+       useNativeDriver: true,
+     }).start();
+   }, []);
+   
+   return (
+     <SafeAreaView style={styles.container}>
+       <Animated.Text 
+         style={[
+           styles.customizeTitle, 
+           { transform: [{ scale: scaleAnim }] }
+         ]}
+       >
+         Do You Want To Customize Your Learning Pathway?
+       </Animated.Text>
+       
+       <View style={styles.buttonRow}>
+         <TouchableOpacity 
+           style={[styles.optionButton, styles.yesButton]}
+           onPress={() => {
+             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+             navigate('LanguagePathwayCustomization2');
+           }}
+         >
+           <Text style={styles.optionButtonText}
+           
+           >YES</Text>
+         </TouchableOpacity>
+         
+         <TouchableOpacity 
+           style={[styles.optionButton, styles.noButton]}
+           onPress={() => {
+             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+             navigate('ReadyCountdown');
+           }}
+         >
+           <Text style={styles.optionButtonText}>NO</Text>
+         </TouchableOpacity>
+       </View>
+       
+       <Image
+         source={require('../../images/jumps.png')}
+         style={styles.characterImage}
+         resizeMode="contain"
+       />
+     </SafeAreaView>
+   );
 
 }
 
 
-
 const styles = StyleSheet.create({
   container: {
-    flex: 2,
+    flex: 1,
     backgroundColor: '#c5c6e8',
     alignItems: 'center',
-    justifyContent: 'flex-start',
-    padding: 40,
+    justifyContent: 'space-between',
+    padding: 20,
   },
 
   welcomeTitle: {
@@ -1140,11 +1093,10 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    paddingTop : -20,
     backgroundColor: '#c5c6e8',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: 300,
+    padding: 20,
   },
   welcomeLessonsTitle: {
     fontSize: 22,
@@ -1347,56 +1299,6 @@ const styles = StyleSheet.create({
 
 
 
-// Update these style properties in your StyleSheet
-
-continueButton: {
-  backgroundColor: '#5d5b8d',
-  paddingVertical: 12,
-  paddingHorizontal: 40,
-  borderRadius: 8,
-  marginTop: 20,
-  shadowColor: '#000',
-  shadowOffset: { width: 0, height: 2 },
-  shadowOpacity: 0.3,
-  shadowRadius: 3,
-  elevation: 5,
-  alignSelf: 'center', // This centers the button horizontally
-  justifyContent: 'center', // This centers content vertically
-  alignItems: 'center', // This centers content horizontally
-},
-
-customizationButton: {
-  width: '100%', // This makes the button take full width
-  marginTop: 30,
-  alignItems: 'center', // Ensure horizontal centering within the full width
-},
-
-nextButtonText: {
-  color: 'white',
-  fontSize: 16,
-  fontWeight: 'bold',
-  textAlign: 'center', // This ensures the text is centered within the button
-},
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -1406,3 +1308,4 @@ nextButtonText: {
 
 
 });
+
