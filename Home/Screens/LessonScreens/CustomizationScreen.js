@@ -45,7 +45,7 @@ export default function  CustomizationScreen({ navigate }) {
            style={[styles.optionButton, styles.yesButton]}
            onPress={() => {
              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-             navigate('LanguagePathwayCustomization3');
+             navigate('LanguagePathwayCustomization');
            }}
          >
            <Text style={styles.optionButtonText}

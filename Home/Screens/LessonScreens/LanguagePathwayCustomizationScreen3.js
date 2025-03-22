@@ -13,7 +13,7 @@ import * as Haptics from 'expo-haptics';
 
 const { width, height } = Dimensions.get('window');
 
-export default function LanguagePathwayCustomizationScreen({ navigate }) {
+export default function LanguagePathwayCustomizationScreen3({ navigate }) {
   const [selectedTopics, setSelectedTopics] = useState([]);
   const [level, setLevel] = useState('Beginner');
   const [showPremiumPopup, setShowPremiumPopup] = useState(false);
@@ -26,7 +26,7 @@ export default function LanguagePathwayCustomizationScreen({ navigate }) {
   
   // Define topics
   const topics = [
-    { id: 1, name: 'English Alphabet', icon: '📝', isPremium: false },
+    { id: 1, name: 'Tamil Alphabet', icon: '📝', isPremium: false },
     { id: 2, name: 'Numbers', icon: '🔢', isPremium: true },
     { id: 3, name: 'Greetings', icon: '👋', isPremium: true },
     { id: 4, name: 'Family', icon: '👪', isPremium: true },

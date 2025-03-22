@@ -62,7 +62,7 @@ export default function  GetStartedScreen({ navigate }) {
          style={styles.startButton}
          onPress={() => {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-            navigate('LearningPathway2');
+            navigate('LearningPathway3');
           }}
        >
          <Text style={styles.nextButtonText}

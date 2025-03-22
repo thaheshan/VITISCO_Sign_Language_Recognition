@@ -18,7 +18,13 @@ import { MaterialIcons, FontAwesome5 } from '@expo/vector-icons';
 
 const { width, height } = Dimensions.get('window');
 
-export default function LearningPathwayScreen2({ navigate, route }) {
+export default function LearningPathwayScreen({ route, navigate }) {
+  // Use passed navigate function or create a compatibility layer for direct navigation
+  const handleNavigation = navigate || ((screenName, params = {}) => {
+    // This is a fallback if the component is used outside your navigation structure
+    console.log(`Navigation to ${screenName} with params:`, params);
+  });
+
   const initialLevel = route?.params?.initialLevel ?? 5;
    
   const [unlockedLevel, setUnlockedLevel] = useState(initialLevel);
@@ -47,8 +53,24 @@ export default function LearningPathwayScreen2({ navigate, route }) {
   const nodeThemes = [
     { icon: 'school', color: '#4e54c8', name: 'Knowledge' },
     { icon: 'extension', color: '#8a2be2', name: 'Challenge' },
-    { icon: 'emoji-events', color: '#ff8c00', name: 'Achievement' },
-    { icon: 'science', color: '#20b2aa', name: 'Discovery' }
+    { icon: 'science', color: '#20b2aa', name: 'Discovery' },
+    { icon: 'emoji-events', color: '#ff8c00', name: 'Achievement' }
+  ];
+
+  // Define navigation screens for each level - matching your App.js structure
+  const levelScreens = [
+    'AtoD',
+    'EtoH',
+    'ItoL',
+    'MtoP',
+    'QtoT',
+    'UtoZ',
+    'Quiz1',
+    'Quiz2',
+    'Quiz3',
+    'Quiz4',
+    'Quiz5',
+    'Quiz6',
   ];
 
   // Node appearance for animation
@@ -216,7 +238,13 @@ export default function LearningPathwayScreen2({ navigate, route }) {
     };
   }, [showPathDetails, selectedNode]);
 
-  // Handle node press - travel to node and navigate to lesson
+  // Navigate to the content screen based on node index
+  const navigateToContentScreen = (screenName) => {
+    // Modified to use the navigate function from App.js
+    handleNavigation(screenName);
+  };
+
+  // Handle node press - travel to node and navigate to corresponding screen
   const handleNodePress = (nodeIndex) => {
     if (nodeIndex <= unlockedLevel) {
       // Haptic feedback
@@ -239,11 +267,13 @@ export default function LearningPathwayScreen2({ navigate, route }) {
         setCurrentPosition(nodeIndex);
         pulseNode(nodeIndex);
         
-        // Navigate to lesson after short delay
+        // Navigate to the appropriate screen based on level
         setTimeout(() => {
-
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                        navigate('AtoD' , { level: nodeIndex + 1 });
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+          // Get the screen name for this level
+          const screenName = levelScreens[nodeIndex];
+          // Navigate to the corresponding level screen
+          navigateToContentScreen(screenName);
         }, 700);
       });
     } else {
@@ -501,26 +531,23 @@ export default function LearningPathwayScreen2({ navigate, route }) {
                   ]}>{index + 1}</Text>
                 </TouchableOpacity>
                 
-                {/* Enhanced node labels with BlurView */}
-                {(isCurrent || isMilestone || (selectedNode === index)) && (
-                  <View style={[
-                    learningPathwayStyles.pathwayNodeLabel,
-                    isMilestone && { backgroundColor: 'rgba(255, 215, 0, 0.2)' }
-                  ]}>
-                    <BlurView intensity={90} style={learningPathwayStyles.nodeBlur}>
-                      <Text style={[
-                        learningPathwayStyles.pathwayNodeLabelText,
-                        isMilestone && { color: '#aa8c00' }
-                      ]}>
-                        {isMilestone ? 'MILESTONE ' : 'LEVEL '}
-                        {index + 1}
-                      </Text>
-                      <Text style={learningPathwayStyles.pathwayNodeThemeText}>
-                        {theme.name}
-                      </Text>
-                    </BlurView>
-                  </View>
-                )}
+                {/* Add the lesson title under each node */}
+                <View style={[
+                  learningPathwayStyles.pathwayNodeLabel,
+                  isMilestone && { backgroundColor: 'rgba(255, 215, 0, 0.2)' }
+                ]}>
+                  <BlurView intensity={90} style={learningPathwayStyles.nodeBlur}>
+                    <Text style={[
+                      learningPathwayStyles.pathwayNodeLabelText,
+                      isMilestone && { color: '#aa8c00' }
+                    ]}>
+                      {levelScreens[index].startsWith('Quiz') ? 'QUIZ ' + levelScreens[index].substring(4) : levelScreens[index]}
+                    </Text>
+                    <Text style={learningPathwayStyles.pathwayNodeThemeText}>
+                      {theme.name}
+                    </Text>
+                  </BlurView>
+                </View>
               </Animated.View>
             </React.Fragment>
           );
@@ -601,10 +628,24 @@ export default function LearningPathwayScreen2({ navigate, route }) {
     );
   };
 
+  // Handle back button press - navigate to previous screen
+  const handleBackPress = () => {
+    handleNavigation('Languageselection');
+  };
+
   return (
     <SafeAreaView style={learningPathwayStyles.pathwayContainer}>
       <View style={learningPathwayStyles.pathwayHeader}>
-        <Text style={learningPathwayStyles.pathwayHeaderTitle}>LEARNING ADVENTURE</Text>
+        <View style={learningPathwayStyles.headerRow}>
+          <TouchableOpacity 
+            style={learningPathwayStyles.backButton}
+            onPress={handleBackPress}
+          >
+            <MaterialIcons name="arrow-back" size={24} color="#383773" />
+          </TouchableOpacity>
+          <Text style={learningPathwayStyles.pathwayHeaderTitle}>LEARNING ADVENTURE</Text>
+          <View style={learningPathwayStyles.backButton} />
+        </View>
         <Text style={learningPathwayStyles.pathwayHeaderSubtitle}>
           Navigate your journey through the knowledge landscape!
         </Text>
@@ -690,9 +731,8 @@ export default function LearningPathwayScreen2({ navigate, route }) {
         <TouchableOpacity 
           style={learningPathwayStyles.continueButton}
           onPress={() => {
-            handleNodePress(Math.min(currentPosition + 1, unlockedLevel));
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-            navigation.navigate('LessonIntro', { level: currentPosition + 1 });
+            const nextLevel = Math.min(currentPosition + 1, unlockedLevel);
+            handleNodePress(nextLevel);
           }}
         >
           <View style={learningPathwayStyles.continueButtonInner}>
@@ -719,7 +759,6 @@ export default function LearningPathwayScreen2({ navigate, route }) {
     </SafeAreaView>
   );
 }
-
 
 
   
