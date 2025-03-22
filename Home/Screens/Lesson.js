@@ -15,7 +15,7 @@ import LanguagePathwayCustomizationScreen from './LessonScreens/LanguagePathwayC
 import LanguagePathwayCustomizationScreen2 from "./LessonScreens/LanguagePathwayCustomizationScreen2";
 import LanguagePathwayCustomizationScreen3 from "./LessonScreens/LanguagePathwayCustomizationScreen3";
 
-import CountDownScreen from './LessonScreens/CountDownScreen';
+//import CountDownScreen from './LessonScreens/CountDownScreen';
 import CountDownScreen2 from './LessonScreens/CountDownScreen2';
 import CountDownScreen3 from './LessonScreens/CountDownScreen3';
 
