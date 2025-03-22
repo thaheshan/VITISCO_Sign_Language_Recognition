@@ -4,6 +4,8 @@ import styles from './styles';
 import StatsCard from './StatsCard';
 import axios from 'axios';
 
+
+
 const QuizAPI = ({ userId, languageName }) => {
   const [averageMarks, setAverageMarks] = useState(0);
   const [averageTime, setAverageTime] = useState(0);
@@ -11,7 +13,7 @@ const QuizAPI = ({ userId, languageName }) => {
   useEffect(() => {
     const fetchQuizPerformance = async () => {
       try {
-        const response = await axios.get('http://192.168.8.189:5000/user-average', {
+        const response = await axios.get('https://future-champion-452808-r4.uw.r.appspot.com/user-average', {
           params: {
             userId: userId,
             languageName: languageName,
