@@ -10,10 +10,12 @@
   },
   "dependencies": {
     "@expo/vector-icons": "^14.0.4",
+    "axios": "^1.8.4",
     "body-parser": "^1.20.3",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "expo": "^52.0.37",
+    "expo-image-picker": "~16.0.6",
     "expo-status-bar": "~1.11.1",
     "express": "^4.21.2",
     "multer": "^1.4.5-lts.2",

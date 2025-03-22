@@ -10,7 +10,7 @@ from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from pathlib import Path
 
 # Path to the dataset folder using pathlib for better Unicode handling
-dataset_path = Path(r"C:\Users\AYMAN BROS\Desktop\Test git")
+dataset_path = Path(r"C:\Users\zuhar\OneDrive\Desktop\Collected tamil letters")
 
 # Image settings
 image_size = 200
