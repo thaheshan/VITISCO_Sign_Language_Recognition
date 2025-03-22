@@ -36,6 +36,12 @@ const SettingsScreen = () => {
     cvv: ''
   });
 
+  // State for About Us modal
+  const [isAboutUsVisible, setIsAboutUsVisible] = useState(false);
+  
+  // State for Terms and Conditions modal
+  const [isTermsVisible, setIsTermsVisible] = useState(false);
+
   // Color scheme based on mode 
   const colors = {
     dark: {
@@ -221,7 +227,7 @@ const SettingsScreen = () => {
           <View style={[styles.modalContent, {backgroundColor: currentColors.cardBackground}]}>
             <Text style={[styles.modalTitle, {color: currentColors.text}]}>Change Password</Text>
             
-            <ScrollView>
+            <ScrollView keyboardShouldPersistTaps="handled">
               <View style={styles.inputContainer}>
                 <Text style={[styles.inputLabel, {color: currentColors.secondaryText}]}>Current Password*</Text>
                 <TextInput
@@ -309,7 +315,7 @@ const SettingsScreen = () => {
           <View style={[styles.modalContent, {backgroundColor: currentColors.cardBackground}]}>
             <Text style={[styles.modalTitle, {color: currentColors.text}]}>Edit Profile</Text>
             
-            <ScrollView>
+            <ScrollView keyboardShouldPersistTaps="handled" >
               <View style={styles.inputContainer}>
                 <Text style={[styles.inputLabel, {color: currentColors.secondaryText}]}>Full Name*</Text>
                 <TextInput
@@ -413,7 +419,7 @@ const SettingsScreen = () => {
           <View style={[styles.modalContent, {backgroundColor: currentColors.cardBackground}]}>
             <Text style={[styles.modalTitle, {color: currentColors.text}]}>Add Payment Method</Text>
             
-            <ScrollView>
+            <ScrollView keyboardShouldPersistTaps="handled">
               <View style={styles.inputContainer}>
                 <Text style={[styles.inputLabel, {color: currentColors.secondaryText}]}>Card Number*</Text>
                 <TextInput
@@ -427,7 +433,7 @@ const SettingsScreen = () => {
                     const formatted = formatCardNumber(text);
                     setPaymentData({...paymentData, cardNumber: formatted});
                   }}
-                  placeholder="1234 5678 9012 3456"
+                  placeholder=""
                   placeholderTextColor={currentColors.placeholderText}
                   keyboardType="numeric"
                   maxLength={19}
@@ -444,7 +450,7 @@ const SettingsScreen = () => {
                   }]}
                   value={paymentData.cardholderName}
                   onChangeText={(text) => setPaymentData({...paymentData, cardholderName: text})}
-                  placeholder="John Smith"
+                  placeholder=""
                   placeholderTextColor={currentColors.placeholderText}
                 />
               </View>
@@ -515,6 +521,106 @@ const SettingsScreen = () => {
           </View>
         </View>
       </KeyboardAvoidingView>
+    </Modal>
+  );
+
+  // About Us Modal
+  const AboutUsModal = () => (
+    <Modal
+      animationType="slide"
+      transparent={true}
+      visible={isAboutUsVisible}
+      onRequestClose={() => setIsAboutUsVisible(false)}
+    >
+      <View style={styles.modalContainer}>
+        <View style={[styles.modalContent, {backgroundColor: currentColors.cardBackground}]}>
+          <Text style={[styles.modalTitle, {color: currentColors.text}]}>About Us</Text>
+          
+          <ScrollView>
+            <Text style={[styles.aboutUsText, {color: currentColors.text}]}>
+              Vitisco is an innovative language-learning platform designed to empower the Deaf and Hard of Hearing (DHH) community. Our goal is to bridge the communication gap by integrating AI-driven Sri Lankan Sign Language (SLSL) recognition with a gamified learning experience. Through interactive lessons, real-time feedback, and a personalized learning path, we ensure an engaging and inclusive environment. Our commitment extends to accessibility, inclusivity, and user-centric design, making language learning a fun and rewarding journey for all.
+            </Text>
+          </ScrollView>
+
+          <View style={styles.buttonContainer}>
+            <TouchableOpacity 
+              style={[styles.button, {backgroundColor: currentColors.buttonBackground}]} 
+              onPress={() => setIsAboutUsVisible(false)}
+            >
+              <Text style={[styles.buttonText, {color: currentColors.buttonText}]}>Close</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+    </Modal>
+  );
+
+  // Terms and Conditions Modal
+  const TermsAndConditionsModal = () => (
+    <Modal
+      animationType="slide"
+      transparent={true}
+      visible={isTermsVisible}
+      onRequestClose={() => setIsTermsVisible(false)}
+    >
+      <View style={styles.modalContainer}>
+        <View style={[styles.modalContent, {backgroundColor: currentColors.cardBackground}]}>
+          <Text style={[styles.modalTitle, {color: currentColors.text}]}>Terms and Conditions</Text>
+          
+          <ScrollView>
+            <View style={styles.termsSection}>
+              <Text style={[styles.termTitle, {color: currentColors.text}]}>1. Acceptance of Terms</Text>
+              <Text style={[styles.termText, {color: currentColors.text}]}>
+                By accessing and using Vitisco, you agree to comply with these terms and conditions.
+              </Text>
+            </View>
+            
+            <View style={styles.termsSection}>
+              <Text style={[styles.termTitle, {color: currentColors.text}]}>2. User Conduct</Text>
+              <Text style={[styles.termText, {color: currentColors.text}]}>
+                Users must engage respectfully and ethically while using the platform. Any misuse, such as harmful or disruptive behavior, may result in account suspension.
+              </Text>
+            </View>
+            
+            <View style={styles.termsSection}>
+              <Text style={[styles.termTitle, {color: currentColors.text}]}>3. Intellectual Property</Text>
+              <Text style={[styles.termText, {color: currentColors.text}]}>
+                All content, including AI models, gamified features, and sign language resources, is owned by Vitisco and cannot be replicated without permission.
+              </Text>
+            </View>
+            
+            <View style={styles.termsSection}>
+              <Text style={[styles.termTitle, {color: currentColors.text}]}>4. Data Usage</Text>
+              <Text style={[styles.termText, {color: currentColors.text}]}>
+                User data is collected solely to improve the platform experience and will be protected under our Privacy Policy.
+              </Text>
+            </View>
+            
+            <View style={styles.termsSection}>
+              <Text style={[styles.termTitle, {color: currentColors.text}]}>5. Service Modifications</Text>
+              <Text style={[styles.termText, {color: currentColors.text}]}>
+                We reserve the right to modify or discontinue features without prior notice.
+              </Text>
+            </View>
+            
+            <View style={styles.termsSection}>
+              <Text style={[styles.termTitle, {color: currentColors.text}]}>6. Liability Limitation</Text>
+              <Text style={[styles.termText, {color: currentColors.text}]}>
+                Vitisco is provided on an "as is" basis. We are not liable for any technical issues or data loss caused by third-party services.
+              </Text>
+            </View>
+          </ScrollView>
+
+          <View style={styles.buttonContainer}>
+            <TouchableOpacity 
+              style={[styles.button, {backgroundColor: currentColors.buttonBackground}]} 
+              onPress={() => setIsTermsVisible(false)}
+            >
+              <Text style={[styles.buttonText, {color: currentColors.buttonText}]}>Close</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
     </Modal>
   );
 
@@ -606,9 +712,9 @@ const SettingsScreen = () => {
         {/* More Section */}
         <View>
           <Text style={[styles.sectionTitle, {color: currentColors.secondaryText}]}>More</Text>
-          {renderSettingsItem('About us', () => {}, '>')}
+          {renderSettingsItem('About us', () => setIsAboutUsVisible(true), '>')}
           {renderSettingsItem('Privacy policy', () => {}, '>')}
-          {renderSettingsItem('Terms and conditions', () => {}, '>')}
+          {renderSettingsItem('Terms and conditions', () => setIsTermsVisible(true), '>')}
         </View>
       </View>
 
@@ -620,6 +726,12 @@ const SettingsScreen = () => {
 
       {/* Add Payment Method Modal */}
       <AddPaymentMethodModal />
+
+      {/* About Us Modal */}
+      <AboutUsModal />
+      
+      {/* Terms and Conditions Modal */}
+      <TermsAndConditionsModal />
     </SafeAreaView>
   );
 };
@@ -748,6 +860,12 @@ const styles = StyleSheet.create({
   rowContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between'
+  },
+  aboutUsText: {
+    fontSize: 16,
+    lineHeight: 24,
+    textAlign: 'justify',
+    marginBottom: 15
   }
 });
 
