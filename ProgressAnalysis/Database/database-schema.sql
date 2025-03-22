@@ -154,3 +154,12 @@ CREATE TABLE VirtualRoomQuiz (
     FOREIGN KEY (roomCode) REFERENCES VirtualRoom(roomCode),
     FOREIGN KEY (quizSessionId) REFERENCES QuizSession(quizSessionId)
 );
+CREATE TABLE LanguageCategorySession (
+    sessionNo INT,
+    sessionId INT,
+    languageId INT,
+    categoryId INT,
+    PRIMARY KEY (sessionNo, languageId, categoryId), 
+    FOREIGN KEY (languageId) REFERENCES Language(languageId),
+    FOREIGN KEY (categoryId) REFERENCES Category(categoryId)
+);
