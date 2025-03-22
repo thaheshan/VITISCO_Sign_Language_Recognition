@@ -27,7 +27,7 @@ class MyClassifier(Classifier):
             return [0]*10, 0  # Return a default value to prevent crashes
 
 # Function to draw Sinhala text on an OpenCV image
-def putSinhalaText(img, text, position, font_path="./Iskoola Pota Regular.ttf", font_size=32, color=(0, 0, 0)):
+def putSinhalaText(img, text, position, font_path="../Iskoola Pota Regular.ttf", font_size=32, color=(0, 0, 0)):
     """
     Draw Sinhala text on an OpenCV image using PIL.
     - img: OpenCV image
@@ -54,7 +54,7 @@ cap = cv2.VideoCapture(0)
 detector = HandDetector(maxHands=2)
 
 # Load classifier model safely
-model_path = "./hand_gesture_model_sinhala.h5"
+model_path = "../hand_gesture_model_sinhala.h5"
 try:
     classifier = MyClassifier(model_path, input_size=200)
 except Exception as e:
