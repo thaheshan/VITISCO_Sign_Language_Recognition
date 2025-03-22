@@ -19,6 +19,23 @@ const SettingsScreen = () => {
   });
   const [editableProfile, setEditableProfile] = useState({...profileData});
 
+  // State for password change
+  const [isChangePasswordVisible, setIsChangePasswordVisible] = useState(false);
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: ''
+  });
+
+  // State for payment method
+  const [isAddPaymentVisible, setIsAddPaymentVisible] = useState(false);
+  const [paymentData, setPaymentData] = useState({
+    cardNumber: '',
+    cardholderName: '',
+    expiryDate: '',
+    cvv: ''
+  });
+
   // Color scheme based on mode 
   const colors = {
     dark: {
@@ -81,11 +98,200 @@ const SettingsScreen = () => {
     Alert.alert("Success", "Profile updated successfully!");
   };
   
+  // Handle password change
+  const handleChangePassword = () => {
+    // Basic validation
+    if (!passwordData.currentPassword.trim()) {
+      Alert.alert("Error", "Current password cannot be empty");
+      return;
+    }
+    
+    if (!passwordData.newPassword.trim()) {
+      Alert.alert("Error", "New password cannot be empty");
+      return;
+    }
+    
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      Alert.alert("Error", "Passwords do not match");
+      return;
+    }
+    
+    // Minimum password length check
+    if (passwordData.newPassword.length < 6) {
+      Alert.alert("Error", "New password must be at least 6 characters long");
+      return;
+    }
+    
+    // In a real app, you would verify the current password and update with the new one
+    // For this example, we'll just show a success message
+    
+    // Reset form and close modal
+    setPasswordData({
+      currentPassword: '',
+      newPassword: '',
+      confirmPassword: ''
+    });
+    setIsChangePasswordVisible(false);
+    Alert.alert("Success", "Password changed successfully!");
+  };
+
+  // Handle payment method save
+  const handleSavePaymentMethod = () => {
+    // Basic validation
+    if (!paymentData.cardNumber.trim()) {
+      Alert.alert("Error", "Card number cannot be empty");
+      return;
+    }
+    
+    if (!paymentData.cardholderName.trim()) {
+      Alert.alert("Error", "Cardholder name cannot be empty");
+      return;
+    }
+    
+    if (!paymentData.expiryDate.trim()) {
+      Alert.alert("Error", "Expiry date cannot be empty");
+      return;
+    }
+    
+    if (!paymentData.cvv.trim()) {
+      Alert.alert("Error", "CVV cannot be empty");
+      return;
+    }
+    
+    // Validate card number (simple check for length)
+    if (paymentData.cardNumber.replace(/\s/g, '').length !== 16) {
+      Alert.alert("Error", "Card number must be 16 digits");
+      return;
+    }
+    
+    // Validate expiry date format (MM/YY)
+    const expiryRegex = /^(0[1-9]|1[0-2])\/([0-9]{2})$/;
+    if (!expiryRegex.test(paymentData.expiryDate)) {
+      Alert.alert("Error", "Expiry date must be in MM/YY format");
+      return;
+    }
+    
+    // Validate CVV (3 or 4 digits)
+    if (!/^[0-9]{3,4}$/.test(paymentData.cvv)) {
+      Alert.alert("Error", "CVV must be 3 or 4 digits");
+      return;
+    }
+    
+    // In a real app, you would send this data securely to your backend
+    // Reset form and close modal
+    setPaymentData({
+      cardNumber: '',
+      cardholderName: '',
+      expiryDate: '',
+      cvv: ''
+    });
+    setIsAddPaymentVisible(false);
+    Alert.alert("Success", "Payment method added successfully!");
+  };
+
+  // Format card number with spaces
+  const formatCardNumber = (text) => {
+    // Remove all non-digits
+    const cleaned = text.replace(/\D/g, '');
+    // Format with spaces every 4 digits
+    const formatted = cleaned.replace(/(\d{4})(?=\d)/g, '$1 ').trim();
+    // Limit to 19 characters (16 digits + 3 spaces)
+    return formatted.slice(0, 19);
+  };
+  
   // Simple email validation
   const isValidEmail = (email) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
   };
+
+  // Password Change Modal
+  const ChangePasswordModal = () => (
+    <Modal
+      animationType="slide"
+      transparent={true}
+      visible={isChangePasswordVisible}
+      onRequestClose={() => setIsChangePasswordVisible(false)}
+    >
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        style={styles.modalKeyboardAvoid}
+      >
+        <View style={styles.modalContainer}>
+          <View style={[styles.modalContent, {backgroundColor: currentColors.cardBackground}]}>
+            <Text style={[styles.modalTitle, {color: currentColors.text}]}>Change Password</Text>
+            
+            <ScrollView>
+              <View style={styles.inputContainer}>
+                <Text style={[styles.inputLabel, {color: currentColors.secondaryText}]}>Current Password*</Text>
+                <TextInput
+                  style={[styles.input, {
+                    backgroundColor: currentColors.inputBackground,
+                    color: currentColors.text,
+                    borderColor: currentColors.border
+                  }]}
+                  value={passwordData.currentPassword}
+                  onChangeText={(text) => setPasswordData({...passwordData, currentPassword: text})}
+                  placeholder="Enter your current password"
+                  placeholderTextColor={currentColors.placeholderText}
+                  secureTextEntry={true}
+                  autoFocus={false}
+                />
+              </View>
+
+              <View style={styles.inputContainer}>
+                <Text style={[styles.inputLabel, {color: currentColors.secondaryText}]}>New Password*</Text>
+                <TextInput
+                  style={[styles.input, {
+                    backgroundColor: currentColors.inputBackground,
+                    color: currentColors.text,
+                    borderColor: currentColors.border
+                  }]}
+                  value={passwordData.newPassword}
+                  onChangeText={(text) => setPasswordData({...passwordData, newPassword: text})}
+                  placeholder="Enter your new password"
+                  placeholderTextColor={currentColors.placeholderText}
+                  secureTextEntry={true}
+                />
+              </View>
+
+              <View style={styles.inputContainer}>
+                <Text style={[styles.inputLabel, {color: currentColors.secondaryText}]}>Confirm New Password*</Text>
+                <TextInput
+                  style={[styles.input, {
+                    backgroundColor: currentColors.inputBackground,
+                    color: currentColors.text,
+                    borderColor: currentColors.border
+                  }]}
+                  value={passwordData.confirmPassword}
+                  onChangeText={(text) => setPasswordData({...passwordData, confirmPassword: text})}
+                  placeholder="Confirm your new password"
+                  placeholderTextColor={currentColors.placeholderText}
+                  secureTextEntry={true}
+                />
+              </View>
+            </ScrollView>
+
+            <View style={styles.buttonContainer}>
+              <TouchableOpacity 
+                style={[styles.button, {backgroundColor: currentColors.buttonBackground}]} 
+                onPress={handleChangePassword}
+              >
+                <Text style={[styles.buttonText, {color: currentColors.buttonText}]}>Update Password</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity 
+                style={[styles.button, {backgroundColor: 'transparent', borderWidth: 1, borderColor: currentColors.border}]} 
+                onPress={() => setIsChangePasswordVisible(false)}
+              >
+                <Text style={[styles.buttonText, {color: currentColors.text}]}>Cancel</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </KeyboardAvoidingView>
+    </Modal>
+  );
 
   // Edit Profile Modal
   const EditProfileModal = () => (
@@ -191,6 +397,127 @@ const SettingsScreen = () => {
     </Modal>
   );
 
+  // Add Payment Method Modal
+  const AddPaymentMethodModal = () => (
+    <Modal
+      animationType="slide"
+      transparent={true}
+      visible={isAddPaymentVisible}
+      onRequestClose={() => setIsAddPaymentVisible(false)}
+    >
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        style={styles.modalKeyboardAvoid}
+      >
+        <View style={styles.modalContainer}>
+          <View style={[styles.modalContent, {backgroundColor: currentColors.cardBackground}]}>
+            <Text style={[styles.modalTitle, {color: currentColors.text}]}>Add Payment Method</Text>
+            
+            <ScrollView>
+              <View style={styles.inputContainer}>
+                <Text style={[styles.inputLabel, {color: currentColors.secondaryText}]}>Card Number*</Text>
+                <TextInput
+                  style={[styles.input, {
+                    backgroundColor: currentColors.inputBackground,
+                    color: currentColors.text,
+                    borderColor: currentColors.border
+                  }]}
+                  value={paymentData.cardNumber}
+                  onChangeText={(text) => {
+                    const formatted = formatCardNumber(text);
+                    setPaymentData({...paymentData, cardNumber: formatted});
+                  }}
+                  placeholder="1234 5678 9012 3456"
+                  placeholderTextColor={currentColors.placeholderText}
+                  keyboardType="numeric"
+                  maxLength={19}
+                />
+              </View>
+
+              <View style={styles.inputContainer}>
+                <Text style={[styles.inputLabel, {color: currentColors.secondaryText}]}>Cardholder Name*</Text>
+                <TextInput
+                  style={[styles.input, {
+                    backgroundColor: currentColors.inputBackground,
+                    color: currentColors.text,
+                    borderColor: currentColors.border
+                  }]}
+                  value={paymentData.cardholderName}
+                  onChangeText={(text) => setPaymentData({...paymentData, cardholderName: text})}
+                  placeholder="John Smith"
+                  placeholderTextColor={currentColors.placeholderText}
+                />
+              </View>
+
+              <View style={styles.rowContainer}>
+                <View style={[styles.inputContainer, {flex: 1, marginRight: 10}]}>
+                  <Text style={[styles.inputLabel, {color: currentColors.secondaryText}]}>Expiry Date (MM/YY)*</Text>
+                  <TextInput
+                    style={[styles.input, {
+                      backgroundColor: currentColors.inputBackground,
+                      color: currentColors.text,
+                      borderColor: currentColors.border
+                    }]}
+                    value={paymentData.expiryDate}
+                    onChangeText={(text) => {
+                      // Format as MM/YY
+                      let formatted = text.replace(/\D/g, '');
+                      if (formatted.length > 2) {
+                        formatted = `${formatted.substring(0, 2)}/${formatted.substring(2, 4)}`;
+                      }
+                      setPaymentData({...paymentData, expiryDate: formatted});
+                    }}
+                    placeholder="MM/YY"
+                    placeholderTextColor={currentColors.placeholderText}
+                    keyboardType="numeric"
+                    maxLength={5}
+                  />
+                </View>
+
+                <View style={[styles.inputContainer, {flex: 1}]}>
+                  <Text style={[styles.inputLabel, {color: currentColors.secondaryText}]}>CVV*</Text>
+                  <TextInput
+                    style={[styles.input, {
+                      backgroundColor: currentColors.inputBackground,
+                      color: currentColors.text,
+                      borderColor: currentColors.border
+                    }]}
+                    value={paymentData.cvv}
+                    onChangeText={(text) => {
+                      const cleaned = text.replace(/\D/g, '');
+                      setPaymentData({...paymentData, cvv: cleaned});
+                    }}
+                    placeholder="123"
+                    placeholderTextColor={currentColors.placeholderText}
+                    keyboardType="numeric"
+                    maxLength={4}
+                    secureTextEntry={true}
+                  />
+                </View>
+              </View>
+            </ScrollView>
+
+            <View style={styles.buttonContainer}>
+              <TouchableOpacity 
+                style={[styles.button, {backgroundColor: currentColors.buttonBackground}]} 
+                onPress={handleSavePaymentMethod}
+              >
+                <Text style={[styles.buttonText, {color: currentColors.buttonText}]}>Add Payment Method</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity 
+                style={[styles.button, {backgroundColor: 'transparent', borderWidth: 1, borderColor: currentColors.border}]} 
+                onPress={() => setIsAddPaymentVisible(false)}
+              >
+                <Text style={[styles.buttonText, {color: currentColors.text}]}>Cancel</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </KeyboardAvoidingView>
+    </Modal>
+  );
+
   // Function to display profile info or placeholder
   const renderProfileSection = () => {
     return (
@@ -231,8 +558,23 @@ const SettingsScreen = () => {
             setEditableProfile({...profileData});
             setIsEditProfileVisible(true);
           }, '>')}
-          {renderSettingsItem('Change password', () => {}, '>')}
-          {renderSettingsItem('Add a payment method', () => {}, '+')}
+          {renderSettingsItem('Change password', () => {
+            setPasswordData({
+              currentPassword: '',
+              newPassword: '',
+              confirmPassword: ''
+            });
+            setIsChangePasswordVisible(true);
+          }, '>')}
+          {renderSettingsItem('Add a payment method', () => {
+            setPaymentData({
+              cardNumber: '',
+              cardholderName: '',
+              expiryDate: '',
+              cvv: ''
+            });
+            setIsAddPaymentVisible(true);
+          }, '+')}
           
           {/* Push Notifications */}
           <View style={styles.settingsItem}>
@@ -272,6 +614,12 @@ const SettingsScreen = () => {
 
       {/* Edit Profile Modal */}
       <EditProfileModal />
+      
+      {/* Change Password Modal */}
+      <ChangePasswordModal />
+
+      {/* Add Payment Method Modal */}
+      <AddPaymentMethodModal />
     </SafeAreaView>
   );
 };
@@ -396,10 +744,11 @@ const styles = StyleSheet.create({
   buttonText: {
     fontSize: 16,
     fontWeight: '500'
+  },
+  rowContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between'
   }
 });
 
 export default SettingsScreen;
-
-
-
