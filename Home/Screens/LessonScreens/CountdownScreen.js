@@ -14,7 +14,7 @@ import * as Haptics from 'expo-haptics';
 
 const { width, height } = Dimensions.get('window');
 
-export default function CountDownScreen({ navigate }) {
+export default function CountDownScreen2({ navigate }) {
   const [countdown, setCountdown] = useState(10);
   const scaleAnim = useRef(new Animated.Value(1)).current;
 
@@ -84,7 +84,7 @@ export default function CountDownScreen({ navigate }) {
         style={styles.skipButton}
         onPress={() => {
           Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-          navigate('GetStarted');
+          navigate('GetStarted2');
         }}
       >
         <Text style={styles.skipText}>Skip</Text>

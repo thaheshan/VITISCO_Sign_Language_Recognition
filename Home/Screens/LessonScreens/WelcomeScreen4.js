@@ -43,7 +43,7 @@ export default function WelcomeScreen4 ({ navigate }) {
         <Animated.Text style={[styles.welcomeTitle, { opacity: fadeAnim }]}>
 
           
-        WELCOME TO THE  LESSONS FOR English FROM ENGLISH THROUGH SIGN LANGUAGE SYSTEM FOE ENHACE YOUR ENGLISH KNOWLEDGE.
+        WELCOME TO THE  LESSONS FOR English FROM ENGLISH THROUGH SIGN LANGUAGE SYSTEM FOR ENHACE YOUR ENGLISH KNOWLEDGE.
 
         </Animated.Text>
         

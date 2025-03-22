@@ -26,7 +26,7 @@ export default function LanguagePathwayCustomizationScreen({ navigate }) {
   
   // Define topics
   const topics = [
-    { id: 1, name: 'Tamil Alphabet', icon: '📝', isPremium: false },
+    { id: 1, name: 'Sinhala Alphabet', icon: '📝', isPremium: false },
     { id: 2, name: 'Numbers', icon: '🔢', isPremium: true },
     { id: 3, name: 'Greetings', icon: '👋', isPremium: true },
     { id: 4, name: 'Family', icon: '👪', isPremium: true },
@@ -92,7 +92,7 @@ export default function LanguagePathwayCustomizationScreen({ navigate }) {
   const toggleTopic = (id) => {
     const topic = topics.find(topic => topic.id === id);
     
-    if (topic.isPremium && topic.name !== 'Tamil Alphabet') {
+    if (topic.isPremium && topic.name !== ' Sinhala Alphabet') {
       setPopupMessage(`"${topic.name}" is available in the premium version!`);
       setShowPremiumPopup(true);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
@@ -127,6 +127,7 @@ export default function LanguagePathwayCustomizationScreen({ navigate }) {
         <View style={styles.levelOptions}>
           {['Beginner', 'Intermediate', 'Advanced'].map((lvl) => (
             <TouchableOpacity 
+            
               key={lvl}
               style={[
                 styles.levelOption,
@@ -160,7 +161,7 @@ export default function LanguagePathwayCustomizationScreen({ navigate }) {
               style={[
                 styles.topicItem,
                 selectedTopics.includes(topic.id) && styles.selectedTopic,
-                topic.isPremium && topic.name !== 'Tamil Alphabet' && styles.premiumTopic
+                topic.isPremium && topic.name !== 'Sinhala Alphabet' && styles.premiumTopic
               ]}
               onPress={() => toggleTopic(topic.id)}
             >
@@ -171,7 +172,7 @@ export default function LanguagePathwayCustomizationScreen({ navigate }) {
               ]}>
                 {topic.name}
               </Text>
-              {topic.isPremium && topic.name !== 'Tamil Alphabet' && (
+              {topic.isPremium && topic.name !== 'Sinhala Alphabet' && (
                 <View style={styles.topicPremiumBadge}>
                   <Text style={styles.premiumBadgeText}>PRO</Text>
                 </View>
@@ -190,7 +191,7 @@ export default function LanguagePathwayCustomizationScreen({ navigate }) {
         disabled={selectedTopics.length === 0}
         onPress={() => {
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-          navigate('Welcome2');
+          navigate('Welcome3');
         }}
       >
         <Text style={styles.nextButtonText}>SAVE & CONTINUE</Text>
@@ -335,11 +336,15 @@ const styles = StyleSheet.create({
     width: '100%',
     marginBottom: 20,
   },
+
+
   topicsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
   },
+
+
   topicItem: {
     width: width / 2.4,
     padding: 15,
@@ -350,6 +355,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     position: 'relative',
   },
+
+
   selectedTopic: {
     borderColor: '#5d5b8d',
     backgroundColor: 'rgba(93, 91, 141, 0.1)',

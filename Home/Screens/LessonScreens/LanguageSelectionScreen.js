@@ -63,12 +63,7 @@ export default function LanguageSelectionScreen({ navigate }) {
           <View style={styles.languageCard}>
             <Text style={styles.languageTitle}>Sinhala</Text>
             <Text style={styles.languageNative}>සිංහල</Text>
-            <View style={styles.flagContainer}>
-              <View style={[styles.flagSection, { backgroundColor: '#FF8F1C' }]} />
-              <View style={[styles.flagSection, { backgroundColor: '#138808' }]} />
-              <View style={[styles.flagSection, { backgroundColor: '#5D5B8D' }]} />
-              <View style={[styles.flagSection, { backgroundColor: '#9291B9' }]} />
-            </View>
+  
           </View>
         </TouchableOpacity>
 
@@ -82,11 +77,7 @@ export default function LanguageSelectionScreen({ navigate }) {
           <View style={styles.languageCard}>
             <Text style={styles.languageTitle}>Tamil</Text>
             <Text style={styles.languageNative}>தமிழ்</Text>
-            <View style={styles.flagContainer}>
-              <View style={[styles.flagSection, { backgroundColor: '#FF9933' }]} />
-              <View style={[styles.flagSection, { backgroundColor: '#FFFFFF' }]} />
-              <View style={[styles.flagSection, { backgroundColor: '#138808' }]} />
-            </View>
+      
           </View>
         </TouchableOpacity>
 
@@ -100,13 +91,7 @@ export default function LanguageSelectionScreen({ navigate }) {
           <View style={styles.languageCard}>
             <Text style={styles.languageTitle}>English</Text>
             <Text style={styles.languageNative}>English</Text>
-            <View style={styles.flagContainer}>
-              <View style={styles.ukFlag}>
-                <View style={styles.ukFlagBackground} />
-                <View style={styles.ukFlagCross1} />
-                <View style={styles.ukFlagCross2} />
-              </View>
-            </View>
+          
           </View>
         </TouchableOpacity>
       </View>

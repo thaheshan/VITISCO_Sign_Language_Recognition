@@ -45,7 +45,7 @@ export default function  CustomizationScreen2({ navigate }) {
            style={[styles.optionButton, styles.yesButton]}
            onPress={() => {
              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-             navigate('LanguagePathwayCustomization');
+             navigate('LanguagePathwayCustomization3');
            }}
          >
            <Text style={styles.optionButtonText}
@@ -57,7 +57,7 @@ export default function  CustomizationScreen2({ navigate }) {
            style={[styles.optionButton, styles.noButton]}
            onPress={() => {
              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-             navigate('ReadyCountdown');
+             navigate('ReadyCountdown2');
            }}
          >
            <Text style={styles.optionButtonText}>NO</Text>

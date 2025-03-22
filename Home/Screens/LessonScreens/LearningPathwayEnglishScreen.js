@@ -4,15 +4,13 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
+  Image,
   SafeAreaView,
   Animated,
   Easing,
   ScrollView,
   Dimensions
 } from 'react-native';
-
-import { useNavigation } from '@react-navigation/native';
-
 import * as Haptics from 'expo-haptics';
 import Svg, { Path, Circle, Defs, LinearGradient, Stop, RadialGradient } from 'react-native-svg';
 import { BlurView } from 'expo-blur';
@@ -20,8 +18,13 @@ import { MaterialIcons, FontAwesome5 } from '@expo/vector-icons';
 
 const { width, height } = Dimensions.get('window');
 
-export default function LearningPathwayScreen({ route }) {
-  const navigation = useNavigation();
+export default function LearningPathwayScreen2({ route, navigate }) {
+  // Use passed navigate function or create a compatibility layer for direct navigation
+  const handleNavigation = navigate || ((screenName, params = {}) => {
+    // This is a fallback if the component is used outside your navigation structure
+    console.log(`Navigation to ${screenName} with params:`, params);
+  });
+
   const initialLevel = route?.params?.initialLevel ?? 5;
    
   const [unlockedLevel, setUnlockedLevel] = useState(initialLevel);
@@ -40,73 +43,35 @@ export default function LearningPathwayScreen({ route }) {
   const scrollViewRef = useRef(null);
 
   // Map coordinate calculations
-  const totalPathLength = width * 3; // Extended for more room
-  const nodeSpacing = totalPathLength / 13; // Account for 12 nodes + coming soon section
+  const totalPathLength = width * 2.5; // Extended for more room
+  const nodeSpacing = totalPathLength / 8;
   
-  // Milestone nodes (special nodes)
-  const milestoneNodes = [3, 7, 11]; // 4th, 8th, and 12th nodes (zero-indexed)
+  // Milestone nodes (every 5th node)
+  const milestoneNodes = [4, 9]; // 5th and 10th nodes (zero-indexed)
   
   // Themed node types with different appearances
   const nodeThemes = [
-    { icon: 'school', color: '#4e54c8', name: 'Literacy' },
-    { icon: 'calculate', color: '#8a2be2', name: 'Numeracy' },
-    { icon: 'science', color: '#20b2aa', name: 'Science' },
-    { icon: 'music-note', color: '#ff8c00', name: 'Arts' },
-    { icon: 'psychology', color: '#e91e63', name: 'Social' },
-    { icon: 'extension', color: '#8bc34a', name: 'Challenge' }
+    { icon: 'school', color: '#4e54c8', name: 'Knowledge' },
+    { icon: 'extension', color: '#8a2be2', name: 'Challenge' },
+    { icon: 'science', color: '#20b2aa', name: 'Discovery' },
+    { icon: 'emoji-events', color: '#ff8c00', name: 'Achievement' }
   ];
 
-  // Node names to display on the pathway
-  const nodeNames = [
+  // Define navigation screens for each level - matching your App.js structure
+  const levelScreens = [
     'AtoD',
-    'Basic Concepts',
-    'Fundamentals',
-    'Knowledge Check',
-    'Advanced Topics',
-    'Practice Activities',
-    'Real-world Examples',
-    'Application',
-    'Expert Techniques',
-    'Problem Solving',
-    'Mastery Challenges',
-    'Final Assessment'
+    'EtoH',
+    'ItoL',
+    'MtoP',
+    'QtoT',
+    'UtoZ',
+    'Quiz1',
+    'Quiz2',
+    'Quiz3',
+    'Quiz4',
+    'Quiz5',
+    'Quiz6',
   ];
-
-  // Fixed navigation method to handle nested navigation correctly
-// Fixed navigation method to handle nested navigation correctly
-const navigateToLesson = (nodeIndex) => {
-  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-  
-  // Updated node to screen mapping - ensure each node maps to a unique screen or provides unique parameters
-  const nodeToScreenMap = {
-    0: 'AtoD',      // Node 1
-    1: 'EtoH',      // Node 2
-    2: 'ItoL',      // Node 3
-    3: 'Quiz1',     // Node 4 (Knowledge Check)
-    4: 'MtoP',      // Node 5
-    5: 'QtoT',      // Node 6
-    6: 'UtoZ',      // Node 7
-    7: 'Quiz4',     // Node 8 (Application)
-    8: 'ExpertTechniques', // Node 9
-    9: 'ProblemSolving',   // Node 10
-    10: 'MasteryChallenges', // Node 11
-    11: 'FinalAssessment'  // Node 12 (Final Assessment)
-  };
-
-  // Get screen name from mapping or use default
-  const screenToNavigate = nodeToScreenMap[nodeIndex] || 'LessonIntro';
-
-  // Make sure you pass unique parameters for each node
-  navigation.navigate(screenToNavigate, { 
-    level: nodeIndex + 1,
-    lessonName: nodeNames[nodeIndex],
-    theme: nodeThemes[nodeIndex % nodeThemes.length].name,
-    isFromPathway: true,
-    nodeId: nodeIndex  // Add a unique identifier for each node
-  });
-};
-
-
 
   // Node appearance for animation
   const pulseNode = (index) => {
@@ -273,7 +238,13 @@ const navigateToLesson = (nodeIndex) => {
     };
   }, [showPathDetails, selectedNode]);
 
-  // Handle node press - travel to node and navigate to lesson
+  // Navigate to the content screen based on node index
+  const navigateToContentScreen = (screenName) => {
+    // Modified to use the navigate function from App.js
+    handleNavigation(screenName);
+  };
+
+  // Handle node press - travel to node and navigate to corresponding screen
   const handleNodePress = (nodeIndex) => {
     if (nodeIndex <= unlockedLevel) {
       // Haptic feedback
@@ -296,10 +267,13 @@ const navigateToLesson = (nodeIndex) => {
         setCurrentPosition(nodeIndex);
         pulseNode(nodeIndex);
         
-        // Navigate to lesson after short delay
+        // Navigate to the appropriate screen based on level
         setTimeout(() => {
           Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-          navigateToLesson(nodeIndex);
+          // Get the screen name for this level
+          const screenName = levelScreens[nodeIndex];
+          // Navigate to the corresponding level screen
+          navigateToContentScreen(screenName);
         }, 700);
       });
     } else {
@@ -337,13 +311,13 @@ const navigateToLesson = (nodeIndex) => {
     return (
       <>
         {/* Enhanced background */}
-        <View style={styles.pathwayBackground}>
+        <View style={learningPathwayStyles.pathwayBackground}>
           {/* Decorative patterns */}
-          <View style={[styles.decorativeCircle, { top: '10%', left: '15%', width: 60, height: 60 }]} />
-          <View style={[styles.decorativeCircle, { top: '60%', left: '70%', width: 80, height: 80 }]} />
-          <View style={[styles.decorativeCircle, { top: '30%', left: '80%', width: 40, height: 40 }]} />
+          <View style={[learningPathwayStyles.decorativeCircle, { top: '10%', left: '15%', width: 60, height: 60 }]} />
+          <View style={[learningPathwayStyles.decorativeCircle, { top: '60%', left: '70%', width: 80, height: 80 }]} />
+          <View style={[learningPathwayStyles.decorativeCircle, { top: '30%', left: '80%', width: 40, height: 40 }]} />
           
-          <View style={styles.pathwayGradient} />
+          <View style={learningPathwayStyles.pathwayGradient} />
         </View>
       </>
     );
@@ -365,9 +339,9 @@ const navigateToLesson = (nodeIndex) => {
           }
         ]
       }}>
-        <View style={styles.flagPole} />
+        <View style={learningPathwayStyles.flagPole} />
         <Animated.View style={[
-          styles.flagBanner,
+          learningPathwayStyles.flagBanner,
           {
             transform: [
               { 
@@ -379,7 +353,7 @@ const navigateToLesson = (nodeIndex) => {
             ]
           }
         ]}>
-          <Text style={styles.flagText}>MILESTONE</Text>
+          <Text style={learningPathwayStyles.flagText}>MILESTONE</Text>
         </Animated.View>
       </Animated.View>
     );
@@ -389,11 +363,11 @@ const navigateToLesson = (nodeIndex) => {
   const renderPathway = () => {
     return (
       <Animated.View style={[
-        styles.pathwayMapContainer,
+        learningPathwayStyles.pathwayMapContainer,
         { opacity: pathRevealAnim }
       ]}>
         {/* Enhanced Path SVG with gradient */}
-        <Svg height="100%" width={totalPathLength} style={styles.pathwaySvg}>
+        <Svg height="100%" width={totalPathLength} style={learningPathwayStyles.pathwaySvg}>
           <Defs>
             <LinearGradient id="pathGradient" x1="0" y1="0" x2="1" y2="0">
               <Stop offset="0" stopColor="#5d5b8d" stopOpacity="0.6" />
@@ -480,7 +454,7 @@ const navigateToLesson = (nodeIndex) => {
               {/* Node */}
               <Animated.View
                 style={[
-                  styles.pathwayNodeContainer,
+                  learningPathwayStyles.pathwayNodeContainer,
                   {
                     left: x - nodeSize/2,
                     top: y - nodeSize/2,
@@ -509,7 +483,7 @@ const navigateToLesson = (nodeIndex) => {
                 {/* Node glow effect for milestones and current */}
                 {(isMilestone || isCurrent) && (
                   <View style={[
-                    styles.nodeGlow,
+                    learningPathwayStyles.nodeGlow,
                     { 
                       width: nodeSize * 1.5,
                       height: nodeSize * 1.5,
@@ -522,17 +496,17 @@ const navigateToLesson = (nodeIndex) => {
                 
                 <TouchableOpacity
                   style={[
-                    styles.pathwayNodeButton,
+                    learningPathwayStyles.pathwayNodeButton,
                     { 
                       width: nodeSize, 
                       height: nodeSize,
                       borderRadius: nodeSize / 2,
                       backgroundColor: nodeColor,
                     },
-                    isCurrent && styles.pathwayCurrentNode,
-                    isMilestone && styles.pathwayMilestoneNode,
-                    isCompleted && styles.pathwayCompletedNode,
-                    isLocked && styles.pathwayLockedNode,
+                    isCurrent && learningPathwayStyles.pathwayCurrentNode,
+                    isMilestone && learningPathwayStyles.pathwayMilestoneNode,
+                    isCompleted && learningPathwayStyles.pathwayCompletedNode,
+                    isLocked && learningPathwayStyles.pathwayLockedNode,
                   ]}
                   onPress={() => handleNodePress(index)}
                   disabled={isLocked}
@@ -552,31 +526,28 @@ const navigateToLesson = (nodeIndex) => {
                   )}
                   
                   <Text style={[
-                    styles.pathwayNodeNumber,
+                    learningPathwayStyles.pathwayNodeNumber,
                     { fontSize: nodeSize * 0.25 }
                   ]}>{index + 1}</Text>
                 </TouchableOpacity>
                 
-                {/* Enhanced node labels with BlurView */}
-                {(isCurrent || isMilestone || (selectedNode === index)) && (
-                  <View style={[
-                    styles.pathwayNodeLabel,
-                    isMilestone && { backgroundColor: 'rgba(255, 215, 0, 0.2)' }
-                  ]}>
-                    <BlurView intensity={90} style={styles.nodeBlur}>
-                      <Text style={[
-                        styles.pathwayNodeLabelText,
-                        isMilestone && { color: '#aa8c00' }
-                      ]}>
-                        {isMilestone ? 'MILESTONE ' : 'LEVEL '}
-                        {index + 1}
-                      </Text>
-                      <Text style={styles.pathwayNodeThemeText}>
-                        {nodeNames[index]}
-                      </Text>
-                    </BlurView>
-                  </View>
-                )}
+                {/* Add the lesson title under each node */}
+                <View style={[
+                  learningPathwayStyles.pathwayNodeLabel,
+                  isMilestone && { backgroundColor: 'rgba(255, 215, 0, 0.2)' }
+                ]}>
+                  <BlurView intensity={90} style={learningPathwayStyles.nodeBlur}>
+                    <Text style={[
+                      learningPathwayStyles.pathwayNodeLabelText,
+                      isMilestone && { color: '#aa8c00' }
+                    ]}>
+                      {levelScreens[index].startsWith('Quiz') ? 'QUIZ ' + levelScreens[index].substring(4) : levelScreens[index]}
+                    </Text>
+                    <Text style={learningPathwayStyles.pathwayNodeThemeText}>
+                      {theme.name}
+                    </Text>
+                  </BlurView>
+                </View>
               </Animated.View>
             </React.Fragment>
           );
@@ -585,7 +556,7 @@ const navigateToLesson = (nodeIndex) => {
         {/* Enhanced animated character avatar - now with emoji style */}
         <Animated.View
           style={[
-            styles.pathwayAvatarContainer,
+            learningPathwayStyles.pathwayAvatarContainer,
             {
               transform: [
                 { 
@@ -615,17 +586,17 @@ const navigateToLesson = (nodeIndex) => {
           ]}
         >
           {/* Avatar glow effect */}
-          <View style={styles.avatarGlow} />
+          <View style={learningPathwayStyles.avatarGlow} />
           
           {/* Emoji-style avatar with circular background */}
-          <View style={styles.emojiAvatarContainer}>
-            <Text style={styles.emojiAvatar}>🧙‍♂️</Text>
+          <View style={learningPathwayStyles.emojiAvatarContainer}>
+            <Text style={learningPathwayStyles.emojiAvatar}>🧙‍♂️</Text>
           </View>
           
           {/* Character shadow with animation */}
           <Animated.View 
             style={[
-              styles.pathwayAvatarShadow,
+              learningPathwayStyles.pathwayAvatarShadow,
               {
                 transform: [
                   {
@@ -643,57 +614,39 @@ const navigateToLesson = (nodeIndex) => {
           />
         </Animated.View>
         
-        {/* Coming Soon section after node 12 */}
+        {/* Finish line at the end */}
         <View style={[
-          styles.comingSoonSection,
-          { left: getNodePosition(11).x + 200 }
+          learningPathwayStyles.finishLine,
+          { left: getNodePosition(11).x + 100 }
         ]}>
-          <View style={styles.comingSoonBackground}>
-            <BlurView intensity={70} style={styles.comingSoonBlur}>
-              <MaterialIcons name="explore" size={60} color="rgba(56, 55, 115, 0.7)" />
-              <Text style={styles.comingSoonTitle}>ADVENTURE AWAITS</Text>
-              <Text style={styles.comingSoonText}>
-                More exciting learning journeys coming soon!
-              </Text>
-              <View style={styles.comingSoonStarsContainer}>
-                {[...Array(5)].map((_, i) => (
-                  <Animated.View 
-                    key={`star-${i}`}
-                    style={[
-                      styles.comingSoonStar,
-                      {
-                        top: -10 + Math.random() * 120,
-                        left: 20 + i * 40 + Math.random() * 20,
-                        transform: [
-                          { 
-                            scale: Animated.modulo(
-                              Animated.multiply(new Animated.Value((Date.now() / 1000) + i), 0.5),
-                              1
-                            ).interpolate({
-                              inputRange: [0, 0.5, 1],
-                              outputRange: [0.8, 1.2, 0.8]
-                            })
-                          }
-                        ]
-                      }
-                    ]}
-                  >
-                    <Text style={{ fontSize: 20 + Math.random() * 10 }}>✨</Text>
-                  </Animated.View>
-                ))}
-              </View>
-            </BlurView>
+          <View style={learningPathwayStyles.finishPole} />
+          <View style={learningPathwayStyles.finishBanner}>
+            <Text style={learningPathwayStyles.finishText}>FINISH</Text>
           </View>
         </View>
       </Animated.View>
     );
   };
 
+  // Handle back button press - navigate to previous screen
+  const handleBackPress = () => {
+    handleNavigation('Languageselection');
+  };
+
   return (
-    <SafeAreaView style={styles.pathwayContainer}>
-      <View style={styles.pathwayHeader}>
-        <Text style={styles.pathwayHeaderTitle}>LEARNING ADVENTURE</Text>
-        <Text style={styles.pathwayHeaderSubtitle}>
+    <SafeAreaView style={learningPathwayStyles.pathwayContainer}>
+      <View style={learningPathwayStyles.pathwayHeader}>
+        <View style={learningPathwayStyles.headerRow}>
+          <TouchableOpacity 
+            style={learningPathwayStyles.backButton}
+            onPress={handleBackPress}
+          >
+            <MaterialIcons name="arrow-back" size={24} color="#383773" />
+          </TouchableOpacity>
+          <Text style={learningPathwayStyles.pathwayHeaderTitle}>LEARNING ADVENTURE</Text>
+          <View style={learningPathwayStyles.backButton} />
+        </View>
+        <Text style={learningPathwayStyles.pathwayHeaderSubtitle}>
           Navigate your journey through the knowledge landscape!
         </Text>
       </View>
@@ -718,7 +671,7 @@ const navigateToLesson = (nodeIndex) => {
         {/* Enhanced cloud cover at the end of the map */}
         <Animated.View 
           style={[
-            styles.pathwayMapEndClouds,
+            learningPathwayStyles.pathwayMapEndClouds,
             {
               opacity: scrollX.interpolate({
                 inputRange: [totalPathLength - width * 1.5, totalPathLength - width],
@@ -728,10 +681,10 @@ const navigateToLesson = (nodeIndex) => {
             }
           ]}
         >
-          <BlurView intensity={80} style={styles.pathwayCloudCover}>
+          <BlurView intensity={80} style={learningPathwayStyles.pathwayCloudCover}>
             <MaterialIcons name="explore" size={50} color="rgba(56, 55, 115, 0.5)" />
-            <Text style={styles.pathwayMysteryText}>The journey continues...</Text>
-            <Text style={styles.pathwayMysterySubtext}>
+            <Text style={learningPathwayStyles.pathwayMysteryText}>The journey continues...</Text>
+            <Text style={learningPathwayStyles.pathwayMysterySubtext}>
               More challenges await in future updates
             </Text>
           </BlurView>
@@ -739,11 +692,11 @@ const navigateToLesson = (nodeIndex) => {
       </ScrollView>
       
       {/* Progress indicator */}
-      <View style={styles.progressContainer}>
-        <View style={styles.progressTrack}>
+      <View style={learningPathwayStyles.progressContainer}>
+        <View style={learningPathwayStyles.progressTrack}>
           <Animated.View 
             style={[
-              styles.progressFill,
+              learningPathwayStyles.progressFill,
               {
                 width: avatarAnim.interpolate({
                   inputRange: [0, 11],
@@ -753,17 +706,17 @@ const navigateToLesson = (nodeIndex) => {
             ]}
           />
         </View>
-        <Text style={styles.progressText}>
+        <Text style={learningPathwayStyles.progressText}>
           {Math.min(Math.floor((currentPosition / 11) * 100), 100)}% Complete
         </Text>
       </View>
       
       {/* Node navigation buttons */}
-      <View style={styles.navigationButtonsContainer}>
+      <View style={learningPathwayStyles.navigationButtonsContainer}>
         <TouchableOpacity 
           style={[
-            styles.navigationButton, 
-            currentPosition <= 0 && styles.disabledButton
+            learningPathwayStyles.navigationButton, 
+            currentPosition <= 0 && learningPathwayStyles.disabledButton
           ]}
           onPress={() => {
             if (currentPosition > 0) {
@@ -776,29 +729,22 @@ const navigateToLesson = (nodeIndex) => {
         </TouchableOpacity>
         
         <TouchableOpacity 
-          style={styles.continueButton}
+          style={learningPathwayStyles.continueButton}
           onPress={() => {
-            if (currentPosition < unlockedLevel) {
-              handleNodePress(currentPosition + 1);
-            } else {
-              // Navigate directly to LessonIntro with current position
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-              navigateToLesson(currentPosition);
-            }
+            const nextLevel = Math.min(currentPosition + 1, unlockedLevel);
+            handleNodePress(nextLevel);
           }}
         >
-          <View style={styles.continueButtonInner}>
+          <View style={learningPathwayStyles.continueButtonInner}>
             <FontAwesome5 name="hiking" size={18} color="white" style={{ marginRight: 10 }} />
-            <Text style={styles.continueButtonText}>
-              {currentPosition < unlockedLevel ? 'CONTINUE JOURNEY' : 'START LESSON'}
-            </Text>
+            <Text style={learningPathwayStyles.continueButtonText}>CONTINUE JOURNEY</Text>
           </View>
         </TouchableOpacity>
         
         <TouchableOpacity 
           style={[
-            styles.navigationButton,
-            (currentPosition >= unlockedLevel) && styles.disabledButton
+            learningPathwayStyles.navigationButton,
+            (currentPosition >= unlockedLevel) && learningPathwayStyles.disabledButton
           ]}
           onPress={() => {
             if (currentPosition < unlockedLevel) {
@@ -815,18 +761,11 @@ const navigateToLesson = (nodeIndex) => {
 }
 
 
-
-
-
-
-
-
-
   
   
   
  
-const styles = StyleSheet.create({
+const learningPathwayStyles = StyleSheet.create({
   pathwayContainer: {
     flex: 1,
     backgroundColor: '#c5c6e8',
@@ -1279,79 +1218,5 @@ const styles = StyleSheet.create({
   },
   emojiAvatar: {
     fontSize: 24,
-  },
-
-
-
-
-
-
-
-
-
-
-
-
-  pathwayContainer: {
-    flex: 1,
-    backgroundColor: '#f0f2f5',
-  },
-  pathwayHeader: {
-    padding: 15,
-    paddingTop: 10,
-    paddingBottom: 5,
-    backgroundColor: '#ffffff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
-    alignItems: 'center',
-  },
-  pathwayHeaderTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#383773',
-    textAlign: 'center',
-  },
-  pathwayHeaderSubtitle: {
-    fontSize: 14,
-    color: '#666',
-    textAlign: 'center',
-    marginTop: 5,
-  },
-  pathwayBackground: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-  },
-  decorativeCircle: {
-    position: 'absolute',
-    borderRadius: 100,
-    backgroundColor: 'rgba(142, 140, 192, 0.1)',
-  },
-  pathwayGradient: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'transparent',
-  },
-  pathwayMapContainer: {
-    flex: 1,
-    width: '100%',
-    height: '100%',
-  },
-  pathwaySvg: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-  },
-  pathwayNodeContainer: {
-    position: 'absolute',
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 5,
-  },
-
+  }
 });

@@ -57,9 +57,11 @@ export default function  CustomizationScreen3({ navigate }) {
            style={[styles.optionButton, styles.noButton]}
            onPress={() => {
              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-             navigate('ReadyCountdown');
+             navigate('ReadyCountdown3');
            }}
          >
+
+
            <Text style={styles.optionButtonText}>NO</Text>
          </TouchableOpacity>
        </View>

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import {
   View,
@@ -13,7 +14,7 @@ import * as Haptics from 'expo-haptics';
 
 const { width, height } = Dimensions.get('window');
 
-export default function LanguagePathwayCustomizationScreen({ navigate }) {
+export default function LanguagePathwayCustomizationScreen2({ navigate }) {
   const [selectedTopics, setSelectedTopics] = useState([]);
   const [level, setLevel] = useState('Beginner');
   const [showPremiumPopup, setShowPremiumPopup] = useState(false);
@@ -57,13 +58,13 @@ export default function LanguagePathwayCustomizationScreen({ navigate }) {
           Animated.timing(glowAnimation, {
             toValue: 1,
             duration: 1500,
-            easing: Easing.inOut(Easing.sine),
+            easing: Easing.inOut(Easing.sin),
             useNativeDriver: true
           }),
           Animated.timing(glowAnimation, {
             toValue: 0,
             duration: 1500,
-            easing: Easing.inOut(Easing.sine),
+            easing: Easing.inOut(Easing.sin),
             useNativeDriver: true
           })
         ])
@@ -92,7 +93,7 @@ export default function LanguagePathwayCustomizationScreen({ navigate }) {
   const toggleTopic = (id) => {
     const topic = topics.find(topic => topic.id === id);
     
-    if (topic.isPremium && topic.name !== 'Tamil Alphabet') {
+    if (topic.isPremium && topic.name !== 'English Alphabet') {
       setPopupMessage(`"${topic.name}" is available in the premium version!`);
       setShowPremiumPopup(true);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
@@ -160,7 +161,7 @@ export default function LanguagePathwayCustomizationScreen({ navigate }) {
               style={[
                 styles.topicItem,
                 selectedTopics.includes(topic.id) && styles.selectedTopic,
-                topic.isPremium && topic.name !== 'Tamil Alphabet' && styles.premiumTopic
+                topic.isPremium && topic.name !== 'English Alphabet' && styles.premiumTopic
               ]}
               onPress={() => toggleTopic(topic.id)}
             >
@@ -171,7 +172,7 @@ export default function LanguagePathwayCustomizationScreen({ navigate }) {
               ]}>
                 {topic.name}
               </Text>
-              {topic.isPremium && topic.name !== 'Tamil Alphabet' && (
+              {topic.isPremium && topic.name !== 'English Alphabet' && (
                 <View style={styles.topicPremiumBadge}>
                   <Text style={styles.premiumBadgeText}>PRO</Text>
                 </View>
@@ -190,7 +191,7 @@ export default function LanguagePathwayCustomizationScreen({ navigate }) {
         disabled={selectedTopics.length === 0}
         onPress={() => {
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-          navigate('Welcome2');
+          navigate('Welcome4');
         }}
       >
         <Text style={styles.nextButtonText}>SAVE & CONTINUE</Text>
@@ -255,6 +256,9 @@ export default function LanguagePathwayCustomizationScreen({ navigate }) {
     </View>
   );
 }
+
+
+
 
 const styles = StyleSheet.create({
   container: {
