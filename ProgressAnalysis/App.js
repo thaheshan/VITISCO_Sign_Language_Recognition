@@ -2,16 +2,12 @@
 import React, { useState, useEffect } from 'react';
 import { SafeAreaView, ScrollView, Text, View, TouchableOpacity, Modal, Image, Dimensions } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import Bo from './Bo';
+import XPPoints from './XPpoints';
 import styles from './styles';
-import RewardCard from './RewardCard';
 import ProgressSection from './ProgressSection';
 import QuizAPI from './QuizAPI';
 import XPChart from './XPChart';
-
-
-
-
+import Challenges from './Challenges';
 
 
 
@@ -34,10 +30,8 @@ const LanguageProgressModal = ({ visible, onClose, language }) => (
         
         <ScrollView>
          <ProgressSection userId={1} languageName={language} />
-
-         
           <XPChart/>
-          <QuizAPI userId={3} languageName={language} />
+          <QuizAPI userId={10} languageName={language} />
 
          
         </ScrollView>
@@ -49,7 +43,7 @@ const LanguageProgressModal = ({ visible, onClose, language }) => (
 const App = () => {
   const [selectedLanguage, setSelectedLanguage] = useState(null);
   const characterImage = require('./assets/logo.png');
-
+  
 
   return (
     <SafeAreaView style={styles.container}>
@@ -67,23 +61,8 @@ const App = () => {
               resizeMode="contain"
             />
           </View>
-          
-          <View style={styles.profileStats}>
-            <View style={styles.statItem}>
-              <View style={styles.statBackgroundBlue}>
-                <Icon name="star-outline" size={20} color="#515CE6" />
-                <Text style={styles.xpText}><Bo/></Text>
-                <Text style={styles.statLabel}>Total Points</Text>
-              </View>
-            </View>
-            <View style={styles.statItem}>
-              <View style={styles.statBackgroundPink}>
-                <Icon name="trophy-outline" size={20} color="#FF6B6B" />
-                <Text style={styles.leagueText}>Gold</Text>
-                <Text style={styles.statLabel}>Current league</Text>
-              </View>
-            </View>
-          </View>
+
+          <XPPoints/>
         </View>
 
         <View style={styles.section}>
@@ -111,31 +90,8 @@ const App = () => {
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Earn Rewards</Text>
-          <RewardCard
-            title="First Lesson"
-            xp="20"
-            description="Complete your first lesson"
-            completed={true}
-            progress={1}
-          />
-          <RewardCard
-            title="Week Streak"
-            xp="20"
-            description="Learn for 7 days in a row"
-            progress={0.5}
-          />
-          <RewardCard
-            title="Vocabulary Master"
-            xp="20"
-            description="Learn 100 new words"
-            progress={0.3}
-          />
-          <RewardCard
-            title="Vocabulary Master"
-            xp="20"
-            description="Learn 100 new words"
-            progress={0.3}
-          />
+         
+          <Challenges/>
         </View>
       </ScrollView>
 
@@ -151,9 +107,6 @@ const App = () => {
     </SafeAreaView>
   );
 };
-
-
-
 
 export default App;
 
