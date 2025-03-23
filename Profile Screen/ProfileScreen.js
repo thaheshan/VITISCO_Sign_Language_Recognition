@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -12,31 +12,48 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import { Avatar, Title, Caption, TouchableRipple } from "react-native-paper";
-import { useNavigation } from "@react-navigation/native";
+import { userAPI } from "./api/api-client";
 
 const ProfileScreen = () => {
-  const navigation = useNavigation();
+  const [profileData, setProfileData] = useState(null);
+  const [loading, setLoading] = useState(true);
 
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const response = await userAPI.getProfile();
+        if (response.success) {
+          setProfileData(response.data);
+        }
+      } catch (error) {
+        console.error("Error fetching profile:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUserData();
+  }, []);
   // Sample data structures for your local images
   const badgeImages = [
     {
       id: 1,
-      source: require("../assets/b1.png"),
+      source: require("./assets/b1.png"),
       name: "Badge 1",
     },
     {
       id: 2,
-      source: require("../assets/b2.png"),
+      source: require("./assets/b2.png"),
       name: "Badge 2",
     },
     {
       id: 3,
-      source: require("../assets/b3.png"),
+      source: require("./assets/b3.png"),
       name: "Badge 3",
     },
     {
       id: 4,
-      source: require("../assets/b4.png"),
+      source: require("./assets/b4.png"),
       name: "Badge 4",
     },
   ];
@@ -44,22 +61,22 @@ const ProfileScreen = () => {
   const rewardImages = [
     {
       id: 1,
-      source: require("../assets/r1.png"),
+      source: require("./assets/r1.png"),
       name: "Reward 1",
     },
     {
       id: 2,
-      source: require("../assets/r2.png"),
+      source: require("./assets/r2.png"),
       name: "Reward 2",
     },
     {
       id: 3,
-      source: require("../assets/r3.png"),
+      source: require("./assets/r3.png"),
       name: "Reward 3",
     },
     {
       id: 4,
-      source: require("../assets/r4.png"),
+      source: require("./assets/r4.png"),
       name: "Reward 4",
     },
   ];
@@ -107,7 +124,7 @@ const ProfileScreen = () => {
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* Profile Info */}
         <View style={styles.profileContainer}>
-          <Avatar.Image source={require("../assets/Zuhar.jpg")} size={80} />
+          <Avatar.Image source={require("./assets/Zuhar.jpg")} size={80} />
           <Text style={styles.username}>{userData.name}</Text>
           <Text style={styles.handle}>{userData.handle}</Text>
 
