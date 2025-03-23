@@ -11,7 +11,6 @@ import {
   ScrollView
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
-import { useNavigation } from '@react-navigation/native';
 
 
 const { width, height } = Dimensions.get('window');
@@ -104,12 +103,10 @@ const Confetti = ({ show }) => {
   return confettiElements;
 };
 
-export default function AlphabetLessonScreen({ route = {} }) {
-
-  const navigation = useNavigation();
+export default function AlphabetLessonScreen({ navigate , ...props}) {
 
 
-  const { lessonId = 1, lessonType = 'alphabet', onComplete } = route.params || {};
+  const { lessonId = 1, lessonType = 'alphabet', onComplete } = props || {};
   const [currentCard, setCurrentCard] = useState(0);
   const [showSuccess, setShowSuccess] = useState(false);
   const [characterState, setCharacterState] = useState('intro');
@@ -128,10 +125,10 @@ export default function AlphabetLessonScreen({ route = {} }) {
   const lessonContent = {
     alphabet: {
       1: {
-        title: "Basic Alphabet (අ-ඉ)",
+        title: "Basic Alphabet (A-D)",
         cards: [
           { 
-            letter: 'අ', 
+            letter: 'U', 
             pronunciation: 'a', 
             example: 'apple', 
             sign: require('../../../assets/videos/Thahee.mp4'), 
@@ -139,7 +136,7 @@ export default function AlphabetLessonScreen({ route = {} }) {
             characterVideo: require('../../../assets/videos/Scene - Jackie.mp4')
           },
           { 
-            letter: 'ඇ', 
+            letter: 'V', 
             pronunciation: 'ae', 
             example: 'ant', 
             sign: require('../../../assets/videos/Thahee.mp4'), 
@@ -147,17 +144,27 @@ export default function AlphabetLessonScreen({ route = {} }) {
             characterVideo: require('../../../assets/videos/Scene - Jackie.mp4')
           },
           { 
-            letter: 'ඈ', 
-            pronunciation: 'aae', 
-            example: 'ask', 
+            letter: 'W', 
             sign: require('../../../assets/videos/Thahee.mp4'), 
             signText: 'Extended palm with circular motion',
             characterVideo: require('../../../assets/videos/Scene - Jackie.mp4')
           },
           { 
-            letter: 'ඉ', 
-            pronunciation: 'i', 
-            example: 'if', 
+            letter: 'X', 
+            sign: require('../../../assets/videos/Thahee.mp4'), 
+            signText: 'Pinky finger pointing upward',
+            characterVideo: require('../../../assets/videos/Scene - Jackie.mp4')
+          },
+
+          { 
+            letter: 'Y', 
+            sign: require('../../../assets/videos/Thahee.mp4'), 
+            signText: 'Pinky finger pointing upward',
+            characterVideo: require('../../../assets/videos/Scene - Jackie.mp4')
+          },
+
+          { 
+            letter: 'Z', 
             sign: require('../../../assets/videos/Thahee.mp4'), 
             signText: 'Pinky finger pointing upward',
             characterVideo: require('../../../assets/videos/Scene - Jackie.mp4')
@@ -426,28 +433,17 @@ export default function AlphabetLessonScreen({ route = {} }) {
     }, 2000);
   };
   
-  // Navigate to next lesson or lesson menu
   const navigateNext = () => {
     // Haptic feedback
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     
-    // Navigate to the LessonComplete screen
-    navigation.navigate('LessonComplete', {
-      lessonId: lessonId,
-      lessonType: lessonType,
-      xpEarned: currentLesson.xpReward,
-      lessonTitle: currentLesson.title,
-      // Pass the onComplete callback to the LessonComplete screen
-      onComplete: () => {
-        // Call the original onComplete callback if provided
-        if (onComplete) {
-          onComplete();
-        } else {
-          // Default navigation if no callback provided
-          navigation.navigate('LearningPathway2');
-        }
-      }
-    });
+    // Navigate using the passed navigate prop
+    if (onComplete) {
+      onComplete();
+    } else {
+      // Default navigation
+      navigate('LearningPathway');  // or whichever screen is appropriate
+    }
   };
   
   // Toggle character visibility
@@ -947,4 +943,3 @@ const progressStyles = StyleSheet.create({
     textAlign: 'right',
   },
 });
-

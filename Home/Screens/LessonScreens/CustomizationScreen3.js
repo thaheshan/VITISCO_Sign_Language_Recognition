@@ -57,7 +57,7 @@ export default function  CustomizationScreen3({ navigate }) {
            style={[styles.optionButton, styles.noButton]}
            onPress={() => {
              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-             navigate('ReadyCountdown3');
+             navigate('Welcome4');
            }}
          >
 

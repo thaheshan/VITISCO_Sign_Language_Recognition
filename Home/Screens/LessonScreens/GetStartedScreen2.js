@@ -31,7 +31,7 @@ export default function  GetStartedScreen2({ navigate }) {
    
    return (
      <SafeAreaView style={styles.container}>
-       <Text style={styles.levelIndicator}>BASIC LEVEL (LEVEL 4)</Text>
+       <Text style={styles.levelIndicator}>BASIC LEVEL (LEVEL 4) English</Text>
        
        <Animated.Text 
          style={[
@@ -62,7 +62,7 @@ export default function  GetStartedScreen2({ navigate }) {
          style={styles.startButton}
          onPress={() => {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-            navigate('LearningPathway');
+            navigate('LearningPathway2');
           }}
        >
          <Text style={styles.nextButtonText}

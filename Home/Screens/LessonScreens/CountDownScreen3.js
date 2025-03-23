@@ -42,7 +42,7 @@ export default function CountDownScreen3({ navigate }) {
         if (prev <= 1) {
           clearInterval(interval);
           setTimeout(() => {
-            navigate('GetStarted3'); // Ensure navigation after timeout
+            navigate('Welcome4'); // Ensure navigation after timeout
           }, 500); // Small delay for smoother transition
           return 0;
         }
@@ -84,7 +84,7 @@ export default function CountDownScreen3({ navigate }) {
         style={styles.skipButton}
         onPress={() => {
           Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-          navigate('GetStarted');
+          navigate('GetStarted3');
         }}
       >
         <Text style={styles.skipText}>Skip</Text>
