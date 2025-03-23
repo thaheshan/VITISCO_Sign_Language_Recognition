@@ -6,8 +6,8 @@ import {
 
 const SettingsScreen = () => {
   // State for dark mode and push notifications
-  const [isDarkMode, setIsDarkMode] = useState(true);
-  const [pushNotifications, setPushNotifications] = useState(true);
+  const [isDarkMode, setIsDarkMode] = useState(false);
+  const [pushNotifications, setPushNotifications] = useState(false);
 
   // State for profile editing
   const [isEditProfileVisible, setIsEditProfileVisible] = useState(false);
@@ -574,6 +574,7 @@ const SettingsScreen = () => {
                 By accessing and using Vitisco, you agree to comply with these terms and conditions.
               </Text>
             </View>
+            <Text></Text>
             
             <View style={styles.termsSection}>
               <Text style={[styles.termTitle, {color: currentColors.text}]}>2. User Conduct</Text>
@@ -581,6 +582,7 @@ const SettingsScreen = () => {
                 Users must engage respectfully and ethically while using the platform. Any misuse, such as harmful or disruptive behavior, may result in account suspension.
               </Text>
             </View>
+            <Text></Text>
             
             <View style={styles.termsSection}>
               <Text style={[styles.termTitle, {color: currentColors.text}]}>3. Intellectual Property</Text>
@@ -588,6 +590,7 @@ const SettingsScreen = () => {
                 All content, including AI models, gamified features, and sign language resources, is owned by Vitisco and cannot be replicated without permission.
               </Text>
             </View>
+            <Text></Text>
             
             <View style={styles.termsSection}>
               <Text style={[styles.termTitle, {color: currentColors.text}]}>4. Data Usage</Text>
@@ -595,6 +598,7 @@ const SettingsScreen = () => {
                 User data is collected solely to improve the platform experience and will be protected under our Privacy Policy.
               </Text>
             </View>
+            <Text></Text>
             
             <View style={styles.termsSection}>
               <Text style={[styles.termTitle, {color: currentColors.text}]}>5. Service Modifications</Text>
@@ -602,6 +606,7 @@ const SettingsScreen = () => {
                 We reserve the right to modify or discontinue features without prior notice.
               </Text>
             </View>
+            <Text></Text>
             
             <View style={styles.termsSection}>
               <Text style={[styles.termTitle, {color: currentColors.text}]}>6. Liability Limitation</Text>
@@ -623,6 +628,164 @@ const SettingsScreen = () => {
       </View>
     </Modal>
   );
+
+  const [isPrivacyPolicyVisible, setIsPrivacyPolicyVisible] = useState(false);
+
+// Privacy Policy Modal component
+const PrivacyPolicyModal = () => (
+  <Modal
+    animationType="slide"
+    transparent={true}
+    visible={isPrivacyPolicyVisible}
+    onRequestClose={() => setIsPrivacyPolicyVisible(false)}
+  >
+    <View style={styles.modalContainer}>
+      <View style={[styles.modalContent, {backgroundColor: currentColors.cardBackground}]}>
+        <Text style={[styles.modalTitle, {color: currentColors.text}]}>Privacy Policy</Text>
+        
+        <ScrollView>
+          <Text style={[styles.modalSubtitle, {color: currentColors.text}]}>
+            Effective Date: March 23, 2025
+          </Text>
+          
+          <Text style={[styles.policyText, {color: currentColors.text}]}>
+            At <Text style={styles.boldText}>Vitisco</Text>, we are committed to protecting your privacy and ensuring a secure and inclusive learning environment. 
+            This Privacy Policy outlines how we collect, use, store, and protect your personal information when you use our platform. 
+            By accessing and using Vitisco, you consent to the practices described in this policy.
+          </Text>
+          <Text> </Text>
+          
+          <Text style={[styles.policySection, {color: currentColors.text}]}>1. Information We Collect</Text>
+          <Text style={[styles.policyText, {color: currentColors.text}]}>
+            We collect the following types of data to enhance your learning experience:
+          </Text>
+          <View style={styles.bulletPoint}>
+            <Text></Text>
+            <Text style={[styles.policyText, {color: currentColors.text}]}>
+              <Text style={styles.boldText}>Personal Information : </Text>Name, email address,  language preference, 
+              and profile details provided during account registration.
+            </Text>
+          </View>
+          <View style={styles.bulletPoint}>
+            <Text></Text>
+            <Text style={[styles.policyText, {color: currentColors.text}]}>
+              <Text style={styles.boldText}>Usage Data :</Text> Information on your interactions with the platform, including progress tracking, quizzes completed, and time spent on learning modules.
+            </Text>
+          </View>
+          <View style={styles.bulletPoint}>
+            <Text></Text>
+            <Text style={[styles.policyText, {color: currentColors.text}]}>
+              <Text style={styles.boldText}>Device and Log Data :</Text> Information such as IP address, browser type, device details, and operating system to optimize platform performance.
+            </Text>
+          </View>
+          <View style={styles.bulletPoint}>
+            <Text></Text>
+            <Text style={[styles.policyText, {color: currentColors.text}]}>
+              <Text style={styles.boldText}>AI-Generated Data:</Text> If you use sign language recognition features, we may temporarily process images or videos to improve AI-based translations.
+            </Text>
+          </View>
+
+          <Text></Text>
+          <Text style={[styles.policySection, {color: currentColors.text}]}>2. How We Use Your Information</Text>
+          <Text style={[styles.policyText, {color: currentColors.text}]}>
+            We use collected data for the following purposes:
+          </Text>
+          <View style={styles.bulletPoint}>
+            <Text></Text>
+            <Text style={[styles.policyText, {color: currentColors.text}]}>
+            • To provide personalized learning experiences based on your progress and preferences.
+            </Text>
+          </View>
+          <View style={styles.bulletPoint}>
+            <Text></Text>
+            <Text style={[styles.policyText, {color: currentColors.text}]}>
+            • To enhance the accuracy of sign language recognition and improve our AI models.
+            </Text>
+          </View>
+          <View style={styles.bulletPoint}>
+            <Text></Text>
+            <Text style={[styles.policyText, {color: currentColors.text}]}>
+            • To track your progress and achievements for better goal-setting.
+            </Text>
+          </View>
+          <View style={styles.bulletPoint}>
+            <Text></Text>
+            <Text style={[styles.policyText, {color: currentColors.text}]}>
+            •  To ensure the security and functionality of our platform.
+            </Text>
+          </View>
+          <View style={styles.bulletPoint}>
+            <Text ></Text>
+            <Text style={[styles.policyText, {color: currentColors.text}]}>
+            •  To analyze usage trends and improve user experience.
+            </Text>
+          </View>
+          <View style={styles.bulletPoint}>
+            <Text ></Text>
+            <Text style={[styles.policyText, {color: currentColors.text}]}>
+            •  To communicate updates, notifications, or technical support when required.
+            </Text>
+          </View>
+          <Text ></Text>
+          <Text style={[styles.policySection, {color: currentColors.text}]}>3. Data Protection and Security</Text>
+          <Text style={[styles.policyText, {color: currentColors.text}]}>
+            We implement strict security measures to protect your data from unauthorized access, loss, or misuse. Your information is encrypted and securely stored in compliance with data protection regulations. We do not share, sell, or trade your personal data with third parties for marketing purposes.
+          </Text>
+          <Text ></Text>
+          <Text style={[styles.policySection, {color: currentColors.text}]}>4. Data Sharing and Third-Party Services</Text>
+          <Text style={[styles.policyText, {color: currentColors.text}]}>
+            While we do not sell your data, we may use third-party services (such as cloud storage and analytics tools) to enhance our platform. These providers are required to maintain confidentiality and follow data protection laws.
+          </Text>
+          <Text ></Text>
+          <Text style={[styles.policySection, {color: currentColors.text}]}>5. Your Rights and Choices</Text>
+          <View style={styles.bulletPoint}>
+            <Text></Text>
+            <Text style={[styles.policyText, {color: currentColors.text}]}>
+            • You have the right to <Text style={styles.boldText}>access, update, or delete</Text> your personal information at any time.
+            </Text>
+          </View>
+          <View style={styles.bulletPoint}>
+            <Text></Text>
+            <Text style={[styles.policyText, {color: currentColors.text}]}>
+            •  You may opt out of receiving non-essential notifications.
+            </Text>
+          </View>
+          <View style={styles.bulletPoint}>
+            <Text></Text>
+            <Text style={[styles.policyText, {color: currentColors.text}]}>
+            •  You can request the deletion of your account and associated data by contacting our support team.
+            </Text>
+          </View>
+          <Text></Text>
+          <Text style={[styles.policySection, {color: currentColors.text}]}>6. Retention of Data</Text>
+          <Text style={[styles.policyText, {color: currentColors.text}]}>
+            We retain user data as long as necessary to provide our services. If an account remains inactive for a long period, we may anonymize or delete certain data.
+          </Text>
+          <Text></Text>
+          
+          <Text style={[styles.policySection, {color: currentColors.text}]}>7. Changes to This Policy</Text>
+          <Text style={[styles.policyText, {color: currentColors.text}]}>
+            Vitisco reserves the right to update this Privacy Policy from time to time. Users will be notified of any significant changes. Continued use of our platform constitutes acceptance of the revised terms.
+          </Text>
+          <Text></Text>
+          <Text style={[styles.policySection, {color: currentColors.text}]}>8. Contact Us</Text>
+          <Text style={[styles.policyText, {color: currentColors.text}]}>
+            If you have any questions or concerns regarding this Privacy Policy, please contact us at <Text style={styles.boldText}>support@vitisco.com</Text>.
+          </Text>
+        </ScrollView>
+
+        <View style={styles.buttonContainer}>
+          <TouchableOpacity 
+            style={[styles.button, {backgroundColor: currentColors.buttonBackground}]} 
+            onPress={() => setIsPrivacyPolicyVisible(false)}
+          >
+            <Text style={[styles.buttonText, {color: currentColors.buttonText}]}>Close</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </View>
+  </Modal>
+);
 
   // Function to display profile info or placeholder
   const renderProfileSection = () => {
@@ -713,7 +876,7 @@ const SettingsScreen = () => {
         <View>
           <Text style={[styles.sectionTitle, {color: currentColors.secondaryText}]}>More</Text>
           {renderSettingsItem('About us', () => setIsAboutUsVisible(true), '>')}
-          {renderSettingsItem('Privacy policy', () => {}, '>')}
+          {renderSettingsItem('Privacy policy', () => setIsPrivacyPolicyVisible(true), '>')}
           {renderSettingsItem('Terms and conditions', () => setIsTermsVisible(true), '>')}
         </View>
       </View>
@@ -732,6 +895,9 @@ const SettingsScreen = () => {
       
       {/* Terms and Conditions Modal */}
       <TermsAndConditionsModal />
+      {/* Privacy Policy Modal */}
+      <PrivacyPolicyModal />
+
     </SafeAreaView>
   );
 };
