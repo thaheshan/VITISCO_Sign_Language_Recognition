@@ -59,18 +59,18 @@ export default function LearningPathwayScreen2({ route, navigate }) {
 
   // Define navigation screens for each level - matching your App.js structure
   const levelScreens = [
-    'AtoD',
-    'EtoH',
-    'ItoL',
-    'MtoP',
-    'QtoT',
-    'UtoZ',
-    'Quiz1',
-    'Quiz2',
-    'Quiz3',
-    'Quiz4',
-    'Quiz5',
-    'Quiz6',
+    'A-D',
+    'QUE-1',
+    'E-H',
+    'QUE-2',
+    'I-L',
+    'QUE-3',
+    'M-P',
+    'QUE-4',
+    'Q-T',
+    'QUE-5',
+    'U-Z',
+    'QUE-6',
   ];
 
   // Node appearance for animation

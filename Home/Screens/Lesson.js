@@ -15,9 +15,14 @@ import LanguagePathwayCustomizationScreen from './LessonScreens/LanguagePathwayC
 import LanguagePathwayCustomizationScreen2 from "./LessonScreens/LanguagePathwayCustomizationScreen2";
 import LanguagePathwayCustomizationScreen3 from "./LessonScreens/LanguagePathwayCustomizationScreen3";
 
+
+
+
 import CountDownScreen from './LessonScreens/CountDownScreen';
 import CountDownScreen2 from './LessonScreens/CountDownScreen2';
 import CountDownScreen3 from './LessonScreens/CountDownScreen3';
+
+
 
 import GetStartedScreen from './LessonScreens/GetStartedScreen';
 import GetStartedScreen2 from './LessonScreens/GetStartedScreen2';
@@ -37,6 +42,13 @@ import Lesson18to24screen from './LessonScreens/ContentScreenSinhala/18t024';
 import Lesson24to30screen from './LessonScreens/ContentScreenSinhala/24to30';
 import Lesson30to36screen from './LessonScreens/ContentScreenSinhala/30to36';
 
+import Lessononetosixscreen from './LessonScreens/ContentScreensTamil/onetosix';
+import Lessonsixtotwescreen from './LessonScreens/ContentScreensTamil/sixtotwe';
+import Lessontwetoeigscreen from './LessonScreens/ContentScreensTamil/twetoeig';    
+import Lessoneigtotwescreen from './LessonScreens/ContentScreensTamil/eigtotwe';
+import Lessontwetothiscreen from './LessonScreens/ContentScreensTamil/twetothi';
+
+
 
 import SinhalaQuiz1 from './LessonScreens/ContentScreenSinhala/SQuiz1';
 import SinhalaQuiz2 from './LessonScreens/ContentScreenSinhala/SQuiz2';
@@ -54,7 +66,44 @@ import EnglishQuiz4 from './LessonScreens/ContentScreensEnglish/Quiz4';
 import EnglishQuiz5 from './LessonScreens/ContentScreensEnglish/Quiz5';
 import EnglishQuiz6 from './LessonScreens/ContentScreensEnglish/Quiz6';
 
+
+
+import TamilQuiz1 from './LessonScreens/ContentScreensTamil/TQuiz1';
+import TamilQuiz2 from './LessonScreens/ContentScreensTamil/TQuiz2';
+import TamilQuiz3 from './LessonScreens/ContentScreensTamil/TQuiz3';
+import TamilQuiz4 from './LessonScreens/ContentScreensTamil/TQuiz4';
+import TamilQuiz5 from './LessonScreens/ContentScreensTamil/TQuiz5';
+
 import LessonIntroScreen from './LessonScreens/LessonIntroScreen';
+
+import IntroScreenEnglish1 from './LessonScreens/IntroScreenEnglish/A-D';
+import IntroScreenEnglish2 from './LessonScreens/IntroScreenEnglish/E-H';
+import IntroScreenEnglish3 from './LessonScreens/IntroScreenEnglish/I-L';
+import IntroScreenEnglish4 from './LessonScreens/IntroScreenEnglish/M-P';
+import IntroScreenEnglish5 from './LessonScreens/IntroScreenEnglish/Q-T';
+import IntroScreenEnglish6 from './LessonScreens/IntroScreenEnglish/U-Z';
+
+
+import EnglishQuizIntroScreen from './LessonScreens/IntroScreenEnglish/Q1';
+import EnglishQuizIntroScreen2 from './LessonScreens/IntroScreenEnglish/Q2';
+import EnglishQuizIntroScreen3 from './LessonScreens/IntroScreenEnglish/Q3';
+import EnglishQuizIntroScreen4 from './LessonScreens/IntroScreenEnglish/Q4';
+import EnglishQuizIntroScreen5 from './LessonScreens/IntroScreenEnglish/Q5';
+import EnglishQuizIntroScreen6 from './LessonScreens/IntroScreenEnglish/Q6';
+
+
+import EnglishScreenComp1 from './LessonScreens/CompletionScreenEnglish/A-Dcom';
+import EnglishScreenComp2 from './LessonScreens/CompletionScreenEnglish/E-Hcom';
+import EnglishScreenComp3 from './LessonScreens/CompletionScreenEnglish/I-Lcom';
+import EnglishScreenComp4 from './LessonScreens/CompletionScreenEnglish/M-Pcom';
+import EnglishScreenComp5 from './LessonScreens/CompletionScreenEnglish/Q-Tcom';
+import EnglishScreenComp6 from './LessonScreens/CompletionScreenEnglish/U-Zcom';
+
+
+
+
+
+
 
 import LearningPathwayScreenEnglish from './LessonScreens/LearningPathwayEnglishScreen';
 import LearningPathwayScreenTamil from './LessonScreens/LearningPathwayTamil';
@@ -167,6 +216,21 @@ export default function App() {
         return <LessonUtoZscreen navigate={navigate} {...screenParams} />;
 
 
+        
+      case 'AtoDcom':
+        return <EnglishScreenComp1 navigate={navigate} {...screenParams} />;
+      case 'EtoHcom':
+        return <EnglishScreenComp2 navigate={navigate} {...screenParams} />;
+      case 'ItoLcom':
+        return <EnglishScreenComp3 navigate={navigate} {...screenParams} />;
+      case 'MtoPcom':
+        return <EnglishScreenComp4 navigate={navigate} {...screenParams} />;
+      case 'QtoTcom':
+        return <EnglishScreenComp5 navigate={navigate} {...screenParams} />;
+      case 'UtoZcom':
+        return <EnglishScreenComp6 navigate={navigate} {...screenParams} />;
+
+
 
         case '1to6':
           return <Lesson1to6screen navigate={navigate} {...screenParams} />;
@@ -180,7 +244,20 @@ export default function App() {
           return <Lesson24to30screen navigate={navigate} {...screenParams} />;
         case '30to36':
           return <Lesson30to36screen navigate={navigate} {...screenParams} />;
-  
+
+
+          
+        case 'onetosix':
+          return <Lessononetosixscreen navigate={navigate} {...screenParams} />;
+        case 'twototwe':
+          return <Lessonsixtotwescreen navigate={navigate} {...screenParams} />;
+        case 'twetoeig':
+          return <Lessontwetoeigscreen navigate={navigate} {...screenParams} />;
+        case 'eigtotwe':
+          return <Lessoneigtotwescreen navigate={navigate} {...screenParams} />;
+        case 'twetothi':
+          return <Lessontwetothiscreen navigate={navigate} {...screenParams} />;
+
 
 
 
@@ -196,6 +273,18 @@ export default function App() {
             return <SinhalaQuiz5 navigate={navigate} {...screenParams} />;
           case 'sQuiz6':
             return <SinhalaQuiz6 navigate={navigate} {...screenParams} />;
+
+            case 'tQuiz1':
+              return <TamilQuiz1 navigate={navigate} {...screenParams} />;
+            case 'tQuiz2':
+              return <TamilQuiz2 navigate={navigate} {...screenParams} />;
+            case 'tQuiz3':
+              return <TamilQuiz3 navigate={navigate} {...screenParams} />;
+            case 'tQuiz4':
+              return <TamilQuiz4 navigate={navigate} {...screenParams} />;
+            case 'tQuiz5':
+              return <TamilQuiz5 navigate={navigate} {...screenParams} />;
+        
 
 
 
@@ -220,6 +309,39 @@ export default function App() {
         return <AlphabetLessonScreen navigate={navigate} {...screenParams} />;
       default:
         return <WelcomeScreen navigate={navigate} />;
+
+
+
+                  
+        case 'A-D':
+          return <IntroScreenEnglish1 navigate={navigate} {...screenParams} />;
+        case 'E-H':
+          return <IntroScreenEnglish2 navigate={navigate} {...screenParams} />;
+        case 'I-L':
+          return <IntroScreenEnglish3 navigate={navigate} {...screenParams} />;
+        case 'M-P':
+          return <IntroScreenEnglish4 navigate={navigate} {...screenParams} />;
+        case 'Q-T':
+          return <IntroScreenEnglish5 navigate={navigate} {...screenParams} />;
+
+          case 'U-Z':
+            return <IntroScreenEnglish6 navigate={navigate} {...screenParams} />;
+
+
+            case 'QUE-1':
+              return <EnglishQuizIntroScreen navigate={navigate} {...screenParams} />;
+            case 'QUE-2':
+              return <EnglishQuizIntroScreen2 navigate={navigate} {...screenParams} />;
+            case 'QUE-3':
+              return <EnglishQuizIntroScreen3 navigate={navigate} {...screenParams} />;
+            case 'QUE-4':
+              return <EnglishQuizIntroScreen4  navigate={navigate} {...screenParams} />;
+            case 'QUE-5':
+              return <EnglishQuizIntroScreen5 navigate={navigate} {...screenParams} />;
+    
+              case 'QUE-6':
+                return <EnglishQuizIntroScreen6 navigate={navigate} {...screenParams} />;
+
     }
   };
 
