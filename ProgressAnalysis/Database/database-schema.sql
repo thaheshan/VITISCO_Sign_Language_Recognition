@@ -164,3 +164,12 @@ CREATE TABLE LanguageCategorySession (
     FOREIGN KEY (languageId) REFERENCES Language(languageId),
     FOREIGN KEY (categoryId) REFERENCES Category(categoryId)
 );
+CREATE TABLE LanguageCategoryQuiz (
+    quizSessionId INT,
+    languageId INT,
+    categoryId INT,
+    PRIMARY KEY (quizSessionId, languageId, categoryId),
+    FOREIGN KEY (quizSessionId) REFERENCES QuizSession(quizSessionId),
+    FOREIGN KEY (languageId) REFERENCES Language(languageId),
+    FOREIGN KEY (categoryId) REFERENCES Category(categoryId)
+);
