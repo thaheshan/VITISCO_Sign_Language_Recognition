@@ -8,14 +8,14 @@ import {
   SafeAreaView, 
   Animated, 
   Easing,
-  ScrollView
+  ScrollView,
+  Alert
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { useNavigation } from '@react-navigation/native';
-
+import { Video } from 'expo-av';
 
 const { width, height } = Dimensions.get('window');
-import { Video } from 'expo-av';
 
 // ProgressBar Component
 const ProgressBar = ({ current, total }) => {
@@ -105,10 +105,7 @@ const Confetti = ({ show }) => {
 };
 
 export default function AlphabetLessonScreen({ route = {} }) {
-
   const navigation = useNavigation();
-
-
   const { lessonId = 1, lessonType = 'alphabet', onComplete } = route.params || {};
   const [currentCard, setCurrentCard] = useState(0);
   const [showSuccess, setShowSuccess] = useState(false);
@@ -124,6 +121,52 @@ export default function AlphabetLessonScreen({ route = {} }) {
   const floatAnim = useRef(new Animated.Value(0)).current;
   const [characterLoaded, setCharacterLoaded] = useState(false);
   
+  // Learning pathway configuration
+  const pathwayConfig = {
+    alphabet: {
+      sequence: [
+        { id: 1, screen: 'A-D', title: 'Basic Alphabet (A-D)' },
+        { id: 2, screen: 'QUE-1', title: 'Quiz: A-D' },
+        { id: 3, screen: 'E-H', title: 'Basic Alphabet (E-H)' },
+        { id: 4, screen: 'QUE-2', title: 'Quiz: E-H' },
+        { id: 5, screen: 'I-L', title: 'Basic Alphabet (I-L)' },
+        { id: 6, screen: 'QUE-3', title: 'Quiz: I-L' },
+        { id: 7, screen: 'M-P', title: 'Basic Alphabet (M-P)' },
+        { id: 8, screen: 'QUE-4', title: 'Quiz: M-P' },
+        { id: 9, screen: 'Q-T', title: 'Basic Alphabet (Q-T)' },
+        { id: 10, screen: 'QUE-5', title: 'Quiz: Q-T' },
+        { id: 11, screen: 'U-Z', title: 'Basic Alphabet (U-Z)' },
+        { id: 12, screen: 'QUE-6', title: 'Quiz: U-Z' }
+      ]
+    },
+    numbers: {
+      sequence: [
+        // Similar structure for numbers lessons
+      ]
+    },
+    phrases: {
+      sequence: [
+        // Similar structure for phrases lessons
+      ]
+    }
+  };
+  
+  // Determine current lesson position in the pathway
+  const getCurrentPathwayPosition = () => {
+    const currentPathway = pathwayConfig[lessonType] || pathwayConfig.alphabet;
+    const currentIndex = currentPathway.sequence.findIndex(item => item.id === lessonId);
+    return {
+      currentIndex,
+      currentPathway,
+      hasNext: currentIndex < currentPathway.sequence.length - 1,
+      hasPrevious: currentIndex > 0,
+      nextLesson: currentIndex < currentPathway.sequence.length - 1 ? 
+        currentPathway.sequence[currentIndex + 1] : null,
+      previousLesson: currentIndex > 0 ? 
+        currentPathway.sequence[currentIndex - 1] : null
+    };
+  };
+  
   // Lesson content based on lesson type and ID
   const lessonContent = {
     alphabet: {
@@ -136,7 +179,7 @@ export default function AlphabetLessonScreen({ route = {} }) {
             example: 'apple', 
             sign: require('../../../assets/videos/Thahee.mp4'), 
             signText: 'Hand forms letter A shape',
-            characterVideo: require('../../../assets/videos/Scene - Jackie.mp4')
+            characterVideo: require('../../videos/0323(1).mp4')
           },
           { 
             letter: 'ඇ', 
@@ -165,8 +208,13 @@ export default function AlphabetLessonScreen({ route = {} }) {
         ],
         xpReward: 75
       },
-
-      // Add more phrase lessons here
+      // Add more alphabet lessons here
+    },
+    numbers: {
+      // Numbers lessons would go here
+    },
+    phrases: {
+      // Phrases lessons would go here
     }
   };
   
@@ -431,26 +479,59 @@ export default function AlphabetLessonScreen({ route = {} }) {
     // Haptic feedback
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     
-    // Navigate to the LessonComplete screen
-    navigation.navigate('Lesson', {
+    // First, mark this lesson as completed by navigating to AtoDcom
+    navigation.navigate('AtoDcom', {
       lessonId: lessonId,
       lessonType: lessonType,
       xpEarned: currentLesson.xpReward,
       lessonTitle: currentLesson.title,
-      // Pass the onComplete callback to the LessonComplete screen
       onComplete: () => {
-        // Call the original onComplete callback if provided
-        if (onComplete) {
-          onComplete();
+        // After lesson is marked complete, determine next steps
+        const { hasNext, nextLesson } = getCurrentPathwayPosition();
+        
+        if (hasNext && nextLesson) {
+          // Present an option to continue the learning pathway
+          Alert.alert(
+            "Continue Learning",
+            `Would you like to continue to the next lesson: ${nextLesson.title}?`,
+            [
+              {
+                text: "Not Now",
+                onPress: () => {
+                  // Go back to the lesson menu
+                  if (onComplete) {
+                    onComplete();
+                  } else {
+                    navigation.navigate('AlphabetLessons');
+                  }
+                },
+                style: "cancel"
+              },
+              {
+                text: "Continue",
+                onPress: () => {
+                  // Navigate directly to the next lesson in the pathway
+                  navigation.navigate(nextLesson.screen, {
+                    lessonId: nextLesson.id,
+                    lessonType: lessonType,
+                    // Pass along the completion callback
+                    onComplete: onComplete
+                  });
+                }
+              }
+            ]
+          );
         } else {
-          // Default navigation if no callback provided
-          navigation.navigate('LearningPathway2');
+          // If there's no next lesson in the pathway, go back to the lesson menu
+          if (onComplete) {
+            onComplete();
+          } else {
+            navigation.navigate('AlphabetLessons');
+          }
         }
       }
     });
   };
-
-
   
   // Toggle character visibility
   const toggleCharacter = () => {
@@ -538,6 +619,32 @@ export default function AlphabetLessonScreen({ route = {} }) {
     return null;
   };
   
+  // Show the user's progress in the learning pathway
+  const renderPathwayIndicator = () => {
+    const { currentIndex, currentPathway } = getCurrentPathwayPosition();
+    const totalLessons = currentPathway.sequence.length;
+    
+    return (
+      <View style={styles.pathwayIndicator}>
+        <Text style={styles.pathwayText}>
+          Lesson {currentIndex + 1} of {totalLessons} in pathway
+        </Text>
+        <View style={styles.pathwayDotsContainer}>
+          {currentPathway.sequence.map((item, index) => (
+            <View 
+              key={index}
+              style={[
+                styles.pathwayDot,
+                index === currentIndex && styles.pathwayDotActive,
+                index < currentIndex && styles.pathwayDotCompleted
+              ]}
+            />
+          ))}
+        </View>
+      </View>
+    );
+  };
+  
   return (
     <SafeAreaView style={styles.container} onTouchStart={resetIdleTimer}>
       <View style={styles.header}>
@@ -551,6 +658,9 @@ export default function AlphabetLessonScreen({ route = {} }) {
           </Text>
         </TouchableOpacity>
       </View>
+      
+      {/* Add the pathway indicator below the header */}
+      {renderPathwayIndicator()}
       
       <ProgressBar current={currentCard + 1} total={cards.length} />
       
@@ -644,6 +754,20 @@ export default function AlphabetLessonScreen({ route = {} }) {
           <Text style={styles.successMessage}>
             You've completed the {currentLesson.title} lesson!
           </Text>
+          
+          {/* Show pathway progress on success screen */}
+          <View style={styles.pathwaySuccessInfo}>
+            <Text style={styles.pathwaySuccessText}>
+              {(() => {
+                const { currentIndex, hasNext, currentPathway } = getCurrentPathwayPosition();
+                if (hasNext) {
+                  return `You are ${Math.round(((currentIndex + 1) / currentPathway.sequence.length) * 100)}% through this learning pathway!`;
+                } else {
+                  return "You've completed the entire learning pathway! Congratulations!";
+                }
+              })()}
+            </Text>
+          </View>
         </View>
       )}
       
@@ -679,7 +803,7 @@ export default function AlphabetLessonScreen({ route = {} }) {
             </TouchableOpacity>
             
             <TouchableOpacity
-              style={styles.navButton}
+              style={[styles.navButton, styles.continueButton]}
               onPress={navigateNext}
             >
               <Text style={styles.navButtonText}>Continue</Text>
@@ -690,6 +814,8 @@ export default function AlphabetLessonScreen({ route = {} }) {
     </SafeAreaView>
   );
 }
+
+
 
 // Improved styles for the character component
 // Define your styles here
@@ -949,3 +1075,4 @@ const progressStyles = StyleSheet.create({
     textAlign: 'right',
   },
 });
+
