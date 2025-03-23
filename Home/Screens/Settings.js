@@ -6,8 +6,8 @@ import {
 
 const SettingsScreen = () => {
   // State for dark mode and push notifications
-  const [isDarkMode, setIsDarkMode] = useState(true);
-  const [pushNotifications, setPushNotifications] = useState(true);
+  const [isDarkMode, setIsDarkMode] = useState(false);
+  const [pushNotifications, setPushNotifications] = useState(false);
 
   // State for profile editing
   const [isEditProfileVisible, setIsEditProfileVisible] = useState(false);
