@@ -31,7 +31,7 @@ export default function  GetStartedScreen({ navigate }) {
    
    return (
      <SafeAreaView style={styles.container}>
-       <Text style={styles.levelIndicator}>BASIC LEVEL (LEVEL 4)</Text>
+       <Text style={styles.levelIndicator}>BASIC LEVEL (LEVEL 4)  Sinhala</Text>
        
        <Animated.Text 
          style={[

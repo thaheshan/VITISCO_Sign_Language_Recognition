@@ -92,12 +92,7 @@ import EnglishQuizIntroScreen5 from './LessonScreens/IntroScreenEnglish/Q5';
 import EnglishQuizIntroScreen6 from './LessonScreens/IntroScreenEnglish/Q6';
 
 
-import EnglishScreenComp1 from './LessonScreens/CompletionScreenEnglish/A-Dcom';
-import EnglishScreenComp2 from './LessonScreens/CompletionScreenEnglish/E-Hcom';
-import EnglishScreenComp3 from './LessonScreens/CompletionScreenEnglish/I-Lcom';
-import EnglishScreenComp4 from './LessonScreens/CompletionScreenEnglish/M-Pcom';
-import EnglishScreenComp5 from './LessonScreens/CompletionScreenEnglish/Q-Tcom';
-import EnglishScreenComp6 from './LessonScreens/CompletionScreenEnglish/U-Zcom';
+
 
 
 

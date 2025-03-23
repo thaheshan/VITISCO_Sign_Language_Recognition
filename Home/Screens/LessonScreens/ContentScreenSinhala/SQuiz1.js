@@ -8,7 +8,9 @@ import {
   SafeAreaView, 
   Animated, 
   Easing,
-  Image
+  Image,
+  Alert,
+  Modal
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { Video } from 'expo-av';
@@ -37,7 +39,7 @@ const Timer = ({ timeRemaining }) => {
       <Text 
         style={[
           timerStyles.timeText, 
-          timeRemaining < 5 && timerStyles.timeWarning
+          timeRemaining < 10 && timerStyles.timeWarning
         ]}
       >
         {timeRemaining}s
@@ -77,14 +79,196 @@ const FeedbackMessage = ({ isCorrect, timeUp }) => {
   );
 };
 
-export default function SignLanguageQuizScreen({ navigation, route = {} }) {
-  const { quizId = 1, language = 'tamil', onComplete } = route.params || {};
+// Quiz Intro Screen Component
+const QuizIntroScreen = ({ quizTitle, xpReward, questionsCount, achievements, onStart }) => {
+  return (
+    <View style={introStyles.container}>
+      <View style={introStyles.card}>
+        <Text style={introStyles.title}>Ready for the Quiz?</Text>
+        <Text style={introStyles.quizTitle}>{quizTitle}</Text>
+        
+        <View style={introStyles.infoContainer}>
+          <View style={introStyles.infoItem}>
+            <Text style={introStyles.infoIcon}>🎯</Text>
+            <Text style={introStyles.infoValue}>{questionsCount}</Text>
+            <Text style={introStyles.infoLabel}>Questions</Text>
+          </View>
+          
+          <View style={introStyles.infoDivider} />
+          
+          <View style={introStyles.infoItem}>
+            <Text style={introStyles.infoIcon}>⏱️</Text>
+            <Text style={introStyles.infoValue}>30s</Text>
+            <Text style={introStyles.infoLabel}>Per Question</Text>
+          </View>
+          
+          <View style={introStyles.infoDivider} />
+          
+          <View style={introStyles.infoItem}>
+            <Text style={introStyles.infoIcon}>🌟</Text>
+            <Text style={introStyles.infoValue}>{xpReward}</Text>
+            <Text style={introStyles.infoLabel}>XP Reward</Text>
+          </View>
+        </View>
+        
+        <View style={introStyles.achievementsContainer}>
+          <Text style={introStyles.achievementsTitle}>Complete to earn:</Text>
+          {achievements.map((achievement, index) => (
+            <View key={index} style={introStyles.achievementItem}>
+              <Text style={introStyles.achievementIcon}>{achievement.icon}</Text>
+              <View style={introStyles.achievementTextContainer}>
+                <Text style={introStyles.achievementTitle}>{achievement.title}</Text>
+                <Text style={introStyles.achievementDesc}>{achievement.description}</Text>
+              </View>
+            </View>
+          ))}
+        </View>
+        
+        <TouchableOpacity style={introStyles.startButton} onPress={onStart}>
+          <Text style={introStyles.startButtonText}>START QUIZ</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+};
+
+// Exit Warning Modal Component
+const ExitWarningModal = ({ visible, onStay, onExit }) => {
+  return (
+    <Modal
+      transparent={true}
+      visible={visible}
+      animationType="fade"
+    >
+      <View style={warningStyles.modalOverlay}>
+        <View style={warningStyles.modalContent}>
+          <Text style={warningStyles.warningTitle}>Are you sure?</Text>
+          <Text style={warningStyles.warningText}>
+            You have scored less than 3/5 correct answers. 
+            Exiting now means you won't gain full experience 
+            from this quiz. Would you like to try again?
+          </Text>
+          <View style={warningStyles.buttonContainer}>
+            <TouchableOpacity 
+              style={warningStyles.stayButton}
+              onPress={onStay}
+            >
+              <Text style={warningStyles.stayButtonText}>Stay & Try Again</Text>
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={warningStyles.exitButton}
+              onPress={onExit}
+            >
+              <Text style={warningStyles.exitButtonText}>Exit Anyway</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+    </Modal>
+  );
+};
+
+// Quiz Results Screen Component
+const QuizResultsScreen = ({ correctAnswers, totalQuestions, xpEarned, achievementsUnlocked, onRetry, onExit }) => {
+  const achievementAnimValue = useRef(new Animated.Value(0)).current;
+  
+  useEffect(() => {
+    // Animate achievements appearing
+    Animated.timing(achievementAnimValue, {
+      toValue: 1,
+      duration: 800,
+      delay: 500,
+      easing: Easing.elastic(1),
+      useNativeDriver: true
+    }).start();
+  }, []);
+  
+  return (
+    <View style={resultStyles.container}>
+      <View style={resultStyles.card}>
+        <Text style={resultStyles.title}>Quiz Complete!</Text>
+        
+        <View style={resultStyles.scoreContainer}>
+          <Text style={resultStyles.scoreText}>
+            {correctAnswers}/{totalQuestions}
+          </Text>
+          <Text style={resultStyles.subtitle}>Questions Answered Correctly</Text>
+        </View>
+        
+        <View style={resultStyles.xpContainer}>
+          <Text style={resultStyles.xpText}>🌟 {xpEarned} XP Earned</Text>
+        </View>
+        
+        <View style={resultStyles.statsContainer}>
+          <View style={resultStyles.statItem}>
+            <Text style={resultStyles.statValue}>{Math.round((correctAnswers / totalQuestions) * 100)}%</Text>
+            <Text style={resultStyles.statLabel}>Accuracy</Text>
+          </View>
+          
+          <View style={resultStyles.statDivider} />
+          
+          <View style={resultStyles.statItem}>
+            <Text style={resultStyles.statValue}>{totalQuestions - correctAnswers}</Text>
+            <Text style={resultStyles.statLabel}>Mistakes</Text>
+          </View>
+        </View>
+        
+        {/* Achievement Unlocked Section */}
+        {achievementsUnlocked && achievementsUnlocked.length > 0 && (
+          <Animated.View 
+            style={[
+              resultStyles.achievementsContainer,
+              {
+                opacity: achievementAnimValue,
+                transform: [{
+                  translateY: achievementAnimValue.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [20, 0]
+                  })
+                }]
+              }
+            ]}
+          >
+            <Text style={resultStyles.achievementsTitle}>Achievements Unlocked!</Text>
+            {achievementsUnlocked.map((achievement, index) => (
+              <View key={index} style={resultStyles.achievementItem}>
+                <Text style={resultStyles.achievementIcon}>{achievement.icon}</Text>
+                <View>
+                  <Text style={resultStyles.achievementTitle}>{achievement.title}</Text>
+                  <Text style={resultStyles.achievementDesc}>{achievement.description}</Text>
+                </View>
+              </View>
+            ))}
+          </Animated.View>
+        )}
+        
+        <View style={resultStyles.buttonContainer}>
+          <TouchableOpacity style={resultStyles.retryButton} onPress={onRetry}>
+            <Text style={resultStyles.retryButtonText}>Retry Quiz</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity style={resultStyles.exitButton} onPress={onExit}>
+            <Text style={resultStyles.exitButtonText}>Exit to Menu</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </View>
+  );
+};
+
+export default function SignLanguageQuizScreen({ navigate, ...props }) {
+
+  const { quizId = 1, language = 'tamil', onComplete } =  props || {};
+  const [showIntro, setShowIntro] = useState(true);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [selectedOption, setSelectedOption] = useState(null);
-  const [timeRemaining, setTimeRemaining] = useState(15);
+  const [timeRemaining, setTimeRemaining] = useState(30); // Changed to 30 seconds
   const [isCorrect, setIsCorrect] = useState(null);
   const [score, setScore] = useState(0);
+  const [correctAnswers, setCorrectAnswers] = useState(0);
   const [showResult, setShowResult] = useState(false);
+  const [autoAdvanceTimer, setAutoAdvanceTimer] = useState(null);
+  const [showExitWarning, setShowExitWarning] = useState(false);
   
   const videoRef = useRef(null);
   const timerRef = useRef(null);
@@ -94,12 +278,11 @@ export default function SignLanguageQuizScreen({ navigation, route = {} }) {
   const quizData = {
     tamil: {
       1: {
-        title: "Basic Tamil Signs",
+        title: "Basic Sinhala Signs",
         questions: [
           {
             id: 1,
-            term: "நண்பர்", // Friend in Tamil
-            pronunciation: "Nanbar",
+            term: "අ", // Friend in Tamil
             videoSource: require('../../../assets/videos/Scene - Jackie.mp4'), // Replace with actual video path
             options: [
               { id: 1, imageSource: require('../../../assets/b4.png'), isCorrect: false }, // Replace with actual image paths
@@ -110,8 +293,7 @@ export default function SignLanguageQuizScreen({ navigation, route = {} }) {
           },
           {
             id: 2,
-            term: "வணக்கம்", // Hello in Tamil
-            pronunciation: "Vanakkam",
+            term: " ඉ", // Hello in Tamil
             videoSource: require('../../../assets/videos/Scene - Jackie.mp4'),
             options: [
               { id: 1, imageSource: require('../../../assets/b4.png'), isCorrect: true },
@@ -122,8 +304,7 @@ export default function SignLanguageQuizScreen({ navigation, route = {} }) {
           },
           {
             id: 3,
-            term: "நன்றி", // Thank you in Tamil
-            pronunciation: "Nandri",
+            term: "ආ", // Thank you in Tamil
             videoSource: require('../../../assets/videos/Scene - Jackie.mp4'),
             options: [
               { id: 1, imageSource: require('../../../assets/b4.png'), isCorrect: false },
@@ -134,8 +315,7 @@ export default function SignLanguageQuizScreen({ navigation, route = {} }) {
           },
           {
             id: 4,
-            term: "காலை வணக்கம்", // Good morning in Tamil
-            pronunciation: "Kaalai Vanakkam",
+            term: "ඇ", // Good morning in Tamil
             videoSource: require('../../../assets/videos/Scene - Jackie.mp4'),
             options: [
               { id: 1, imageSource: require('../../../assets/b4.png'), isCorrect: false },
@@ -146,8 +326,7 @@ export default function SignLanguageQuizScreen({ navigation, route = {} }) {
           },
           {
             id: 5,
-            term: "சந்தோஷம்", // Happy in Tamil
-            pronunciation: "Santosham",
+            term: "ඈ", // Happy in Tamil
             videoSource: require('../../../assets/videos/Scene - Jackie.mp4'),
             options: [
               { id: 1, imageSource: require('../../../assets/b4.png'), isCorrect: true },
@@ -157,7 +336,24 @@ export default function SignLanguageQuizScreen({ navigation, route = {} }) {
             ]
           }
         ],
-        xpReward: 40
+        xpReward: 40,
+        achievements: [
+          {
+            icon: '🏆',
+            title: 'Tamil Beginner',
+            description: 'Complete your first Tamil sign language quiz'
+          },
+          {
+            icon: '🔥',
+            title: 'On a Roll',
+            description: 'Answer 3 questions correctly in a row'
+          },
+          {
+            icon: '⚡',
+            title: 'Speed Learner',
+            description: 'Complete the quiz in under 2 minutes'
+          }
+        ]
       }
       // Additional quizzes could be added here
     }
@@ -169,19 +365,63 @@ export default function SignLanguageQuizScreen({ navigation, route = {} }) {
   const questions = currentQuiz.questions;
   const currentQ = questions[currentQuestion];
   
+  // Determine achievements unlocked based on performance
+  const determineAchievementsUnlocked = () => {
+    const achievements = [];
+    
+    // Always unlock the first achievement for completing the quiz
+    achievements.push(currentQuiz.achievements[0]);
+    
+    // If score is perfect or near perfect, unlock the second achievement
+    if (correctAnswers >= 3) {
+      achievements.push(currentQuiz.achievements[1]);
+    }
+    
+    // For the third achievement, we would need to track time, but for demo purposes:
+    // Let's say if they got at least 4 correct, they did it quickly
+    if (correctAnswers >= 4) {
+      achievements.push(currentQuiz.achievements[2]);
+    }
+    
+    return achievements;
+  };
+  
+  // Start the quiz
+  const handleStartQuiz = () => {
+    setShowIntro(false);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+  };
+  
   // Animation for options appearing
   useEffect(() => {
-    Animated.timing(optionAnim, {
-      toValue: 1,
-      duration: 500,
-      useNativeDriver: true,
-    }).start();
-  }, [currentQuestion]);
+    if (!showIntro && !showResult) {
+      Animated.timing(optionAnim, {
+        toValue: 1,
+        duration: 500,
+        useNativeDriver: true,
+      }).start();
+    }
+  }, [currentQuestion, showIntro, showResult]);
+  
+  // Clear all timers - utility function
+  const clearAllTimers = () => {
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+    
+    if (autoAdvanceTimer) {
+      clearTimeout(autoAdvanceTimer);
+      setAutoAdvanceTimer(null);
+    }
+  };
   
   // Initialize timer and reset states when question changes
   useEffect(() => {
+    if (showIntro || showResult) return;
+    
     // Reset states for new question
-    setTimeRemaining(15);
+    setTimeRemaining(30); // Set to 30 seconds
     setSelectedOption(null);
     setIsCorrect(null);
     optionAnim.setValue(0);
@@ -215,9 +455,7 @@ export default function SignLanguageQuizScreen({ navigation, route = {} }) {
     
     // Cleanup on unmount or question change
     return () => {
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-      }
+      clearAllTimers();
       
       if (videoRef.current) {
         videoRef.current.pauseAsync().catch(error => {
@@ -225,7 +463,7 @@ export default function SignLanguageQuizScreen({ navigation, route = {} }) {
         });
       }
     };
-  }, [currentQuestion]);
+  }, [currentQuestion, showIntro, showResult]);
   
   // Handle when time runs out
   const handleTimeUp = () => {
@@ -239,6 +477,11 @@ export default function SignLanguageQuizScreen({ navigation, route = {} }) {
       // Highlight the correct answer but mark as incorrect response
       setSelectedOption(correctOption.id);
       setIsCorrect(false);
+      
+      // Set timer to automatically move to next question after 3 seconds
+      setAutoAdvanceTimer(setTimeout(() => {
+        moveToNextQuestion();
+      }, 3000));
     }
   };
   
@@ -260,17 +503,25 @@ export default function SignLanguageQuizScreen({ navigation, route = {} }) {
     const correct = selectedOpt.isCorrect;
     setIsCorrect(correct);
     
-    // Provide haptic feedback based on correctness
+    // Update correct answers count
     if (correct) {
+      setCorrectAnswers(prev => prev + 1);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       setScore(prev => prev + currentQuiz.xpReward / questions.length);
     } else {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     }
+    
+    // Set timer to automatically move to next question after 2 seconds
+    setAutoAdvanceTimer(setTimeout(() => {
+      moveToNextQuestion();
+    }, 2000));
   };
   
   // Move to next question or complete quiz
-  const handleContinue = () => {
+  const moveToNextQuestion = () => {
+    clearAllTimers();
+    
     if (currentQuestion < questions.length - 1) {
       // Provide haptic feedback for navigation
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -279,36 +530,62 @@ export default function SignLanguageQuizScreen({ navigation, route = {} }) {
       setCurrentQuestion(currentQuestion + 1);
     } else {
       // Complete the quiz
-      setShowResult(true);
-      
-      // Provide strong haptic feedback for completion
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      
-      // Navigate to completion screen after a delay
-      setTimeout(() => {
-        navigation.navigate('LessonComplete', {
-          quizId: quizId,
-          language: language,
-          score: score,
-          xpEarned: Math.round(score),
-          totalQuestions: questions.length,
-          quizTitle: currentQuiz.title,
-          onComplete
-        });
-      }, 1500);
+      completeQuiz();
     }
   };
   
-  // Animation styles
-  const opacityAnim = optionAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0, 1]
-  });
+  // Handle quiz completion
+  const completeQuiz = () => {
+    setShowResult(true);
+    
+    // Provide strong haptic feedback for completion
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+  };
   
-  const translateYAnim = optionAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [20, 0]
-  });
+  // Handle retry quiz
+  const handleRetryQuiz = () => {
+    setCurrentQuestion(0);
+    setScore(0);
+    setCorrectAnswers(0);
+    setShowResult(false);
+  };
+  
+  // Handle close button or exit functionality
+  const handleExitAttempt = () => {
+    // Check if user has completed the quiz and their score
+    if (correctAnswers < 3 && (showResult || currentQuestion > 0)) {
+      // Show warning modal if score is less than 3/5
+      setShowExitWarning(true);
+    } else {
+      // Exit directly if score is 3 or higher or quiz not started
+      navigateToLearningPathway();
+    }
+  };
+
+  // Stay in quiz and retry
+  const handleStayInQuiz = () => {
+    setShowExitWarning(false);
+    handleRetryQuiz();
+  };
+
+  // Exit to learning pathway despite low score
+  const navigateToLearningPathway = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    
+    // If onComplete is provided, call it (similar to navigateNext in the second file)
+    if (onComplete) {
+      onComplete();
+    } else {
+      // Otherwise navigate to the LearningPathway screen
+      navigate('LearningPathway');
+    }
+  };
+  
+  // Calculate XP earned
+  const xpEarned = Math.round((correctAnswers / questions.length) * currentQuiz.xpReward);
+  
+  // Determine achievements unlocked for results screen
+  const achievementsUnlocked = showResult ? determineAchievementsUnlocked() : [];
   
   return (
     <SafeAreaView style={styles.container}>
@@ -320,218 +597,168 @@ export default function SignLanguageQuizScreen({ navigation, route = {} }) {
         
         <TouchableOpacity 
           style={styles.closeButton}
-          onPress={() => navigation.goBack()}
+          onPress={handleExitAttempt}
         >
           <Text style={styles.closeButtonText}>✕</Text>
         </TouchableOpacity>
       </View>
       
-      {/* Progress bar */}
-      <ProgressBar current={currentQuestion + 1} total={questions.length} />
-      
-      {!showResult ? (
-        <View style={styles.contentContainer}>
-          {/* Question */}
-          <View style={styles.questionContainer}>
-            <Text style={styles.questionText}>
-              select the correct sign for '{currentQ.term}'
-            </Text>
-            <Text style={styles.pronunciationText}>
-              Pronunciation: {currentQ.pronunciation}
-            </Text>
-          </View>
-          
-          {/* Video demonstration */}
-          <View style={styles.videoContainer}>
-            <Video
-              ref={videoRef}
-              source={currentQ.videoSource}
-              style={styles.video}
-              resizeMode="contain"
-              isLooping
-              shouldPlay
-              useNativeControls={false}
-            />
-            <View style={styles.videoBadge}>
-              <View style={styles.recordingDot} />
-              <Text style={styles.videoBadgeText}>Watch Demo</Text>
-            </View>
-          </View>
-          
-          {/* Timer */}
-          <Timer timeRemaining={timeRemaining} />
-          
-          {/* Options grid */}
-          <View style={styles.optionsGrid}>
-            {currentQ.options.map((option) => (
-              <Animated.View 
-                key={option.id}
-                style={[
-                  styles.optionWrapper,
-                  {
-                    opacity: opacityAnim,
-                    transform: [{ translateY: translateYAnim }]
-                  }
-                ]}
-              >
-                <TouchableOpacity
-                  style={[
-                    styles.optionButton,
-                    selectedOption === option.id && option.isCorrect && styles.correctOption,
-                    selectedOption === option.id && !option.isCorrect && styles.incorrectOption,
-                    selectedOption !== null && option.isCorrect && styles.correctOption,
-                  ]}
-                  onPress={() => handleOptionSelect(option.id)}
-                  disabled={selectedOption !== null}
-                >
-                  <Image 
-                    source={option.imageSource}
-                    style={styles.optionImage}
-                    resizeMode="contain"
-                  />
-                  
-                  {/* Indicator for correct/incorrect */}
-                  {selectedOption !== null && option.isCorrect && (
-                    <View style={styles.correctIndicator}>
-                      <Text style={styles.indicatorText}>✓</Text>
-                    </View>
-                  )}
-                  
-                  {selectedOption === option.id && !option.isCorrect && (
-                    <View style={styles.incorrectIndicator}>
-                      <Text style={styles.indicatorText}>✗</Text>
-                    </View>
-                  )}
-                </TouchableOpacity>
-              </Animated.View>
-            ))}
-          </View>
-          
-          {/* Feedback message */}
-          <FeedbackMessage 
-            isCorrect={isCorrect} 
-            timeUp={timeRemaining === 0} 
-          />
-          
-          {/* Continue button */}
-          <TouchableOpacity
-            style={[
-              styles.continueButton,
-              (selectedOption === null && timeRemaining > 0) ? styles.disabledButton : {}
-            ]}
-            onPress={handleContinue}
-            disabled={selectedOption === null && timeRemaining > 0}
-          >
-            <Text style={styles.continueButtonText}>CONTINUE</Text>
-          </TouchableOpacity>
-        </View>
+      {showIntro ? (
+        <QuizIntroScreen 
+          quizTitle={currentQuiz.title}
+          xpReward={currentQuiz.xpReward}
+          questionsCount={questions.length}
+          achievements={currentQuiz.achievements}
+          onStart={handleStartQuiz}
+        />
       ) : (
-        <View style={styles.resultContainer}>
-          <Text style={styles.resultTitle}>Quiz Complete!</Text>
-          <Text style={styles.resultScore}>
-            Score: {Math.round(score)} XP
-          </Text>
-          <Text style={styles.resultMessage}>
-            Great job! Redirecting to results...
-          </Text>
-        </View>
+        <>
+          {/* Progress bar (only show if not in intro screen) */}
+          <ProgressBar current={currentQuestion + 1} total={questions.length} />
+          
+          {!showResult ? (
+            <View style={styles.contentContainer}>
+              {/* Question */}
+              <View style={styles.questionContainer}>
+                <Text style={styles.questionText}>
+                  Select the correct sign for '{currentQ.term}'
+                </Text>
+                <Text style={styles.pronunciationText}>
+                  Pronunciation: {currentQ.pronunciation}
+                </Text>
+              </View>
+              
+              {/* Video demonstration */}
+              <View style={styles.videoContainer}>
+                <Video
+                  ref={videoRef}
+                  source={currentQ.videoSource}
+                  style={styles.video}
+                  resizeMode="contain"
+                  isLooping
+                  shouldPlay
+                  useNativeControls={false}
+                />
+                <View style={styles.videoBadge}>
+                  <View style={styles.recordingDot} />
+                  <Text style={styles.videoBadgeText}>Watch Demo</Text>
+                </View>
+              </View>
+              
+              {/* Timer */}
+              <Timer timeRemaining={timeRemaining} />
+              
+              {/* Options grid */}
+              <View style={styles.optionsGrid}>
+                {currentQ.options.map((option) => (
+                  <Animated.View 
+                    key={option.id}
+                    style={[
+                      styles.optionWrapper,
+                      {
+                        opacity: optionAnim,
+                        transform: [{ 
+                          translateY: optionAnim.interpolate({
+                            inputRange: [0, 1],
+                            outputRange: [20, 0]
+                          }) 
+                        }]
+                      }
+                    ]}
+                  >
+                    <TouchableOpacity
+                      style={[
+                        styles.optionButton,
+                        selectedOption === option.id && option.isCorrect && styles.correctOption,
+                        selectedOption === option.id && !option.isCorrect && styles.incorrectOption,
+                        selectedOption !== null && option.isCorrect && styles.correctOption,
+                      ]}
+                      onPress={() => handleOptionSelect(option.id)}
+                      disabled={selectedOption !== null}
+                    >
+                      <Image 
+                        source={option.imageSource}
+                        style={styles.optionImage}
+                        resizeMode="contain"
+                      />
+                      
+                      {/* Indicator for correct/incorrect */}
+                      {selectedOption !== null && option.isCorrect && (
+                        <View style={styles.correctIndicator}>
+                          <Text style={styles.indicatorText}>✓</Text>
+                        </View>
+                      )}
+                      
+                      {selectedOption === option.id && !option.isCorrect && (
+                        <View style={styles.incorrectIndicator}>
+                          <Text style={styles.indicatorText}>✗</Text>
+                        </View>
+                      )}
+                    </TouchableOpacity>
+                  </Animated.View>
+                ))}
+              </View>
+              
+              {/* Feedback message */}
+              <FeedbackMessage 
+                isCorrect={isCorrect} 
+                timeUp={timeRemaining === 0} 
+              />
+              
+              {/* Manual continue button (only visible when timeRemaining > 0 and no answer selected) */}
+              {selectedOption === null && timeRemaining > 0 && (
+                <TouchableOpacity
+                  style={[styles.skipButton]}
+                  onPress={() => {
+                    handleTimeUp();
+                  }}
+                >
+                  <Text style={styles.skipButtonText}>SKIP</Text>
+                </TouchableOpacity>
+              )}
+              
+              {/* Skip to results button (only visible when answer is selected or time is up) */}
+              {(selectedOption !== null || timeRemaining === 0) && currentQuestion < questions.length - 1 && (
+                <TouchableOpacity
+                  style={styles.continueButton}
+                  onPress={moveToNextQuestion}
+                >
+                  <Text style={styles.continueButtonText}>NEXT QUESTION</Text>
+                </TouchableOpacity>
+              )}
+              
+              {/* Finish quiz button (only visible on last question when answered) */}
+              {(selectedOption !== null || timeRemaining === 0) && currentQuestion === questions.length - 1 && (
+                <TouchableOpacity
+                  style={styles.continueButton}
+                  onPress={completeQuiz}
+                >
+                  <Text style={styles.continueButtonText}>FINISH QUIZ</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          ) : (
+            <QuizResultsScreen 
+              correctAnswers={correctAnswers}
+              totalQuestions={questions.length}
+              xpEarned={xpEarned}
+              achievementsUnlocked={achievementsUnlocked}
+              onRetry={handleRetryQuiz}
+              onExit={handleExitAttempt}
+            />
+          )}
+        </>
       )}
+
+      {/* Exit Warning Modal */}
+      <ExitWarningModal 
+        visible={showExitWarning}
+        onStay={handleStayInQuiz}
+        onExit={navigateToLearningPathway}
+      />
     </SafeAreaView>
   );
 }
-
-// Progress Bar Styles
-const progressStyles = StyleSheet.create({
-  container: {
-    width: '100%',
-    marginBottom: 15,
-  },
-  progressBarContainer: {
-    height: 8,
-    backgroundColor: '#ffffff',
-    borderRadius: 4,
-    overflow: 'hidden',
-  },
-  progressBar: {
-    height: '100%',
-    backgroundColor: '#5d5b8d',
-    borderRadius: 4,
-  },
-  progressText: {
-    textAlign: 'right',
-    marginTop: 4,
-    fontSize: 14,
-    color: '#383773',
-    fontWeight: '500',
-  }
-});
-
-// Timer Styles
-const timerStyles = StyleSheet.create({
-  container: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'white',
-    paddingHorizontal: 15,
-    paddingVertical: 8,
-    borderRadius: 20,
-    alignSelf: 'center',
-    marginVertical: 10,
-  },
-  clockIcon: {
-    fontSize: 16,
-    marginRight: 5,
-  },
-  timeText: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: '#383773',
-  },
-  timeWarning: {
-    color: '#ff5252',
-  }
-});
-
-// Feedback Message Styles
-const feedbackStyles = StyleSheet.create({
-  container: {
-    padding: 12,
-    borderRadius: 8,
-    marginVertical: 15,
-    width: '100%',
-  },
-  correctContainer: {
-    backgroundColor: 'rgba(76, 175, 80, 0.2)',
-  },
-  incorrectContainer: {
-    backgroundColor: 'rgba(255, 82, 82, 0.2)',
-  },
-  timeUpContainer: {
-    backgroundColor: 'rgba(255, 193, 7, 0.2)',
-    padding: 12,
-    borderRadius: 8,
-    marginVertical: 15,
-    width: '100%',
-  },
-  text: {
-    fontSize: 14,
-    fontWeight: '500',
-    textAlign: 'center',
-  },
-  correctText: {
-    color: '#2e7d32',
-  },
-  incorrectText: {
-    color: '#c62828',
-  },
-  timeUpText: {
-    fontSize: 14,
-    fontWeight: '500',
-    textAlign: 'center',
-    color: '#f57f17',
-  }
-});
 
 // Main Component Styles
 const styles = StyleSheet.create({
@@ -583,6 +810,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#383773',
     textAlign: 'center',
+    textTransform: 'capitalize',
   },
   pronunciationText: {
     fontSize: 14,
@@ -697,35 +925,410 @@ const styles = StyleSheet.create({
     shadowRadius: 3,
     elevation: 3,
   },
-  disabledButton: {
+  skipButton: {
     backgroundColor: '#9291b9',
-    opacity: 0.7,
+    width: '100%',
+    paddingVertical: 15,
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 'auto',
+    marginBottom: 10,
+  },
+  skipButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
   continueButtonText: {
     color: 'white',
     fontSize: 16,
     fontWeight: 'bold',
-  },
-  resultContainer: {
+  }
+});
+
+// Intro Screen Styles
+const introStyles = StyleSheet.create({
+  container: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    paddingHorizontal: 20,
   },
-  resultTitle: {
+  card: {
+    backgroundColor: 'white',
+    borderRadius: 16,
+    padding: 24,
+    width: '100%',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  title: {
     fontSize: 24,
     fontWeight: 'bold',
     color: '#383773',
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  quizTitle: {
+    fontSize: 16,
+    color: '#5d5b8d',
+    textAlign: 'center',
     marginBottom: 20,
   },
-  resultScore: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#5d5b8d',
-    marginBottom: 15,
+  infoContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    backgroundColor: '#f8f8ff',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 20,
   },
-  resultMessage: {
-    fontSize: 16,
+  infoItem: {
+    alignItems: 'center',
+    flex: 1,
+  },
+  infoIcon: {
+    fontSize: 22,
+    marginBottom: 8,
+  },
+  infoValue: {
+    fontSize: 18,
+    fontWeight: 'bold',
     color: '#383773',
-    textAlign: 'center',
+  },
+  infoLabel: {
+    fontSize: 12,
+    color: '#666',
+  },
+  infoDivider: {
+    width: 1,
+    backgroundColor: '#ddd',
+    height: '80%',
+    alignSelf: 'center',
+  },
+  achievementsContainer: {
+    marginBottom: 20,
+  },
+  achievementsTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#383773',
+    marginBottom: 12,
+  },
+  achievementItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f0f0ff',
+    borderRadius: 10,
+    padding: 12,
+    marginBottom: 8,
+  },
+  achievementIcon: {
+    fontSize: 24,
+    marginRight: 12,
+  },
+  achievementTextContainer: {
+    flex: 1,
+  },
+  achievementTitle: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#383773',
+  },
+  achievementDesc: {
+    fontSize: 12,
+    color: '#666',
+  },
+  startButton: {
+    backgroundColor: '#5d5b8d',
+    paddingVertical: 16,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  startButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: 'bold',
   }
 });
+
+const warningStyles = StyleSheet.create({
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalContent: {
+    backgroundColor: 'white',
+    borderRadius: 16,
+    padding: 24,
+    width: '85%',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  warningTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#383773',
+    textAlign: 'center',
+    marginBottom: 12,
+  },
+  warningText: {
+    fontSize: 16,
+    color: '#666',
+    lineHeight: 22,
+    textAlign: 'center',
+    marginBottom: 24,
+  },
+  buttonContainer: {
+    flexDirection: 'column',
+    width: '100%',
+  },
+  stayButton: {
+    backgroundColor: '#5d5b8d',
+    paddingVertical: 14,
+    borderRadius: 10,
+    marginBottom: 12,
+    alignItems: 'center',
+  },
+  stayButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  exitButton: {
+    backgroundColor: '#f0f0ff',
+    paddingVertical: 14,
+    borderRadius: 10,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#ddd',
+  },
+  exitButtonText: {
+    color: '#383773',
+    fontSize: 16,
+    fontWeight: '600',
+  }
+});
+
+// Progress Bar Styles
+const progressStyles = StyleSheet.create({
+  container: {
+    width: '100%',
+    marginBottom: 15,
+  },
+  progressBarContainer: {
+    height: 8,
+    backgroundColor: '#ffffff',
+    borderRadius: 4,
+    overflow: 'hidden',
+  },
+  progressBar: {
+    height: '100%',
+    backgroundColor: '#5d5b8d',
+    borderRadius: 4,
+  },
+  progressText: {
+    textAlign: 'right',
+    marginTop: 4,
+    fontSize: 14,
+    color: '#383773',
+    fontWeight: '500',
+  }
+});
+
+// Timer Styles
+const timerStyles = StyleSheet.create({
+  container: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'white',
+    paddingHorizontal: 15,
+    paddingVertical: 8,
+    borderRadius: 20,
+    alignSelf: 'center',
+    marginVertical: 10,
+  },
+  clockIcon: {
+    fontSize: 16,
+    marginRight: 5,
+  },
+  timeText: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#383773',
+  },
+  timeWarning: {
+    color: '#ff5252',
+  }
+});
+
+// Feedback Message Styles
+const feedbackStyles = StyleSheet.create({
+  container: {
+    padding: 12,
+    borderRadius: 8,
+    marginVertical: 15,
+    width: '100%',
+  },
+  correctContainer: {
+    backgroundColor: 'rgba(76, 175, 80, 0.2)',
+  },
+  incorrectContainer: {
+    backgroundColor: 'rgba(255, 82, 82, 0.2)',
+  },
+  timeUpContainer: {
+    backgroundColor: 'rgba(255, 193, 7, 0.2)',
+    padding: 12,
+    borderRadius: 8,
+    marginVertical: 15,
+    width: '100%',
+  },
+  text: {
+    fontSize: 14,
+    fontWeight: '500',
+    textAlign: 'center',
+  },
+  correctText: {
+    color: '#2e7d32',
+  },
+  incorrectText: {
+    color: '#c62828',
+  },
+  timeUpText: {
+    fontSize: 14,
+    fontWeight: '500',
+    textAlign: 'center',
+    color: '#f57f17',
+  }
+});
+
+// Results Screen Styles
+const resultStyles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+  },
+  card: {
+    backgroundColor: 'white',
+    borderRadius: 16,
+    padding: 24,
+    width: '100%',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#383773',
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  scoreContainer: {
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  scoreText: {
+    fontSize: 36,
+    fontWeight: 'bold',
+    color: '#5d5b8d',
+  },
+  subtitle: {
+    fontSize: 14,
+    color: '#666',
+    textAlign: 'center',
+  },
+  xpContainer: {
+    backgroundColor: '#f0f0ff',
+    borderRadius: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    marginBottom: 20,
+    alignItems: 'center',
+  },
+  xpText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#383773',
+  },
+  statsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginBottom: 24,
+    paddingVertical: 12,
+    backgroundColor: '#f8f8ff',
+    borderRadius: 12,
+  },
+  statItem: {
+    alignItems: 'center',
+    flex: 1,
+  },
+  statValue: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#383773',
+  },
+  statLabel: {
+    fontSize: 12,
+    color: '#666',
+  },
+  statDivider: {
+    width: 1,
+    backgroundColor: '#ddd',
+  },
+  buttonContainer: {
+    marginTop: 10,
+  },
+  retryButton: {
+    backgroundColor: '#5d5b8d',
+    paddingVertical: 15,
+    borderRadius: 10,
+    marginBottom: 12,
+    alignItems: 'center',
+  },
+  retryButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  exitButton: {
+    backgroundColor: '#f0f0ff',
+    paddingVertical: 15,
+    borderRadius: 10,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#ddd',
+  },
+  exitButtonText: {
+    color: '#383773',
+    fontSize: 16,
+    fontWeight: '600',
+  }
+});
+
+
+
+
