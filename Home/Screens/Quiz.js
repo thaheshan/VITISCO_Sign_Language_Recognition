@@ -10,8 +10,11 @@ import {
   ScrollView,
   Alert,
   Dimensions,
-  BackHandler
+  BackHandler,
+  ActivityIndicator
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { fetchQuizQuestions, submitQuizAnswers, fetchLanguages, fetchCategories } from '../services/api';
 
 const { width, height } = Dimensions.get('window');
 
@@ -19,9 +22,56 @@ const QuizApp = () => {
   const [showStartScreen, setShowStartScreen] = useState(true);
   const [showLanguageSelection, setShowLanguageSelection] = useState(true);
   const [selectedLanguage, setSelectedLanguage] = useState(null);
+  const [selectedLanguageId, setSelectedLanguageId] = useState(null);
+  const [selectedCategoryId, setSelectedCategoryId] = useState(1); // Default to category 1 (assuming it's the alphabet)
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState(null);
   const [quizHistory, setQuizHistory] = useState([]);
+  const [questions, setQuestions] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [userId, setUserId] = useState(null);
+  const [languages, setLanguages] = useState([]);
+  const [loadingLanguages, setLoadingLanguages] = useState(true);
+
+  // Initialize userId on first load
+  useEffect(() => {
+    const initializeUser = async () => {
+      try {
+        // Check if userId exists in AsyncStorage
+        let storedUserId = await AsyncStorage.getItem('userId');
+        
+        if (!storedUserId) {
+          // If no userId, generate a random one and store it
+          storedUserId = `user_${Math.random().toString(36).substring(2, 15)}`;
+          await AsyncStorage.setItem('userId', storedUserId);
+        }
+        
+        setUserId(storedUserId);
+        
+        // Fetch available languages
+        await loadLanguages();
+      } catch (error) {
+        console.error('Error initializing user:', error);
+        setError('Failed to initialize. Please restart the app.');
+      }
+    };
+    
+    initializeUser();
+  }, []);
+
+  // Load available languages
+  const loadLanguages = async () => {
+    try {
+      setLoadingLanguages(true);
+      const languagesData = await fetchLanguages();
+      setLanguages(languagesData);
+    } catch (error) {
+      console.error('Error loading languages:', error);
+    } finally {
+      setLoadingLanguages(false);
+    }
+  };
 
   // Handle Android back button
   useEffect(() => {
@@ -45,7 +95,43 @@ const QuizApp = () => {
     return () => backHandler.remove();
   }, [showStartScreen, showLanguageSelection, currentQuestion]);
 
-  // Quiz questions data for english letters 
+  // Fetch quiz questions from API when language is selected
+  const fetchQuestions = async () => {
+    if (!selectedLanguageId || !userId) return;
+    
+    try {
+      setLoading(true);
+      setError(null);
+      const questionsData = await fetchQuizQuestions(selectedLanguageId, selectedCategoryId, userId);
+      
+      // Transform API response to match the expected format
+      const formattedQuestions = questionsData.map(q => ({
+        id: q.quizId,
+        title: q.question,
+        questionText: q.questionText,
+        options: [
+          { id: 'A', text: q.optionA },
+          { id: 'B', text: q.optionB },
+          { id: 'C', text: q.optionC },
+          { id: 'D', text: q.optionD },
+        ].filter(option => option.text), // Remove any null options
+      }));
+      
+      setQuestions(formattedQuestions);
+    } catch (error) {
+      console.error('Error fetching questions:', error);
+      setError('Failed to load questions. Please try again.');
+      
+      // Fallback to sample questions if API fails
+      if (selectedLanguage === 'english') {
+        setQuestions(englishQuestions);
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Sample quiz questions data for english letters (fallback)
   const englishQuestions = [
     {
       id: 1,
@@ -68,50 +154,19 @@ const QuizApp = () => {
       ],
       gridView: true,
     },
-    {
-      id: 3,
-      title: 'Select the correct sign for C',
-      options: [
-        { image: require('../assets/adaptive-icon.png') },
-        { image: require('../assets/adaptive-icon.png') },
-        { image: require('../assets/adaptive-icon.png') },
-        { image: require('../assets/adaptive-icon.png') },
-      ],
-      gridView: true,
-    },
-    {
-      id: 4,
-      title: 'Select the correct sign for D',
-      image: require('../assets/adaptive-icon.png'),
-      options: [
-        { id: 'A', text: 'A' },
-        { id: 'B', text: 'C' },
-        { id: 'C', text: 'B' },
-      ],
-    },
-
+    // More sample questions...
   ];
 
-  // Get questions based on selected language
-  const getQuestions = () => {
-    if (selectedLanguage === 'english') {
-      return englishQuestions;
-    } else if (selectedLanguage === 'tamil') {
-      return tamilQuestions;
-    }
-    return [];
-  };
-
-  const questions = getQuestions();
-
   // Handle language selection
-  const selectLanguage = (language) => {
+  const selectLanguage = (language, languageId) => {
     setSelectedLanguage(language);
+    setSelectedLanguageId(languageId);
     setShowLanguageSelection(false);
   };
 
   // Start the quiz
-  const startQuiz = () => {
+  const startQuiz = async () => {
+    await fetchQuestions();
     setCurrentQuestion(0);
     setSelectedAnswer(null);
     setQuizHistory([]);
@@ -122,17 +177,40 @@ const QuizApp = () => {
   const handleContinue = () => {
     // Update quiz history
     const updatedHistory = [...quizHistory];
-    updatedHistory[currentQuestion] = selectedAnswer;
+    updatedHistory[currentQuestion] = {
+      questionId: questions[currentQuestion].id,
+      selectedAnswerIndex: selectedAnswer,
+      selectedAnswerText: questions[currentQuestion].options[selectedAnswer]?.text || 
+                          questions[currentQuestion].options[selectedAnswer]?.id
+    };
     setQuizHistory(updatedHistory);
 
     if (currentQuestion < questions.length - 1) {
       setCurrentQuestion(currentQuestion + 1);
       setSelectedAnswer(null);
     } else {
+      // Submit answers to the API
+      submitQuizResults(updatedHistory);
+    }
+  };
+
+  // Submit quiz results to the API
+  const submitQuizResults = async (answers) => {
+    try {
+      setLoading(true);
+      // Prepare the answers in the format expected by the API
+      const formattedAnswers = answers.map(answer => ({
+        quizId: answer.questionId,
+        selectedAnswer: answer.selectedAnswerIndex + 1 // Assuming backend expects 1-based index
+      }));
+      
+      // Submit answers to API
+      const result = await submitQuizAnswers(selectedLanguageId, userId, formattedAnswers);
+      
       // Show completion alert with options
       Alert.alert(
         "Quiz Completed!",
-        "Congratulations! You've completed the quiz.",
+        `Congratulations! You've completed the quiz. Your score: ${result.score || 'N/A'}`,
         [
           { 
             text: "Review Answers", 
@@ -150,6 +228,23 @@ const QuizApp = () => {
         ],
         { cancelable: false }
       );
+    } catch (error) {
+      console.error('Error submitting quiz results:', error);
+      Alert.alert(
+        "Quiz Completed",
+        "Your quiz has been completed, but we couldn't submit your results. Please try again later.",
+        [
+          { 
+            text: "Back to Start", 
+            onPress: () => {
+              setShowStartScreen(true);
+            }
+          }
+        ],
+        { cancelable: false }
+      );
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -167,7 +262,7 @@ const QuizApp = () => {
               const prevQuestion = currentQuestion - 1;
               setCurrentQuestion(prevQuestion);
               // Restore previous answer if available
-              setSelectedAnswer(quizHistory[prevQuestion] !== undefined ? quizHistory[prevQuestion] : null);
+              setSelectedAnswer(quizHistory[prevQuestion]?.selectedAnswerIndex || null);
             } 
           }
         ]
@@ -212,6 +307,34 @@ const QuizApp = () => {
     );
   };
 
+  // Loading screen
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#6A5ACD" />
+        <Text style={styles.loadingText}>Loading...</Text>
+      </SafeAreaView>
+    );
+  }
+
+  // Error screen
+  if (error) {
+    return (
+      <SafeAreaView style={styles.errorContainer}>
+        <Text style={styles.errorText}>{error}</Text>
+        <TouchableOpacity 
+          style={styles.retryButton}
+          onPress={() => {
+            setError(null);
+            fetchQuestions();
+          }}
+        >
+          <Text style={styles.retryButtonText}>Retry</Text>
+        </TouchableOpacity>
+      </SafeAreaView>
+    );
+  }
+
   // Language Selection Screen
   if (showLanguageSelection) {
     return (
@@ -225,19 +348,38 @@ const QuizApp = () => {
         </View>
         
         <View style={styles.languageButtonsContainer}>
-          <TouchableOpacity 
-            style={styles.languageButton} 
-            onPress={() => selectLanguage('english')}
-          >
-            <Text style={styles.languageButtonText}>English</Text>
-          </TouchableOpacity>
-          
-          <TouchableOpacity 
-            style={styles.languageButton}
-            onPress={() => selectLanguage('tamil')}
-          >
-            <Text style={styles.languageButtonText}>Tamil</Text>
-          </TouchableOpacity>
+          {loadingLanguages ? (
+            <ActivityIndicator size="large" color="white" />
+          ) : (
+            languages.length > 0 ? (
+              languages.map(lang => (
+                <TouchableOpacity 
+                  key={lang.languageId}
+                  style={styles.languageButton} 
+                  onPress={() => selectLanguage(lang.languageName.toLowerCase(), lang.languageId)}
+                >
+                  <Text style={styles.languageButtonText}>{lang.languageName}</Text>
+                </TouchableOpacity>
+              ))
+            ) : (
+              // Fallback buttons if API fails
+              <>
+                <TouchableOpacity 
+                  style={styles.languageButton} 
+                  onPress={() => selectLanguage('english', 1)}
+                >
+                  <Text style={styles.languageButtonText}>English</Text>
+                </TouchableOpacity>
+                
+                <TouchableOpacity 
+                  style={styles.languageButton}
+                  onPress={() => selectLanguage('tamil', 2)}
+                >
+                  <Text style={styles.languageButtonText}>Tamil</Text>
+                </TouchableOpacity>
+              </>
+            )
+          )}
         </View>
       </SafeAreaView>
     );
@@ -259,7 +401,9 @@ const QuizApp = () => {
           </TouchableOpacity>
           
           <Text style={styles.enhancedHeaderTitle}>
-            {selectedLanguage === 'english' ? 'English Sign Language' : 'Tamil Sign Language'}
+            {selectedLanguage === 'english' ? 'English Sign Language' : 
+             selectedLanguage === 'tamil' ? 'Tamil Sign Language' : 
+             `${selectedLanguage} Sign Language`}
           </Text>
           
           <View style={{width: 40}} />
@@ -318,6 +462,14 @@ const QuizApp = () => {
 
   // Render the current question with enhanced styling
   const renderQuestion = () => {
+    if (!questions || questions.length === 0) {
+      return (
+        <View style={styles.noQuestionsContainer}>
+          <Text style={styles.noQuestionsText}>No questions available</Text>
+        </View>
+      );
+    }
+
     const question = questions[currentQuestion];
 
     return (
@@ -328,6 +480,10 @@ const QuizApp = () => {
         <View style={styles.questionContainer}>
           {question.title && (
             <Text style={styles.questionTitle}>{question.title}</Text>
+          )}
+          
+          {question.questionText && (
+            <Text style={styles.questionSubtitle}>{question.questionText}</Text>
           )}
           
           {question.image && (
@@ -408,7 +564,9 @@ const QuizApp = () => {
         </TouchableOpacity>
         
         <Text style={styles.enhancedHeaderTitle}>
-          {selectedLanguage === 'english' ? 'Sign Language Quiz' : 'Tamil Sign Language Quiz'}
+          {selectedLanguage === 'english' ? 'Sign Language Quiz' : 
+           selectedLanguage === 'tamil' ? 'Tamil Sign Language Quiz' : 
+           `${selectedLanguage} Sign Language Quiz`}
         </Text>
         
         <TouchableOpacity style={styles.closeButtonContainer} onPress={handleQuit}>
@@ -439,6 +597,59 @@ const QuizApp = () => {
 };
 
 const styles = StyleSheet.create({
+  // New styles
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#c5c6e8',
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 16,
+    color: '#6A5ACD',
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#c5c6e8',
+    padding: 20,
+  },
+  errorText: {
+    marginBottom: 20,
+    fontSize: 16,
+    color: '#d32f2f',
+    textAlign: 'center',
+  },
+  retryButton: {
+    backgroundColor: '#6A5ACD',
+    paddingVertical: 12,
+    paddingHorizontal: 30,
+    borderRadius: 30,
+  },
+  retryButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  noQuestionsContainer: {
+    padding: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: 200,
+  },
+  noQuestionsText: {
+    fontSize: 16,
+    color: '#666',
+  },
+  questionSubtitle: {
+    fontSize: 16,
+    color: '#555',
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  
   // Language Selection Screen Styles
   languageScreenContainer: {
     flex: 1,
@@ -495,6 +706,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 40,
   },
+  
   appTitle: {
     fontSize: 32,
     fontWeight: 'bold',
