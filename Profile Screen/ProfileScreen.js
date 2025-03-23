@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import {
   View,
   Text,
@@ -8,16 +8,64 @@ import {
   TouchableOpacity,
   StatusBar,
   ScrollView,
-  Alert,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
-import { Avatar, Title, Caption } from "react-native-paper";
-import * as ImagePicker from "expo-image-picker";
+import { Avatar, Title, Caption, TouchableRipple } from "react-native-paper";
+import { useNavigation } from "@react-navigation/native";
 
 const ProfileScreen = () => {
-  // State for user data
-  const [userData, setUserData] = useState({
+  const navigation = useNavigation();
+
+  // Sample data structures for your local images
+  const badgeImages = [
+    {
+      id: 1,
+      source: require("../assets/b1.png"),
+      name: "Badge 1",
+    },
+    {
+      id: 2,
+      source: require("../assets/b2.png"),
+      name: "Badge 2",
+    },
+    {
+      id: 3,
+      source: require("../assets/b3.png"),
+      name: "Badge 3",
+    },
+    {
+      id: 4,
+      source: require("../assets/b4.png"),
+      name: "Badge 4",
+    },
+  ];
+
+  const rewardImages = [
+    {
+      id: 1,
+      source: require("../assets/r1.png"),
+      name: "Reward 1",
+    },
+    {
+      id: 2,
+      source: require("../assets/r2.png"),
+      name: "Reward 2",
+    },
+    {
+      id: 3,
+      source: require("../assets/r3.png"),
+      name: "Reward 3",
+    },
+    {
+      id: 4,
+      source: require("../assets/r4.png"),
+      name: "Reward 4",
+    },
+  ];
+
+  // User profile data
+  const userData = {
     userId: "ZA7194",
     name: "Zuhar Ahamed",
     handle: "@zheong123",
@@ -27,111 +75,18 @@ const ProfileScreen = () => {
     email: "zuharahamed007@gmail.com",
     gender: "Male",
     nativeLanguage: "Tamil",
-    profilePic: "http://localhost:3001/uploads/Zuhar.jpg",
     following: 140,
     followers: 100,
     membershipType: "Gold",
     points: 1200,
     notifications: 21,
-  });
-
-  // State for editable user information
-  const [editableData, setEditableData] = useState({ ...userData });
-
-  // State for edit modal visibility
-  const [isEditModalVisible, setEditModalVisible] = useState(false);
-
-  // Fetch user profile data from the backend
-  useEffect(() => {
-    const fetchUserData = async () => {
-      try {
-        const response = await fetch(
-          "http://localhost:3001/api/profile/ZA7194"
-        );
-        const data = await response.json();
-        setUserData(data);
-        setEditableData(data); // Initialize editable data with fetched data
-      } catch (error) {
-        console.error("Error fetching user data:", error);
-      }
-    };
-
-    fetchUserData();
-  }, []);
-
-  // Function to update user profile
-  const updateProfile = async () => {
-    try {
-      const response = await fetch("http://localhost:3001/api/profile/ZA7194", {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(editableData),
-      });
-      const data = await response.json();
-      Alert.alert("Success", data.message);
-      setUserData({ ...userData, ...editableData }); // Update local state
-      setEditModalVisible(false); // Close the modal
-    } catch (error) {
-      console.error("Error updating profile:", error);
-      Alert.alert("Error", "Failed to update profile.");
-    }
-  };
-
-  // Function to upload profile picture
-  const uploadProfilePic = async () => {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== "granted") {
-      Alert.alert(
-        "Permission Denied",
-        "Sorry, we need camera roll permissions to upload a profile picture."
-      );
-      return;
-    }
-
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 1,
-    });
-
-    if (!result.canceled) {
-      const file = result.assets[0];
-      const formData = new FormData();
-      formData.append("profilePic", {
-        uri: file.uri,
-        name: file.fileName || "profile.jpg",
-        type: file.type || "image/jpeg",
-      });
-
-      try {
-        const response = await fetch(
-          "http://localhost:3001/api/profile/ZA7194/upload",
-          {
-            method: "POST",
-            body: formData,
-            headers: {
-              "Content-Type": "multipart/form-data",
-            },
-          }
-        );
-        const data = await response.json();
-        Alert.alert("Success", data.message);
-        setUserData({ ...userData, profilePic: data.profilePicUrl }); // Update profile picture in state
-      } catch (error) {
-        console.error("Error uploading profile picture:", error);
-        Alert.alert("Error", "Failed to upload profile picture.");
-      }
-    }
   };
 
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" />
 
-      {/* Header */}
+      {/* Header - Updated to match the screenshot */}
       <View style={styles.header}>
         <View style={styles.headerContent}>
           <TouchableOpacity style={styles.backButton}>
@@ -152,13 +107,13 @@ const ProfileScreen = () => {
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* Profile Info */}
         <View style={styles.profileContainer}>
-          <TouchableOpacity onPress={uploadProfilePic}>
-            <Avatar.Image source={{ uri: userData.profilePic }} size={80} />
-            <Text style={styles.editText}>Edit</Text>
-          </TouchableOpacity>
+          <Avatar.Image source={require("../assets/Zuhar.jpg")} size={80} />
           <Text style={styles.username}>{userData.name}</Text>
           <Text style={styles.handle}>{userData.handle}</Text>
+
+          {/* User ID */}
           <Text style={styles.userId}>ID: {userData.userId}</Text>
+
           <View style={styles.levelContainer}>
             <Text style={styles.levelText}>LEVEL {userData.level}</Text>
           </View>
@@ -178,10 +133,14 @@ const ProfileScreen = () => {
             <Icon name="email" color="#777777" size={20} />
             <Text style={styles.infoText}>{userData.email}</Text>
           </View>
+
+          {/* Gender */}
           <View style={styles.row}>
             <Icon name="gender-male-female" color="#777777" size={20} />
             <Text style={styles.infoText}>{userData.gender}</Text>
           </View>
+
+          {/* Native language */}
           <View style={styles.row}>
             <Icon name="translate" color="#777777" size={20} />
             <Text style={styles.infoText}>
@@ -190,75 +149,178 @@ const ProfileScreen = () => {
           </View>
         </View>
 
-        {/* Edit Profile Button */}
-        <TouchableOpacity
-          style={styles.editProfileButton}
-          onPress={() => setEditModalVisible(true)}
-        >
-          <Text style={styles.editProfileButtonText}>Edit Profile</Text>
-        </TouchableOpacity>
-
-        {/* Rest of your UI components (Rewards, Badges, etc.) */}
-      </ScrollView>
-
-      {/* Edit Profile Modal */}
-      {isEditModalVisible && (
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContainer}>
-            <Text style={styles.modalTitle}>Edit Profile</Text>
-            <TextInput
-              style={styles.input}
-              value={editableData.name}
-              onChangeText={(text) =>
-                setEditableData({ ...editableData, name: text })
-              }
-              placeholder="Name"
-            />
-            <TextInput
-              style={styles.input}
-              value={editableData.location}
-              onChangeText={(text) =>
-                setEditableData({ ...editableData, location: text })
-              }
-              placeholder="Location"
-            />
-            <TextInput
-              style={styles.input}
-              value={editableData.phone}
-              onChangeText={(text) =>
-                setEditableData({ ...editableData, phone: text })
-              }
-              placeholder="Phone"
-            />
-            <TextInput
-              style={styles.input}
-              value={editableData.email}
-              onChangeText={(text) =>
-                setEditableData({ ...editableData, email: text })
-              }
-              placeholder="Email"
-            />
-            <TextInput
-              style={styles.input}
-              value={editableData.gender}
-              onChangeText={(text) =>
-                setEditableData({ ...editableData, gender: text })
-              }
-              placeholder="Gender"
-            />
-            <TextInput
-              style={styles.input}
-              value={editableData.nativeLanguage}
-              onChangeText={(text) =>
-                setEditableData({ ...editableData, nativeLanguage: text })
-              }
-              placeholder="Native Language"
-            />
-            <Button title="Save" onPress={updateProfile} />
-            <Button title="Cancel" onPress={() => setEditModalVisible(false)} />
+        {/* Follower Stats */}
+        <View style={styles.infoBoxWrapper}>
+          <View
+            style={[
+              styles.infoBox,
+              { borderRightWidth: 1, borderRightColor: "#dddddd" },
+            ]}
+          >
+            <Title style={styles.statsNumber}>{userData.following}</Title>
+            <Caption style={styles.statsCaption}>Following</Caption>
+          </View>
+          <View style={styles.infoBox}>
+            <Title style={styles.statsNumber}>{userData.followers}</Title>
+            <Caption style={styles.statsCaption}>Followers</Caption>
           </View>
         </View>
-      )}
+
+        {/* Vouchers */}
+        <View style={styles.vouchersContainer}>
+          {/* 10% Voucher */}
+          <View style={styles.voucherCard}>
+            <View style={[styles.voucherHeader, styles.purpleHeader]}>
+              <Text style={styles.voucherHeaderTitle}>
+                10% discount voucher
+              </Text>
+              <Text style={styles.voucherHeaderSubtitle}>For all members</Text>
+            </View>
+            <View style={styles.voucherBody}>
+              <Text style={styles.voucherTitle}>10% discount voucher</Text>
+              <Text style={styles.voucherPoints}>1,000 Points</Text>
+              <TouchableOpacity style={styles.redeemButton}>
+                <Text style={styles.redeemButtonText}>Redeem</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          {/* 25% Voucher */}
+          <View style={styles.voucherCard}>
+            <View style={[styles.voucherHeader, styles.blueHeader]}>
+              <Text style={styles.voucherHeaderTitle}>
+                25% discount voucher
+              </Text>
+              <Text style={styles.voucherHeaderSubtitle}>
+                For platinum members
+              </Text>
+            </View>
+            <View style={styles.voucherBody}>
+              <Text style={styles.voucherTitle}>25% discount voucher</Text>
+              <Text style={styles.voucherPoints}>2,500 Points</Text>
+              <TouchableOpacity style={styles.redeemButton}>
+                <Text style={styles.redeemButtonText}>Redeem</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+
+        {/* Rewards Section */}
+        <View style={styles.sectionContainer}>
+          <Text style={styles.sectionTitle}>REWARDS</Text>
+          <View style={styles.badgesRow}>
+            {rewardImages.map((reward) => (
+              <View key={`reward-${reward.id}`} style={styles.rewardContainer}>
+                <View style={styles.hexagonBadge}>
+                  <Image
+                    source={reward.source}
+                    style={styles.badgeIcon}
+                    resizeMode="cover"
+                  />
+                </View>
+                <Text style={styles.rewardLabel}>{reward.name}</Text>
+              </View>
+            ))}
+          </View>
+        </View>
+
+        {/* Badges Section */}
+        <View style={styles.sectionContainer}>
+          <Text style={styles.sectionTitle}>BADGES</Text>
+          <View style={styles.badgesRow}>
+            {badgeImages.map((badge) => (
+              <View key={`badge-${badge.id}`} style={styles.badgeContainer}>
+                <View style={styles.circleBadge}>
+                  <Image
+                    source={badge.source}
+                    style={styles.badgeIcon}
+                    resizeMode="cover"
+                  />
+                </View>
+                <Text style={styles.badgeLabel}>{badge.name}</Text>
+              </View>
+            ))}
+          </View>
+        </View>
+
+        {/* XP Points Section - New section added below badges */}
+        <View style={styles.bottomContainer}>
+          <View style={styles.infoBox2}>
+            <View style={styles.xpIcon}>
+              <Ionicons name="star" size={18} color="#FFF" />
+            </View>
+            <View style={styles.infoTextContainer}>
+              <Text style={styles.infoTitle}>2,500</Text>
+              <Text style={styles.infoSubtitle}>XP Points</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={16} color="#FFD700" />
+          </View>
+        </View>
+
+        {/* Bottom Info */}
+        <View style={styles.bottomContainer}>
+          <View style={styles.infoBox2}>
+            <View style={styles.goldIcon} />
+            <View style={styles.infoTextContainer}>
+              <Text style={styles.infoTitle}>{userData.membershipType}</Text>
+              <Text style={styles.infoSubtitle}>Membership</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={16} color="#FFD700" />
+          </View>
+
+          <View style={styles.infoBox2}>
+            <View style={styles.goldIcon} />
+            <View style={styles.infoTextContainer}>
+              <Text style={styles.infoTitle}>
+                {userData.points.toLocaleString()}
+              </Text>
+              <Text style={styles.infoSubtitle}>Points</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={16} color="#FFD700" />
+          </View>
+        </View>
+
+        {/* Account Menu */}
+        <View style={styles.menuContainer}>
+          <TouchableOpacity style={styles.menuItem}>
+            <Text style={styles.menuItemText}>Account Information</Text>
+            <Ionicons name="chevron-forward" size={20} color="#555" />
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.menuItem}>
+            <Text style={styles.menuItemText}>Add Social Media</Text>
+            <Ionicons name="chevron-forward" size={20} color="#555" />
+          </TouchableOpacity>
+
+          <View style={styles.divider} />
+
+          <TouchableOpacity style={styles.menuItem}>
+            <Text style={styles.menuItemText}>Referral Code</Text>
+            <Ionicons name="chevron-forward" size={20} color="#555" />
+          </TouchableOpacity>
+
+          <View style={styles.divider} />
+
+          <TouchableOpacity
+            style={styles.menuItem}
+            onPress={() =>
+              navigation.navigate(
+                "Settings",
+                {},
+                { animation: "slide_from_right" }
+              )
+            }
+          >
+            <Text style={styles.menuItemText}>Settings</Text>
+            <Ionicons name="chevron-forward" size={20} color="#555" />
+          </TouchableOpacity>
+        </View>
+
+        {/* Logout Button */}
+        <TouchableOpacity style={styles.logoutButton}>
+          <Text style={styles.logoutButtonText}>LOGOUT</Text>
+        </TouchableOpacity>
+      </ScrollView>
     </SafeAreaView>
   );
 };
@@ -271,6 +333,7 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingBottom: 20,
   },
+  // Updated header styles to match the screenshot
   header: {
     backgroundColor: "#5d5b8d",
     paddingTop: 10,
@@ -342,11 +405,6 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     fontSize: 14,
   },
-  editText: {
-    color: "#4E7BEF",
-    marginTop: 5,
-    textAlign: "center",
-  },
   userInfoSection: {
     paddingHorizontal: 30,
     marginBottom: 25,
@@ -361,47 +419,229 @@ const styles = StyleSheet.create({
     marginLeft: 20,
     fontSize: 14,
   },
-  editProfileButton: {
-    backgroundColor: "#5d5b8d",
-    padding: 10,
-    borderRadius: 8,
-    marginHorizontal: 20,
-    marginTop: 20,
-    alignItems: "center",
+  infoBoxWrapper: {
+    borderBottomColor: "#dddddd",
+    borderBottomWidth: 1,
+    borderTopColor: "#dddddd",
+    borderTopWidth: 1,
+    flexDirection: "row",
+    height: 100,
+    backgroundColor: "rgba(255, 255, 255, 0.3)",
   },
-  editProfileButtonText: {
+  infoBox: {
+    width: "50%",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  statsNumber: {
+    fontSize: 24,
+    fontWeight: "bold",
+    color: "#333",
+  },
+  statsCaption: {
+    fontSize: 14,
+    color: "#666",
+  },
+  vouchersContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    paddingHorizontal: 16,
+    marginTop: 16,
+  },
+  voucherCard: {
+    width: "48%",
+    backgroundColor: "white",
+    borderRadius: 12,
+    overflow: "hidden",
+    elevation: 2,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.22,
+    shadowRadius: 2.22,
+  },
+  voucherHeader: {
+    padding: 12,
+  },
+  purpleHeader: {
+    backgroundColor: "#C73BCC",
+  },
+  blueHeader: {
+    backgroundColor: "#3B77CC",
+  },
+  voucherHeaderTitle: {
     color: "white",
     fontWeight: "bold",
+    fontSize: 14,
   },
-  modalOverlay: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-    position: "absolute",
-    top: 0,
-    bottom: 0,
-    left: 0,
-    right: 0,
+  voucherHeaderSubtitle: {
+    color: "white",
+    fontSize: 12,
+    marginTop: 2,
   },
-  modalContainer: {
-    backgroundColor: "white",
-    padding: 20,
-    borderRadius: 10,
-    width: "80%",
+  voucherBody: {
+    padding: 12,
   },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: "bold",
-    marginBottom: 20,
-    textAlign: "center",
+  voucherTitle: {
+    color: "#333",
+    fontSize: 14,
+    fontWeight: "500",
   },
-  input: {
-    height: 40,
-    borderColor: "gray",
+  voucherPoints: {
+    color: "#FF9900",
+    fontSize: 13,
+    marginTop: 4,
+    marginBottom: 8,
+  },
+  redeemButton: {
     borderWidth: 1,
-    marginBottom: 10,
-    paddingHorizontal: 10,
+    borderColor: "#7C76A3",
+    borderRadius: 16,
+    paddingVertical: 6,
+    alignItems: "center",
+    marginTop: 4,
+  },
+  redeemButtonText: {
+    color: "#7C76A3",
+    fontWeight: "500",
+  },
+  sectionContainer: {
+    marginVertical: 16,
+    paddingHorizontal: 24,
+  },
+  sectionTitle: {
+    color: "white",
+    fontSize: 16,
+    fontWeight: "600",
+    marginBottom: 12,
+  },
+  badgesRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    paddingHorizontal: 4,
+  },
+  badgeContainer: {
+    alignItems: "center",
+    width: "22%",
+  },
+  rewardContainer: {
+    alignItems: "center",
+    width: "22%",
+  },
+  hexagonBadge: {
+    width: 60,
+    height: 60,
+    borderRadius: 10,
+    alignItems: "center",
+    justifyContent: "center",
+    overflow: "hidden",
+    marginBottom: 5,
+  },
+  circleBadge: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    alignItems: "center",
+    justifyContent: "center",
+    overflow: "hidden",
+    borderWidth: 2,
+    borderColor: "#FFC700",
+    marginBottom: 5,
+  },
+  badgeIcon: {
+    width: "100%",
+    height: "100%",
+  },
+  badgeLabel: {
+    fontSize: 11,
+    color: "#333",
+    textAlign: "center",
+    fontWeight: "500",
+  },
+  rewardLabel: {
+    fontSize: 11,
+    color: "#333",
+    textAlign: "center",
+    fontWeight: "500",
+  },
+  menuContainer: {
+    marginTop: 16,
+    marginHorizontal: 16,
+    backgroundColor: "rgba(255, 255, 255, 0.3)",
+    borderRadius: 12,
+    padding: 4,
+  },
+  menuItem: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+  },
+  menuItemText: {
+    fontSize: 16,
+    color: "#333",
+  },
+  divider: {
+    height: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.1)",
+    marginHorizontal: 16,
+  },
+  bottomContainer: {
+    marginTop: 16,
+    paddingHorizontal: 24,
+    paddingBottom: 16,
+  },
+  infoBox2: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#5d5b8d",
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 8,
+  },
+  goldIcon: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: "#FFD700",
+    marginRight: 10,
+  },
+  infoTextContainer: {
+    flex: 1,
+  },
+  infoTitle: {
+    fontWeight: "600",
+    fontSize: 16,
+    color: "white",
+  },
+  infoSubtitle: {
+    color: "#ffffff",
+    fontSize: 12,
+  },
+  logoutButton: {
+    backgroundColor: "#5d5b8d",
+    marginHorizontal: 16,
+    marginTop: 16,
+    padding: 14,
+    borderRadius: 8,
+    alignItems: "center",
+  },
+  logoutButtonText: {
+    color: "white",
+    fontWeight: "bold",
+    fontSize: 16,
+  },
+  xpIcon: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: "#4E7BEF", // Blue color for XP
+    marginRight: 10,
+    alignItems: "center",
+    justifyContent: "center",
   },
 });
 

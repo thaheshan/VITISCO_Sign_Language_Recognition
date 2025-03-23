@@ -109,7 +109,7 @@ const ProfileScreen = () => {
         {/* Profile Info */}
         <View style={styles.profileContainer}>
           <Avatar.Image
-            source={require("../assets/Zuhar.jpg")}
+            //source={require("Home/images/download (10).png")}
             size={80}
           />
           <Text style={styles.username}>{userData.name}</Text>
