@@ -162,6 +162,52 @@ const HomeScreen = () => {
     completeInstructions();
   };
 
+  // Task data
+  const taskItems = [
+    {
+      id: 1,
+      icon: "flame-outline",
+      title: "Lesson Time",
+      subtitle: "TASK 01"
+    },
+    {
+      id: 2,
+      icon: "time-outline",
+      title: "Coursework",
+      subtitle: "TASK 02"
+    },
+    {
+      id: 3,
+      icon: "help-circle-outline",
+      title: "Do Quiz",
+      subtitle: "TASK 03"
+    },
+    {
+      id: 4,
+      icon: "document-text-outline",
+      title: "Assignments",
+      subtitle: "TASK 04"
+    },
+    {
+      id: 5,
+      icon: "create-outline",
+      title: "Sign Forms",
+      subtitle: "TASK 05"
+    },
+    {
+      id: 6,
+      icon: "book-outline",
+      title: "Reading",
+      subtitle: "TASK 06"
+    },
+    {
+      id: 7,
+      icon: "laptop-outline",
+      title: "Lab Work",
+      subtitle: "TASK 07"
+    }
+  ];
+
   return (
     <SafeAreaView style={styles.container}>
       {/* Header */}
@@ -203,35 +249,25 @@ const HomeScreen = () => {
             </TouchableOpacity>
           </View>
            
-          {/* Task Cards */}
-          <View style={styles.taskCards}>
-            <TouchableOpacity 
-              style={styles.taskCard}
-              activeOpacity={0.7}
-            >
-              <Ionicons name="flame-outline" size={24} color="#4A86FF" />
-              <Text style={styles.taskTitle}>Lesson Time</Text>
-              <Text style={styles.taskSubtitle}>TASK 01</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity 
-              style={styles.taskCard}
-              activeOpacity={0.7}
-            >
-              <Ionicons name="time-outline" size={24} color="#4A86FF" />
-              <Text style={styles.taskTitle}>Coursework</Text>
-              <Text style={styles.taskSubtitle}>TASK 02</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity 
-              style={styles.taskCard}
-              activeOpacity={0.7}
-            >
-              <AntDesign name="questioncircleo" size={23} color="#4A86FF" />
-              <Text style={styles.taskTitle}>Do Quiz</Text>
-              <Text style={styles.taskSubtitle}>TASK 03</Text>
-            </TouchableOpacity>
-          </View>
+          {/* Horizontal Scrollable Task Cards */}
+          <ScrollView 
+            horizontal 
+            showsHorizontalScrollIndicator={false}
+            style={styles.taskScrollContainer}
+            contentContainerStyle={styles.taskScrollContent}
+          >
+            {taskItems.map((task) => (
+              <TouchableOpacity 
+                key={task.id}
+                style={styles.taskCard}
+                activeOpacity={0.7}
+              >
+                <Ionicons name={task.icon} size={24} color="#4A86FF" />
+                <Text style={styles.taskTitle}>{task.title}</Text>
+                <Text style={styles.taskSubtitle}>{task.subtitle}</Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
         </View>
 
         {/* Ongoing Lessons Section */}
@@ -501,23 +537,26 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
   },
-  taskCards: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  // Horizontal scrolling task cards
+  taskScrollContainer: {
+    marginBottom: 10,
+  },
+  taskScrollContent: {
+    paddingRight: 16, // Add some right padding for the last item
   },
   taskCard: {
     backgroundColor: '#FFFFFF',
     padding: 16,
     borderRadius: 16,
     alignItems: 'center',
-    width: '30%',
+    width: 110, // Fixed width for each card
     paddingVertical: 20,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 5,
     elevation: 5,
-    transform: [{ scale: 1 }],
+    marginRight: 12, // Space between cards
   },
   taskTitle: {
     marginTop: 8,
