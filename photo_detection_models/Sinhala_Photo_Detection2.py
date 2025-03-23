@@ -69,7 +69,7 @@ except Exception as e:
 
 # Load gesture actions dynamically
 try:
-    labels_path = './labels.txt"
+    labels_path = './labels.txt'
     logger.info(f"Loading labels from: {labels_path}")
     if os.path.exists(labels_path):
         with open(labels_path, "r", encoding="utf-8") as f:

@@ -12,12 +12,11 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import { Avatar, Title, Caption, TouchableRipple } from "react-native-paper";
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation } from "@react-navigation/native";
 
 const ProfileScreen = () => {
+  const navigation = useNavigation();
 
-      const navigation = useNavigation();
-    
   // Sample data structures for your local images
   const badgeImages = [
     {
@@ -305,7 +304,16 @@ const ProfileScreen = () => {
 
           <View style={styles.divider} />
 
-          <TouchableOpacity style={styles.menuItem}   onPress={() => navigation.navigate('Settings', {}, { animation: 'slide_from_right' })}>
+          <TouchableOpacity
+            style={styles.menuItem}
+            onPress={() =>
+              navigation.navigate(
+                "Settings",
+                {},
+                { animation: "slide_from_right" }
+              )
+            }
+          >
             <Text style={styles.menuItemText}>Settings</Text>
             <Ionicons name="chevron-forward" size={20} color="#555" />
           </TouchableOpacity>
