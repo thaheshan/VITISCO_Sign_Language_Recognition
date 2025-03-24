@@ -68,6 +68,8 @@ export default function  GetStartedScreen2({ navigate }) {
          <Text style={styles.nextButtonText}
               
 
+
+
          
          >START</Text>
        </TouchableOpacity>

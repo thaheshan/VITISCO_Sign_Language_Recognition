@@ -28,7 +28,11 @@ const ProgressBar = ({ current, total }) => {
       <Text style={progressStyles.progressText}>{current} of {total}</Text>
     </View>
   );
+
+
 };
+
+const bucketBaseUrl = "https://storage.googleapis.com/your-bucket-name/";
 
 // Confetti Component
 const Confetti = ({ show }) => {
