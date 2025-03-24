@@ -13,7 +13,7 @@ const ProgressSection = ({ userId, languageName }) => {
     const fetchProgress = async () => {
       try {
         // Replace the URL with your API endpoint
-        const response = await axios.get('https://future-champion-452808-r4.uw.r.appspot.com/user-progress', {
+        const response = await axios.get('https://backend-18-dot-future-champion-452808-r4.uw.r.appspot.com//user-progress', {
           params: {
             userId: userId,
             languageName: languageName,
