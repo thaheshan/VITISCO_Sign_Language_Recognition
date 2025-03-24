@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -13,65 +13,31 @@ import {
   BackHandler,
   ActivityIndicator
 } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { fetchQuizQuestions, submitQuizAnswers, fetchLanguages, fetchCategories } from '../services/api';
+import Video from 'react-native-video'; // Import Video component
+import axios from 'axios';
 
 const { width, height } = Dimensions.get('window');
 
+/**
+ * Main QuizApp Component
+ * Handles UI state management and user interactions
+ */
 const QuizApp = () => {
+  // App state management
   const [showStartScreen, setShowStartScreen] = useState(true);
   const [showLanguageSelection, setShowLanguageSelection] = useState(true);
   const [selectedLanguage, setSelectedLanguage] = useState(null);
-  const [selectedLanguageId, setSelectedLanguageId] = useState(null);
-  const [selectedCategoryId, setSelectedCategoryId] = useState(1); // Default to category 1 (assuming it's the alphabet)
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState(null);
   const [quizHistory, setQuizHistory] = useState([]);
   const [questions, setQuestions] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [userId, setUserId] = useState(null);
-  const [languages, setLanguages] = useState([]);
-  const [loadingLanguages, setLoadingLanguages] = useState(true);
-
-  // Initialize userId on first load
-  useEffect(() => {
-    const initializeUser = async () => {
-      try {
-        // Check if userId exists in AsyncStorage
-        let storedUserId = await AsyncStorage.getItem('userId');
-        
-        if (!storedUserId) {
-          // If no userId, generate a random one and store it
-          storedUserId = `user_${Math.random().toString(36).substring(2, 15)}`;
-          await AsyncStorage.setItem('userId', storedUserId);
-        }
-        
-        setUserId(storedUserId);
-        
-        // Fetch available languages
-        await loadLanguages();
-      } catch (error) {
-        console.error('Error initializing user:', error);
-        setError('Failed to initialize. Please restart the app.');
-      }
-    };
-    
-    initializeUser();
-  }, []);
-
-  // Load available languages
-  const loadLanguages = async () => {
-    try {
-      setLoadingLanguages(true);
-      const languagesData = await fetchLanguages();
-      setLanguages(languagesData);
-    } catch (error) {
-      console.error('Error loading languages:', error);
-    } finally {
-      setLoadingLanguages(false);
-    }
-  };
+  const [answerSubmitted, setAnswerSubmitted] = useState(false); // Tracks if answer was submitted
+  const [isPlaying, setIsPlaying] = useState({}); // Track playing state of videos
+  
+  // Video player references
+  const videoRefs = useRef({});
 
   // Handle Android back button
   useEffect(() => {
@@ -95,160 +61,742 @@ const QuizApp = () => {
     return () => backHandler.remove();
   }, [showStartScreen, showLanguageSelection, currentQuestion]);
 
-  // Fetch quiz questions from API when language is selected
-  const fetchQuestions = async () => {
-    if (!selectedLanguageId || !userId) return;
-    
+  // Fetch questions when language is selected
+  useEffect(() => {
+    if (selectedLanguage) {
+      fetchQuestions(selectedLanguage);
+    }
+  }, [selectedLanguage]);
+
+  // Reset video playing state when changing questions
+  useEffect(() => {
+    setIsPlaying({});
+  }, [currentQuestion]);
+
+  /**
+   * Handle video play/pause toggle
+   */
+  const toggleVideoPlay = (index) => {
+    setIsPlaying(prev => {
+      const newState = {...prev};
+      // Pause all videos
+      Object.keys(newState).forEach(key => {
+        newState[key] = false;
+      });
+      // Toggle the selected video
+      newState[index] = !prev[index];
+      return newState;
+    });
+  };
+
+  /**
+   * Fetch questions from backend API
+   * Currently mocked with local data if API fails
+   */
+  const fetchQuestions = async (language) => {
+    setLoading(true);
+    setError(null);
+  
     try {
-      setLoading(true);
-      setError(null);
-      const questionsData = await fetchQuizQuestions(selectedLanguageId, selectedCategoryId, userId);
+      // BACKEND CODE - Commented out
+      /*
+      console.log(`Fetching questions from: ${API_URL}/api/questions/${language}`);
       
-      // Transform API response to match the expected format
-      const formattedQuestions = questionsData.map(q => ({
-        id: q.quizId,
-        title: q.question,
-        questionText: q.questionText,
-        options: [
-          { id: 'A', text: q.optionA },
-          { id: 'B', text: q.optionB },
-          { id: 'C', text: q.optionC },
-          { id: 'D', text: q.optionD },
-        ].filter(option => option.text), // Remove any null options
-      }));
+      const response = await axios.get(`${API_URL}/api/questions/${language}`, {
+        timeout: 10000, // Set timeout to 10 seconds
+      });
+  
+      console.log("API Response:", response.data);
       
-      setQuestions(formattedQuestions);
-    } catch (error) {
-      console.error('Error fetching questions:', error);
-      setError('Failed to load questions. Please try again.');
+      if (!response.data || response.data.length === 0) {
+        throw new Error("No questions received from API");
+      }
+
+      // Add correctAnswer property to each question if not already present
+      const processedQuestions = response.data.map(question => {
+        if (!question.hasOwnProperty('correctAnswer')) {
+          // If no correct answer specified, set first option as correct (this is just a placeholder)
+          return { ...question, correctAnswer: 0 };
+        }
+        return question;
+      });
+  
+      setQuestions(processedQuestions);
+      */
+
+      // FRONTEND CODE - Use mock data for now
+      if (language === 'english') {
+        const processedQuestions = englishQuestions.map(question => {
+          if (!question.hasOwnProperty('correctAnswer')) {
+            return { ...question, correctAnswer: 0 }; // First option is correct by default
+          }
+          return question;
+        });
+        setQuestions(processedQuestions);
+      } else if (language === 'tamil') {
+        const processedQuestions = tamilQuestions.map(question => {
+          if (!question.hasOwnProperty('correctAnswer')) {
+            return { ...question, correctAnswer: 0 }; // First option is correct by default
+          }
+          return question;
+        });
+        setQuestions(processedQuestions);
+      }
       
-      // Fallback to sample questions if API fails
-      if (selectedLanguage === 'english') {
-        setQuestions(englishQuestions);
+    } catch (err) {
+      // BACKEND ERROR HANDLING - Commented out
+      /*
+      if (err.code === "ECONNABORTED") {
+        console.error("Request timed out.");
+        setError("The server is taking too long to respond. Please try again.");
+      } else {
+        console.error("Error fetching questions:", err?.response?.data || err.message);
+        setError("Failed to load questions. Please try again later.");
+      }
+      */
+      
+      setError("Failed to load questions. Using local data instead.");
+      
+      // Use fallback questions based on selected language
+      if (language === 'english') {
+        const processedQuestions = englishQuestions.map(question => {
+          if (!question.hasOwnProperty('correctAnswer')) {
+            return { ...question, correctAnswer: 0 };
+          }
+          return question;
+        });
+        setQuestions(processedQuestions);
+      } else if (language === 'tamil') {
+        const processedQuestions = tamilQuestions.map(question => {
+          if (!question.hasOwnProperty('correctAnswer')) {
+            return { ...question, correctAnswer: 0 };
+          }
+          return question;
+        });
+        setQuestions(processedQuestions);
       }
     } finally {
       setLoading(false);
     }
   };
+  
+  /**
+   * Save quiz results to backend (commented out)
+   */
+  const saveQuizResults = async (results) => {
+    // BACKEND CODE - Commented out
+    /*
+    try {
+      await axios.post(`${API_URL}/api/results`, {
+        language: selectedLanguage,
+        answers: results,
+        timestamp: new Date().toISOString()
+      });
+      console.log("Quiz results saved successfully");
+    } catch (err) {
+      console.error("Error saving quiz results:", err);
+      // Continue without blocking the user experience
+    }
+    */
+    
+    // FRONTEND ONLY - Log results to console
+    console.log("Quiz results:", {
+      language: selectedLanguage,
+      answers: results,
+      timestamp: new Date().toISOString()
+    });
+  };
 
-  // Sample quiz questions data for english letters (fallback)
+  // Quiz questions data for english letters (local data)
   const englishQuestions = [
     {
       id: 1,
       title: 'Select the correct sign for A',
-      image: require('../assets/adaptive-icon.png'),
+      video: require('../images/videos/A.mp4'),
       options: [
         { id: 'A', text: 'A' },
         { id: 'B', text: 'B' },
         { id: 'C', text: 'C' },
       ],
+      correctAnswer: 0, // A is correct
     },
     {
       id: 2,
       title: 'Select the correct sign for B',
       options: [
-        { image: require('../assets/adaptive-icon.png') },
-        { image: require('../assets/adaptive-icon.png') },
-        { image: require('../assets/adaptive-icon.png') },
-        { image: require('../assets/adaptive-icon.png') },
+        { video: require('../images/videos/A.mp4') },
+        { video: require('../images/videos/A.mp4') },
+        { video: require('../images/videos/A.mp4') },
+        { video: require('../images/videos/A.mp4') },
       ],
       gridView: true,
+      correctAnswer: 1, // Second video is correct (B)
     },
-    // More sample questions...
+    {
+      id: 3,
+      title: 'Select the correct sign for C',
+      options: [
+        { video: require('../images/videos/A.mp4') },
+        { video: require('../images/videos/A.mp4') },
+        { video: require('../images/videos/A.mp4') },
+        { video: require('../images/videos/A.mp4') },
+      ],
+      gridView: true,
+      correctAnswer: 2, // Third video is correct (C)
+    },
+    {
+      id: 4,
+      title: 'Select the correct sign for D',
+      video: require('../images/videos/A.mp4'),
+      options: [
+        { id: 'A', text: 'A' },
+        { id: 'B', text: 'D' },
+        { id: 'C', text: 'B' },
+      ],
+      correctAnswer: 1, // D is correct
+    },
+    {
+      id: 5,
+      title: 'Select the correct sign for E',
+      options: [
+        { video: require('../images/videos/A.mp4') },
+        { video: require('../images/videos/A.mp4') },
+        { video: require('../images/videos/A.mp4') },
+        { video: require('../images/videos/A.mp4') },
+      ],
+      gridView: true,
+      correctAnswer: 3, // Fourth video is correct (E)
+    },
+    {
+      id: 6,
+      title: 'Select the correct sign for F',
+      options: [
+        { video: require('../images/videos/A.mp4') },
+        { video: require('../images/videos/A.mp4') },
+        { video: require('../images/videos/A.mp4') },
+        { video: require('../images/videos/A.mp4') },
+      ],
+      gridView: true,
+      correctAnswer: 0, // First video is correct (F)
+    },
+    {
+      id: 7,
+      title: 'Find the sign',
+      video: require('../images/videos/A.mp4'),
+      options: [
+        { id: 'A', text: 'E' },
+        { id: 'B', text: 'A' },
+        { id: 'C', text: 'G' },
+      ],
+      correctAnswer: 2, // G is correct
+    },
+    {
+      id: 8,
+      title: 'Select the correct sign for H',
+      options: [
+        { video: require('../images/videos/A.mp4') },
+        { video: require('../images/videos/A.mp4') },
+        { video: require('../images/videos/A.mp4') },
+        { video: require('../images/videos/A.mp4') },
+      ],
+      gridView: true,
+      correctAnswer: 1, // Second video is correct (H)
+    },
+    {
+      id: 9,
+      title: 'Select the correct sign for I',
+      options: [
+        { video: require('../images/videos/A.mp4') },
+        { video: require('../images/videos/A.mp4') },
+        { video: require('../images/videos/A.mp4') },
+        { video: require('../images/videos/A.mp4') },
+      ],
+      gridView: true,
+      correctAnswer: 2, // Third video is correct (I)
+    },
+    {
+      id: 10,
+      title: 'Find the sign',
+      video: require('../images/videos/A.mp4'),
+      options: [
+        { id: 'A', text: 'J' },
+        { id: 'B', text: 'I' },
+        { id: 'C', text: 'C' },
+      ],
+      correctAnswer: 0, // J is correct
+    },
+    {
+      id: 11,
+      title: 'Select the correct sign for K',
+      options: [
+        { video: require('../images/videos/A.mp4') },
+        { video: require('../images/videos/A.mp4') },
+        { video: require('../images/videos/A.mp4') },
+        { video: require('../images/videos/A.mp4') },
+      ],
+      gridView: true,
+      correctAnswer: 3, // Fourth video is correct (K)
+    },
+    {
+      id: 12,
+      title: 'Select the correct sign for L',
+      options: [
+        { video: require('../images/videos/A.mp4') },
+        { video: require('../images/videos/A.mp4') },
+        { video: require('../images/videos/A.mp4') },
+        { video: require('../images/videos/A.mp4') },
+      ],
+      gridView: true,
+      correctAnswer: 0, // First video is correct (L)
+    },
+    {
+      id: 13,
+      title: 'Find the sign',
+      video: require('../images/videos/A.mp4'),
+      options: [
+        { id: 'A', text: 'A' },
+        { id: 'B', text: 'M' },
+        { id: 'C', text: 'C' },
+      ],
+      correctAnswer: 1, // M is correct
+    },
+    {
+      id: 14,
+      title: 'Select the correct sign for N',
+      options: [
+        { video: require('../images/videos/A.mp4') },
+        { video: require('../images/videos/A.mp4') },
+        { video: require('../images/videos/A.mp4') },
+        { video: require('../images/videos/A.mp4') },
+      ],
+      gridView: true,
+      correctAnswer: 2, // Third video is correct (N)
+    },
+    {
+      id: 15,
+      title: 'Select the correct sign for O',
+      options: [
+        { video: require('../images/videos/A.mp4') },
+        { video: require('../images/videos/A.mp4') },
+        { video: require('../images/videos/A.mp4') },
+        { video: require('../images/videos/A.mp4') },
+      ],
+      gridView: true,
+      correctAnswer: 1, // Second video is correct (O)
+    },
+    {
+      id: 16,
+      title: 'Find the sign',
+      video: require('../images/videos/A.mp4'),
+      options: [
+        { id: 'A', text: 'P' },
+        { id: 'B', text: 'I' },
+        { id: 'C', text: 'J' },
+      ],
+      correctAnswer: 0, // P is correct
+    },
+    {
+      id: 17,
+      title: 'Select the correct sign for Q',
+      options: [
+        { video: require('../images/videos/A.mp4') },
+        { video: require('../images/videos/A.mp4') },
+        { video: require('../images/videos/A.mp4') },
+        { video: require('../images/videos/A.mp4') },
+      ],
+      gridView: true,
+      correctAnswer: 3, // Fourth video is correct (Q)
+    },
+    {
+      id: 18,
+      title: 'Select the correct sign for R',
+      options: [
+        { video: require('../images/videos/A.mp4') },
+        { video: require('../images/videos/A.mp4') },
+        { video: require('../images/videos/A.mp4') },
+        { video: require('../images/videos/A.mp4') },
+      ],
+      gridView: true,
+      correctAnswer: 0, // First video is correct (R)
+    },
+    {
+      id: 19,
+      title: 'Find the sign',
+      video: require('../images/videos/A.mp4'),
+      options: [
+        { id: 'A', text: 'S' },
+        { id: 'B', text: 'B' },
+        { id: 'C', text: 'F' },
+      ],
+      correctAnswer: 0, // S is correct
+    },
+    {
+      id: 20,
+      title: 'Select the correct sign for T',
+      options: [
+        { video: require('../images/videos/A.mp4') },
+        { video: require('../images/videos/A.mp4') },
+        { video: require('../images/videos/A.mp4') },
+        { video: require('../images/videos/A.mp4') },
+      ],
+      gridView: true,
+      correctAnswer: 2, // Third video is correct (T)
+    },
+    {
+      id: 21,
+      title: 'Select the correct sign for U',
+      options: [
+        { video: require('../images/videos/A.mp4') },
+        { video: require('../images/videos/A.mp4') },
+        { video: require('../images/videos/A.mp4') },
+        { video: require('../images/videos/A.mp4') },
+      ],
+      gridView: true,
+      correctAnswer: 1, // Second video is correct (U)
+    },
+    {
+      id: 22,
+      title: 'Select the correct sign for V',
+      options: [
+        { video: require('../images/videos/A.mp4') },
+        { video: require('../images/videos/A.mp4') },
+        { video: require('../images/videos/A.mp4') },
+        { video: require('../images/videos/A.mp4') },
+      ],
+      gridView: true,
+      correctAnswer: 3, // Fourth video is correct (V)
+    },
+    {
+      id: 23,
+      title: 'Find the sign',
+      video: require('../images/videos/A.mp4'),
+      options: [
+        { id: 'A', text: 'O' },
+        { id: 'B', text: 'S' },
+        { id: 'C', text: 'W' },
+      ],
+      correctAnswer: 2, // W is correct
+    },
+    {
+      id: 24,
+      title: 'Select the correct sign for X',
+      options: [
+        { video: require('../images/videos/A.mp4') },
+        { video: require('../images/videos/A.mp4') },
+        { video: require('../images/videos/A.mp4') },
+        { video: require('../images/videos/A.mp4') },
+      ],
+      gridView: true,
+      correctAnswer: 0, // First video is correct (X)
+    },
+    {
+      id: 25,
+      title: 'Select the correct sign for Y',
+      options: [
+        { video: require('../images/videos/A.mp4') },
+        { video: require('../images/videos/A.mp4') },
+        { video: require('../images/videos/A.mp4') },
+        { video: require('../images/videos/A.mp4') },
+      ],
+      gridView: true,
+      correctAnswer: 2, // Third video is correct (Y)
+    },
+    {
+      id: 26,
+      title: 'Find the sign',
+      video: require('../images/videos/A.mp4'),
+      options: [
+        { id: 'A', text: 'X' },
+        { id: 'B', text: 'Z' },
+        { id: 'C', text: 'G' },
+      ],
+      correctAnswer: 1, // Z is correct
+    },
   ];
 
-  // Handle language selection
-  const selectLanguage = (language, languageId) => {
+  // Tamil quiz questions data (local data)
+  const tamilQuestions = [
+    {
+      id: 1,
+      title: 'Select the correct Tamil letter for this sign',
+      video: require('../images/videos/A.mp4'),
+      options: [
+        { id: 'A', text: 'அ' },
+        { id: 'B', text: 'ஆ' },
+        { id: 'C', text: 'இ' },
+      ],
+      correctAnswer: 0, // அ is correct
+    },
+    {
+      id: 2,
+      title: 'Select the correct sign for Tamil letter "ஆ"',
+      options: [
+        { video: require('../images/videos/A.mp4') },
+        { video: require('../images/videos/A.mp4') },
+        { video: require('../images/videos/A.mp4') },
+        { video: require('../images/videos/A.mp4') },
+      ],
+      gridView: true,
+      correctAnswer: 0, // First video is correct (ஆ)
+    },
+    {
+      id: 3,
+      title: 'Select the correct sign for Tamil letter "இ"',
+      options: [
+        { video: require('../images/videos/A.mp4') },
+        { video: require('../images/videos/A.mp4') },
+        { video: require('../images/videos/A.mp4') },
+        { video: require('../images/videos/A.mp4') },
+      ],
+      gridView: true,
+      correctAnswer: 2, // Third video is correct (இ)
+    },
+    {
+      id: 4,
+      title: 'Select the correct sign for Tamil letter "ஈ"',
+      options: [
+        { video: require('../images/videos/A.mp4') },
+        { video: require('../images/videos/A.mp4') },
+        { video: require('../images/videos/A.mp4') },
+        { video: require('../images/videos/A.mp4') },
+      ],
+      gridView: true,
+      correctAnswer: 1, // Second video is correct (ஈ)
+    },
+    {
+      id: 5,
+      title: 'Select the correct sign for Tamil letter "உ"',
+      options: [
+        { video: require('../images/videos/A.mp4') },
+        { video: require('../images/videos/A.mp4') },
+        { video: require('../images/videos/A.mp4') },
+        { video: require('../images/videos/A.mp4') },
+      ],
+      gridView: true,
+      correctAnswer: 2, // Third video is correct (உ)
+    },
+    {
+      id: 6,
+      title: 'Select the correct sign for Tamil letter "ஊ"',
+      options: [
+        { video: require('../images/videos/A.mp4') },
+        { video: require('../images/videos/A.mp4') },
+        { video: require('../images/videos/A.mp4') },
+        { video: require('../images/videos/A.mp4') },
+      ],
+      gridView: true,
+      correctAnswer: 0, // First video is correct (ஊ)
+    },
+    {
+      id: 7,
+      title: 'Select the correct Tamil letter for this sign',
+      video: require('../images/videos/A.mp4'),
+      options: [
+        { id: 'A', text: 'ஊ' },
+        { id: 'B', text: 'எ' },
+        { id: 'C', text: 'ஒ' },
+      ],
+      correctAnswer: 1, // எ is correct
+    },
+    {
+      id: 8,
+      title: 'Select the correct Tamil letter for this sign',
+      video: require('../images/videos/A.mp4'),
+      options: [
+        { id: 'A', text: 'ஏ' },
+        { id: 'B', text: 'எ' },
+        { id: 'C', text: 'ஐ' },
+      ],
+      correctAnswer: 0, // ஏ is correct
+    },
+    {
+      id: 9,
+      title: 'Select the correct sign for Tamil letter "ஐ"',
+      options: [
+        { video: require('../images/videos/A.mp4') },
+        { video: require('../images/videos/A.mp4') },
+        { video: require('../images/videos/A.mp4') },
+        { video: require('../images/videos/A.mp4') },
+      ],
+      gridView: true,
+      correctAnswer: 2, // Third video is correct (ஐ)
+    },
+    {
+      id: 10,
+      title: 'Select the correct Tamil letter for this sign',
+      video: require('../images/videos/A.mp4'),
+      options: [
+        { id: 'A', text: 'ஊ' },
+        { id: 'B', text: 'எ' },
+        { id: 'C', text: 'ஒ' },
+      ],
+      correctAnswer: 2, // ஒ is correct
+    },
+    {
+      id: 11,
+      title: 'Select the correct Tamil letter for this sign',
+      video: require('../images/videos/A.mp4'),
+      options: [
+        { id: 'A', text: 'ஓ' },
+        { id: 'B', text: 'ஔ' },
+        { id: 'C', text: 'க' },
+      ],
+      correctAnswer: 0, // ஓ is correct
+    },
+    {
+      id: 12,
+      title: 'Select the correct sign for Tamil letter "ஔ"',
+      options: [
+        { video: require('../images/videos/A.mp4') },
+        { video: require('../images/videos/A.mp4') },
+        { video: require('../images/videos/A.mp4') },
+        { video: require('../images/videos/A.mp4') },
+      ],
+      gridView: true,
+      correctAnswer: 0, // First video is correct (ஔ)
+    },
+    {
+      id: 13,
+      title: 'Select the correct sign for Tamil letter "க"',
+      options: [
+        { video: require('../images/videos/A.mp4') },
+        { video: require('../images/videos/A.mp4') },
+        { video: require('../images/videos/A.mp4') },
+        { video: require('../images/videos/A.mp4') },
+      ],
+      gridView: true,
+      correctAnswer: 3, // Fourth video is correct (க)
+    },
+    {
+      id: 14,
+      title: 'Select the correct sign for Tamil letter "ச"',
+      options: [
+        { video: require('../images/videos/A.mp4') },
+        { video: require('../images/videos/A.mp4') },
+        { video: require('../images/videos/A.mp4') },
+        { video: require('../images/videos/A.mp4') },
+      ],
+      gridView: true,
+      correctAnswer: 1, // Second video is correct (ச)
+    },
+    {
+      id: 15,
+      title: 'Select the correct sign for Tamil letter "ட"',
+      options: [
+        { video: require('../images/videos/A.mp4') },
+        { video: require('../images/videos/A.mp4') },
+        { video: require('../images/videos/A.mp4') },
+        { video: require('../images/videos/A.mp4') },
+      ],
+      gridView: true,
+      correctAnswer: 2, // Third video is correct (ட)
+    },
+    {
+      id: 16,
+      title: 'Select the correct sign for Tamil letter "த"',
+      options: [
+        { video: require('../images/videos/A.mp4') },
+        { video: require('../images/videos/A.mp4') },
+        { video: require('../images/videos/A.mp4') },
+        { video: require('../images/videos/A.mp4') },
+      ],
+      gridView: true,
+      correctAnswer: 0, // First video is correct (த)
+    },
+    {
+      id: 17,
+      title: 'Select the correct sign for Tamil letter "ப"',
+      options: [
+        { video: require('../images/videos/A.mp4') },
+        { video: require('../images/videos/A.mp4') },
+        { video: require('../images/videos/A.mp4') },
+        { video: require('../images/videos/A.mp4') },
+      ],
+      gridView: true,
+      correctAnswer: 3, // Fourth video is correct (ப)
+    },
+    {
+      id: 18,
+      title: 'Select the correct sign for Tamil letter "ற"',
+      options: [
+        { video: require('../images/videos/A.mp4') },
+        { video: require('../images/videos/A.mp4') },
+        { video: require('../images/videos/A.mp4') },
+        { video: require('../images/videos/A.mp4') },
+      ],
+      gridView: true,
+      correctAnswer: 0, // First video is correct (ற)
+    },
+  ];
+
+  /**
+   * Handle language selection
+   */
+  const selectLanguage = (language) => {
     setSelectedLanguage(language);
-    setSelectedLanguageId(languageId);
     setShowLanguageSelection(false);
   };
 
-  // Start the quiz
-  const startQuiz = async () => {
-    await fetchQuestions();
+  /**
+   * Start the quiz
+   */
+  const startQuiz = () => {
     setCurrentQuestion(0);
     setSelectedAnswer(null);
     setQuizHistory([]);
     setShowStartScreen(false);
+    setAnswerSubmitted(false); // Reset answer submission state
   };
 
-  // Move to the next question and save current answer to history
-  const handleContinue = () => {
-    // Update quiz history
-    const updatedHistory = [...quizHistory];
-    updatedHistory[currentQuestion] = {
-      questionId: questions[currentQuestion].id,
-      selectedAnswerIndex: selectedAnswer,
-      selectedAnswerText: questions[currentQuestion].options[selectedAnswer]?.text || 
-                          questions[currentQuestion].options[selectedAnswer]?.id
-    };
-    setQuizHistory(updatedHistory);
+  /**
+   * Check if answer is correct and proceed to next question
+   */
+  const checkAnswer = () => {
+    setAnswerSubmitted(true);
+    
+    // Show feedback for 1 second before moving to next question
+    setTimeout(() => {
+      // Update quiz history
+      const updatedHistory = [...quizHistory];
+      updatedHistory[currentQuestion] = selectedAnswer;
+      setQuizHistory(updatedHistory);
 
-    if (currentQuestion < questions.length - 1) {
-      setCurrentQuestion(currentQuestion + 1);
-      setSelectedAnswer(null);
-    } else {
-      // Submit answers to the API
-      submitQuizResults(updatedHistory);
-    }
-  };
-
-  // Submit quiz results to the API
-  const submitQuizResults = async (answers) => {
-    try {
-      setLoading(true);
-      // Prepare the answers in the format expected by the API
-      const formattedAnswers = answers.map(answer => ({
-        quizId: answer.questionId,
-        selectedAnswer: answer.selectedAnswerIndex + 1 // Assuming backend expects 1-based index
-      }));
-      
-      // Submit answers to API
-      const result = await submitQuizAnswers(selectedLanguageId, userId, formattedAnswers);
-      
-      // Show completion alert with options
-      Alert.alert(
-        "Quiz Completed!",
-        `Congratulations! You've completed the quiz. Your score: ${result.score || 'N/A'}`,
-        [
-          { 
-            text: "Review Answers", 
-            onPress: () => {
-              // You could add a review screen here
-              setShowStartScreen(false);
-            } 
-          },
-          { 
-            text: "Back to Start", 
-            onPress: () => {
-              setShowStartScreen(true);
+      if (currentQuestion < questions.length - 1) {
+        setCurrentQuestion(currentQuestion + 1);
+        setSelectedAnswer(null);
+        setAnswerSubmitted(false); // Reset for next question
+      } else {
+        // Save results to backend (commented out)
+        saveQuizResults(updatedHistory);
+        
+        // Show completion alert with options
+        Alert.alert(
+          "Quiz Completed!",
+          "Congratulations! You've completed the quiz.",
+          [
+            { 
+              text: "Review Answers", 
+              onPress: () => {
+                // You could add a review screen here
+                setShowStartScreen(false);
+              } 
+            },
+            { 
+              text: "Back to Start", 
+              onPress: () => {
+                setShowStartScreen(true);
+              }
             }
-          }
-        ],
-        { cancelable: false }
-      );
-    } catch (error) {
-      console.error('Error submitting quiz results:', error);
-      Alert.alert(
-        "Quiz Completed",
-        "Your quiz has been completed, but we couldn't submit your results. Please try again later.",
-        [
-          { 
-            text: "Back to Start", 
-            onPress: () => {
-              setShowStartScreen(true);
-            }
-          }
-        ],
-        { cancelable: false }
-      );
-    } finally {
-      setLoading(false);
-    }
+          ],
+          { cancelable: false }
+        );
+      }
+    }, 1000); // Delay before moving to next question
   };
 
-  // Enhanced back functionality
+  /**
+   * Handle back button navigation
+   */
   const handleBack = () => {
     if (currentQuestion > 0) {
       Alert.alert(
@@ -262,7 +810,8 @@ const QuizApp = () => {
               const prevQuestion = currentQuestion - 1;
               setCurrentQuestion(prevQuestion);
               // Restore previous answer if available
-              setSelectedAnswer(quizHistory[prevQuestion]?.selectedAnswerIndex || null);
+              setSelectedAnswer(quizHistory[prevQuestion] !== undefined ? quizHistory[prevQuestion] : null);
+              setAnswerSubmitted(false); // Reset answer submission state
             } 
           }
         ]
@@ -273,7 +822,9 @@ const QuizApp = () => {
     }
   };
 
-  // Enhanced quit confirmation with save progress option
+  /**
+   * Handle quiz exit with options
+   */
   const handleQuit = () => {
     Alert.alert(
       "Exit Quiz",
@@ -307,35 +858,9 @@ const QuizApp = () => {
     );
   };
 
-  // Loading screen
-  if (loading) {
-    return (
-      <SafeAreaView style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#6A5ACD" />
-        <Text style={styles.loadingText}>Loading...</Text>
-      </SafeAreaView>
-    );
-  }
-
-  // Error screen
-  if (error) {
-    return (
-      <SafeAreaView style={styles.errorContainer}>
-        <Text style={styles.errorText}>{error}</Text>
-        <TouchableOpacity 
-          style={styles.retryButton}
-          onPress={() => {
-            setError(null);
-            fetchQuestions();
-          }}
-        >
-          <Text style={styles.retryButtonText}>Retry</Text>
-        </TouchableOpacity>
-      </SafeAreaView>
-    );
-  }
-
-  // Language Selection Screen
+  /**
+   * Language Selection Screen
+   */
   if (showLanguageSelection) {
     return (
       <SafeAreaView style={styles.languageScreenContainer}>
@@ -348,44 +873,27 @@ const QuizApp = () => {
         </View>
         
         <View style={styles.languageButtonsContainer}>
-          {loadingLanguages ? (
-            <ActivityIndicator size="large" color="white" />
-          ) : (
-            languages.length > 0 ? (
-              languages.map(lang => (
-                <TouchableOpacity 
-                  key={lang.languageId}
-                  style={styles.languageButton} 
-                  onPress={() => selectLanguage(lang.languageName.toLowerCase(), lang.languageId)}
-                >
-                  <Text style={styles.languageButtonText}>{lang.languageName}</Text>
-                </TouchableOpacity>
-              ))
-            ) : (
-              // Fallback buttons if API fails
-              <>
-                <TouchableOpacity 
-                  style={styles.languageButton} 
-                  onPress={() => selectLanguage('english', 1)}
-                >
-                  <Text style={styles.languageButtonText}>English</Text>
-                </TouchableOpacity>
-                
-                <TouchableOpacity 
-                  style={styles.languageButton}
-                  onPress={() => selectLanguage('tamil', 2)}
-                >
-                  <Text style={styles.languageButtonText}>Tamil</Text>
-                </TouchableOpacity>
-              </>
-            )
-          )}
+          <TouchableOpacity 
+            style={styles.languageButton} 
+            onPress={() => selectLanguage('english')}
+          >
+            <Text style={styles.languageButtonText}>English</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={styles.languageButton}
+            onPress={() => selectLanguage('tamil')}
+          >
+            <Text style={styles.languageButtonText}>Tamil</Text>
+          </TouchableOpacity>
         </View>
       </SafeAreaView>
     );
   }
 
-  // Enhanced Welcome Screen UI (shown after language selection)
+  /**
+   * Welcome/Start Screen (shown after language selection)
+   */
   if (showStartScreen) {
     return (
       <SafeAreaView style={styles.welcomeScreenContainer}>
@@ -401,47 +909,106 @@ const QuizApp = () => {
           </TouchableOpacity>
           
           <Text style={styles.enhancedHeaderTitle}>
-            {selectedLanguage === 'english' ? 'English Sign Language' : 
-             selectedLanguage === 'tamil' ? 'Tamil Sign Language' : 
-             `${selectedLanguage} Sign Language`}
+            {selectedLanguage === 'english' ? 'English Sign Language' : 'Tamil Sign Language'}
           </Text>
           
           <View style={{width: 40}} />
         </View>
         
-        <View style={styles.welcomeLogoContainer}>
-          <Text style={styles.welcomeText}>
-            Test your sign language knowledge!
-          </Text>
-          <Image source={require('../assets/logo.png')} style={styles.welcomeImage} />
-          <Text style={styles.welcomeSubtext}>
-            Learn, practice, and master sign language through interactive quizzes
-          </Text>
-        </View>
-        
-        <View style={styles.welcomeButtonsContainer}>
-          <TouchableOpacity 
-            style={styles.startQuizButton} 
-            onPress={startQuiz}
-          >
-            <Text style={styles.startQuizButtonText}>
-              Start Quiz
-            </Text>
-          </TouchableOpacity>
-          
-          <TouchableOpacity 
-            style={styles.learnMoreButton}
-          >
-            <Text style={styles.learnMoreButtonText}>
-              Learn More
-            </Text>
-          </TouchableOpacity>
-        </View>
+        {loading ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#ffffff" />
+            <Text style={styles.loadingText}>Loading questions...</Text>
+          </View>
+        ) : error ? (
+          <View style={styles.errorContainer}>
+            <Text style={styles.errorText}>{error}</Text>
+            <TouchableOpacity 
+              style={styles.retryButton}
+              onPress={() => fetchQuestions(selectedLanguage)}
+            >
+              <Text style={styles.retryButtonText}>Retry</Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <>
+            <View style={styles.welcomeLogoContainer}>
+              <Text style={styles.welcomeText}>
+                Test your sign language knowledge!
+              </Text>
+              <Image source={require('../assets/logo.png')} style={styles.welcomeImage} />
+              <Text style={styles.welcomeSubtext}>
+                Learn, practice, and master sign language through interactive quizzes
+              </Text>
+            </View>
+            
+            <View style={styles.welcomeButtonsContainer}>
+              <TouchableOpacity 
+                style={styles.startQuizButton} 
+                onPress={startQuiz}
+              >
+                <Text style={styles.startQuizButtonText}>
+                  Start Quiz
+                </Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity 
+                style={styles.learnMoreButton}
+              >
+                <Text style={styles.learnMoreButtonText}>
+                  Learn More
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </>
+        )}
       </SafeAreaView>
     );
   }
 
-  // Enhanced Progress bar component
+  /**
+   * Loading Screen
+   */
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.loadingScreenContainer}>
+        <ActivityIndicator size="large" color="#ffffff" />
+        <Text style={styles.loadingScreenText}>Loading questions...</Text>
+      </SafeAreaView>
+    );
+  }
+
+  /**
+   * Error Screen
+   */
+  if (error && questions.length === 0) {
+    return (
+      <SafeAreaView style={styles.errorScreenContainer}>
+        <Text style={styles.errorScreenText}>{error}</Text>
+        <TouchableOpacity 
+          style={styles.errorScreenButton}
+          onPress={() => {
+            fetchQuestions(selectedLanguage);
+          }}
+        >
+          <Text style={styles.errorScreenButtonText}>Retry</Text>
+        </TouchableOpacity>
+        <TouchableOpacity 
+          style={styles.errorScreenBackButton}
+          onPress={() => {
+            setShowStartScreen(true);
+            setShowLanguageSelection(true);
+          }}
+        >
+          <Text style={styles.errorScreenBackButtonText}>Back to Language Selection</Text>
+        </TouchableOpacity>
+      </SafeAreaView>
+    );
+  }
+
+  /**
+   * Progress Bar Component
+   */
   const renderProgressBar = () => (
     <View style={styles.progressContainer}>
       <View style={styles.progressBarWrapper}>
@@ -460,9 +1027,23 @@ const QuizApp = () => {
     </View>
   );
 
-  // Render the current question with enhanced styling
+  /**
+   * Helper function to determine answer styling based on correctness
+   */
+  const getAnswerStatusStyle = (index) => {
+    if (!answerSubmitted || selectedAnswer !== index) return null;
+    
+    const currentQ = questions[currentQuestion];
+    if (!currentQ || !currentQ.hasOwnProperty('correctAnswer')) return null;
+    
+    return index === currentQ.correctAnswer ? styles.correctAnswer : styles.incorrectAnswer;
+  };
+
+  /**
+   * Render the current question
+   */
   const renderQuestion = () => {
-    if (!questions || questions.length === 0) {
+    if (!questions || questions.length === 0 || !questions[currentQuestion]) {
       return (
         <View style={styles.noQuestionsContainer}>
           <Text style={styles.noQuestionsText}>No questions available</Text>
@@ -482,10 +1063,6 @@ const QuizApp = () => {
             <Text style={styles.questionTitle}>{question.title}</Text>
           )}
           
-          {question.questionText && (
-            <Text style={styles.questionSubtitle}>{question.questionText}</Text>
-          )}
-          
           {question.image && (
             <View style={styles.imageContainer}>
               <Image source={question.image} style={styles.questionImage} />
@@ -493,15 +1070,18 @@ const QuizApp = () => {
           )}
           
           {question.gridView ? (
+            // Grid view for image-based options
             <View style={styles.gridContainer}>
               {question.options.map((option, index) => (
                 <TouchableOpacity
                   key={index}
                   style={[
                     styles.gridItem,
-                    selectedAnswer === index && styles.selectedGridItem
+                    selectedAnswer === index && styles.selectedGridItem,
+                    getAnswerStatusStyle(index) // Add green/red border based on answer correctness
                   ]}
-                  onPress={() => setSelectedAnswer(index)}
+                  onPress={() => !answerSubmitted && setSelectedAnswer(index)}
+                  disabled={answerSubmitted} // Disable further selection after submission
                 >
                   <Image source={option.image} style={styles.optionImage} />
                   {selectedAnswer === index && (
@@ -513,6 +1093,7 @@ const QuizApp = () => {
               ))}
             </View>
           ) : (
+            // List view for text-based options
             <View style={styles.optionsContainer}>
               {question.options.map((option, index) => (
                 <TouchableOpacity
@@ -520,8 +1101,10 @@ const QuizApp = () => {
                   style={[
                     styles.optionButton,
                     selectedAnswer === index && styles.selectedOption,
+                    getAnswerStatusStyle(index) // Add green/red border based on answer correctness
                   ]}
-                  onPress={() => setSelectedAnswer(index)}
+                  onPress={() => !answerSubmitted && setSelectedAnswer(index)}
+                  disabled={answerSubmitted} // Disable further selection after submission
                 >
                   <View style={styles.optionContent}>
                     {option.id && (
@@ -548,11 +1131,14 @@ const QuizApp = () => {
     );
   };
 
+  /**
+   * Main Quiz Screen
+   */
   return (
     <SafeAreaView style={styles.quizScreenContainer}>
       <StatusBar barStyle="dark-content" />
       
-      {/* Enhanced Header with improved back button */}
+      {/* Header with navigation controls */}
       <View style={styles.enhancedHeader}>
         <TouchableOpacity
           style={styles.enhancedBackButton}
@@ -564,9 +1150,7 @@ const QuizApp = () => {
         </TouchableOpacity>
         
         <Text style={styles.enhancedHeaderTitle}>
-          {selectedLanguage === 'english' ? 'Sign Language Quiz' : 
-           selectedLanguage === 'tamil' ? 'Tamil Sign Language Quiz' : 
-           `${selectedLanguage} Sign Language Quiz`}
+          {selectedLanguage === 'english' ? 'Sign Language Quiz' : 'Tamil Sign Language Quiz'}
         </Text>
         
         <TouchableOpacity style={styles.closeButtonContainer} onPress={handleQuit}>
@@ -574,21 +1158,25 @@ const QuizApp = () => {
         </TouchableOpacity>
       </View>
       
+      {/* Progress bar */}
       {renderProgressBar()}
+      
+      {/* Question content */}
       {renderQuestion()}
 
-      {/* Enhanced Continue Button */}
+      {/* Bottom action button */}
       <View style={styles.continueButtonContainer}>
         <TouchableOpacity
           style={[
             styles.enhancedContinueButton,
             selectedAnswer !== null && styles.enhancedContinueButtonActive,
           ]}
-          onPress={handleContinue}
-          disabled={selectedAnswer === null}
+          onPress={checkAnswer}
+          disabled={selectedAnswer === null || answerSubmitted}
         >
           <Text style={styles.enhancedContinueButtonText}>
-            {currentQuestion < questions.length - 1 ? "CONTINUE" : "FINISH QUIZ"}
+            {answerSubmitted ? "PROCESSING..." : 
+              (currentQuestion < questions.length - 1 ? "CHECK ANSWER" : "FINISH QUIZ")}
           </Text>
         </TouchableOpacity>
       </View>
@@ -597,97 +1185,87 @@ const QuizApp = () => {
 };
 
 const styles = StyleSheet.create({
-  // New styles
-  loadingContainer: {
+  // Loading and Error Screen Styles
+  loadingScreenContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#c5c6e8',
+    backgroundColor: '#6A5ACD',
   },
-  loadingText: {
-    marginTop: 12,
-    fontSize: 16,
-    color: '#6A5ACD',
+  loadingScreenText: {
+    color: 'white',
+    fontSize: 18,
+    marginTop: 20,
   },
-  errorContainer: {
+  errorScreenContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#c5c6e8',
+    backgroundColor: '#6A5ACD',
     padding: 20,
   },
-  errorText: {
-    marginBottom: 20,
-    fontSize: 16,
-    color: '#d32f2f',
+  errorScreenText: {
+    color: 'white',
+    fontSize: 18,
     textAlign: 'center',
+    marginBottom: 20,
   },
-  retryButton: {
-    backgroundColor: '#6A5ACD',
-    paddingVertical: 12,
-    paddingHorizontal: 30,
-    borderRadius: 30,
+  errorScreenButton: {
+    backgroundColor: '#ffffff',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 25,
+    marginBottom: 15,
   },
-  retryButtonText: {
+  errorScreenButtonText: {
+    color: '#6A5ACD',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  errorScreenBackButton: {
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+  },
+  errorScreenBackButtonText: {
     color: 'white',
     fontSize: 16,
-    fontWeight: '600',
-  },
-  noQuestionsContainer: {
-    padding: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-    height: 200,
-  },
-  noQuestionsText: {
-    fontSize: 16,
-    color: '#666',
-  },
-  questionSubtitle: {
-    fontSize: 16,
-    color: '#555',
-    marginBottom: 16,
-    textAlign: 'center',
   },
   
   // Language Selection Screen Styles
   languageScreenContainer: {
     flex: 1,
-    backgroundColor: '#6A5ACD', // Rich purple background
-    justifyContent: 'space-between',
+    backgroundColor: '#6A5ACD',
     padding: 20,
   },
   languageSelectionText: {
-    fontSize: 24,
-    fontWeight: '600',
     color: 'white',
+    fontSize: 24,
+    fontWeight: 'bold',
     textAlign: 'center',
-    marginBottom: 10,
+    marginTop: 20,
   },
   languageSelectionSubtext: {
+    color: 'white',
     fontSize: 16,
-    color: 'rgba(255, 255, 255, 0.8)',
     textAlign: 'center',
-    marginHorizontal: 20,
-    lineHeight: 22,
+    marginTop: 10,
+    opacity: 0.8,
   },
   languageButtonsContainer: {
-    marginBottom: 50,
+    flex: 1,
+    justifyContent: 'center',
     alignItems: 'center',
-    gap: 20,
+    marginTop: 20,
   },
   languageButton: {
     backgroundColor: 'white',
-    paddingVertical: 16,
-    paddingHorizontal: 40,
-    borderRadius: 30,
-    width: '80%',
+    borderRadius: 25,
+    paddingVertical: 15,
+    paddingHorizontal: 30,
+    width: width * 0.7,
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 7,
+    marginBottom: 20,
+    elevation: 5,
   },
   languageButtonText: {
     color: '#6A5ACD',
@@ -695,68 +1273,53 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   
-  // Enhanced Welcome Screen Styles
+  // Welcome Screen Styles
   welcomeScreenContainer: {
     flex: 1,
-    backgroundColor: '#6A5ACD', // Rich purple background
-    justifyContent: 'space-between',
+    backgroundColor: '#6A5ACD',
     padding: 20,
   },
   welcomeLogoContainer: {
+    flex: 1,
+    justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 40,
-  },
-  
-  appTitle: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: 'white',
-    marginBottom: 30,
-    textShadowColor: 'rgba(0, 0, 0, 0.25)',
-    textShadowOffset: { width: 1, height: 1 },
-    textShadowRadius: 4,
   },
   welcomeImage: {
-    width: 180,
-    height: 180,
+    width: width * 0.6,
+    height: width * 0.6,
     resizeMode: 'contain',
-    marginVertical: 30,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.3,
-    shadowRadius: 15,
+    marginVertical: 20,
   },
-  welcomeText: {
-    fontSize: 22,
-    fontWeight: '600',
+  appTitle: {
     color: 'white',
+    fontSize: 32,
+    fontWeight: 'bold',
     textAlign: 'center',
     marginBottom: 10,
   },
-  welcomeSubtext: {
-    fontSize: 16,
-    color: 'rgba(255, 255, 255, 0.8)',
+  welcomeText: {
+    color: 'white',
+    fontSize: 24,
+    fontWeight: 'bold',
     textAlign: 'center',
-    marginHorizontal: 20,
-    lineHeight: 22,
+  },
+  welcomeSubtext: {
+    color: 'white',
+    fontSize: 16,
+    textAlign: 'center',
+    marginTop: 10,
+    opacity: 0.8,
   },
   welcomeButtonsContainer: {
-    marginBottom: 50,
-    alignItems: 'center',
+    marginBottom: 40,
   },
   startQuizButton: {
     backgroundColor: 'white',
-    paddingVertical: 16,
-    paddingHorizontal: 40,
-    borderRadius: 30,
-    width: '80%',
+    borderRadius: 25,
+    paddingVertical: 15,
     alignItems: 'center',
-    marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 7,
+    marginBottom: 20,
+    elevation: 5,
   },
   startQuizButtonText: {
     color: '#6A5ACD',
@@ -764,157 +1327,190 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   learnMoreButton: {
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 25,
-    borderWidth: 2,
     borderColor: 'white',
-    width: '60%',
+    borderWidth: 2,
+    borderRadius: 25,
+    paddingVertical: 15,
     alignItems: 'center',
   },
   learnMoreButtonText: {
     color: 'white',
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 18,
+    fontWeight: 'bold',
   },
   
-  // Enhanced Quiz Screen Styles
+  // Loading States
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    color: 'white',
+    fontSize: 18,
+    marginTop: 20,
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  errorText: {
+    color: 'white',
+    fontSize: 18,
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  retryButton: {
+    backgroundColor: 'white',
+    paddingHorizontal: 30,
+    paddingVertical: 10,
+    borderRadius: 25,
+  },
+  retryButtonText: {
+    color: '#6A5ACD',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  
+  // Quiz Screen Styles
   quizScreenContainer: {
     flex: 1,
-    backgroundColor: '#c5c6e8', // Light background with slight purple tint
+    backgroundColor: '#f8f9fa',
   },
-  
-  // Enhanced Header
   enhancedHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: '#5d5b8d',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  enhancedHeaderTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#ffffff',
-    textAlign: 'center',
+    backgroundColor: '#6A5ACD',
+    paddingTop: 10,
+    paddingBottom: 15,
+    paddingHorizontal: 15,
+    elevation: 5,
   },
   enhancedBackButton: {
-    padding: 8,
+    width: 40,
+    height: 40,
     borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   backButtonText: {
+    color: 'white',
     fontSize: 20,
-    color: '#ffffff',
-    fontWeight: '600',
+    fontWeight: 'bold',
   },
-  disabledBackButton: {
-    color: '#CCCCCC',
+  enhancedHeaderTitle: {
+    color: 'white',
+    fontSize: 18,
+    fontWeight: 'bold',
+    textAlign: 'center',
   },
   closeButtonContainer: {
-    padding: 8,
+    width: 40,
+    height: 40,
     borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   closeButtonText: {
-    fontSize: 20,
-    color: '#ffffff',
-    fontWeight: '600',
+    color: 'white',
+    fontSize: 18,
+    fontWeight: 'bold',
   },
   
-  // Enhanced Progress Bar
+  // Progress Bar Styles
   progressContainer: {
-    padding: 16,
-    backgroundColor: '#5d5b8d',
-    borderBottomLeftRadius: 20,
-    borderBottomRightRadius: 20,
-    shadowColor: '#ffffff',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
-    marginBottom: 8,
+    padding: 15,
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e0e0e0',
   },
   progressBarWrapper: {
-    marginBottom: 8,
+    height: 10,
+    backgroundColor: '#e0e0e0',
+    borderRadius: 5,
+    overflow: 'hidden',
   },
   progressBar: {
-    height: 8,
-    backgroundColor: '#E9ECEF',
-    borderRadius: 10,
+    flexDirection: 'row',
+    height: '100%',
+    width: '100%',
   },
   progressFill: {
     height: '100%',
     backgroundColor: '#6A5ACD',
-    borderRadius: 10,
   },
   progressText: {
-
-    textAlign: 'right',
-    color: '#6C757D',
+    marginTop: 8,
+    color: '#666',
     fontSize: 14,
-    fontWeight: '500',
+    textAlign: 'right',
   },
   
-  // Enhanced Scrollable Content
+  // Question Styles
   scrollContainer: {
-    paddingBottom: 100,
+    flexGrow: 1,
+    padding: 20,
   },
-  
-  // Enhanced Question Container
   questionContainer: {
-    padding: 16,
+    flex: 1,
+    backgroundColor: '#fff',
+    borderRadius: 15,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 3,
   },
   questionTitle: {
-    fontSize: 22,
-    fontWeight: '600',
-    color: '#212529',
-    marginBottom: 24,
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 20,
     textAlign: 'center',
   },
   imageContainer: {
-    backgroundColor: 'white',
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 24,
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 6,
-    elevation: 3,
+    marginVertical: 15,
   },
   questionImage: {
-    width: width * 0.8,
-    height: 200,
+    width: width * 0.7,
+    height: width * 0.7,
     resizeMode: 'contain',
+    borderRadius: 10,
   },
   
-  // Enhanced Options
+  // Options Styles
   optionsContainer: {
-    gap: 16,
+    marginTop: 20,
   },
   optionButton: {
-    backgroundColor: 'white',
-    padding: 16,
-    borderRadius: 16,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 6,
-    elevation: 3,
+    backgroundColor: '#f5f5f5',
+    borderRadius: 10,
+    padding: 15,
+    marginBottom: 12,
+    borderWidth: 2,
+    borderColor: '#f5f5f5',
   },
   selectedOption: {
-    backgroundColor: '#F0F4FF',
     borderColor: '#6A5ACD',
-    borderWidth: 2,
+    backgroundColor: '#f0f0ff',
+  },
+  correctAnswer: {
+    borderColor: '#4CAF50',
+    backgroundColor: 'rgba(76, 175, 80, 0.1)',
+  },
+  incorrectAnswer: {
+    borderColor: '#F44336',
+    backgroundColor: 'rgba(244, 67, 54, 0.1)',
   },
   optionContent: {
     flexDirection: 'row',
@@ -922,73 +1518,70 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   optionIdContainer: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: '#F0F0F0',
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: '#ddd',
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 16,
+    marginRight: 15,
   },
   optionId: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#6A5ACD',
+    fontWeight: 'bold',
+    color: '#666',
   },
   optionText: {
-    fontSize: 16,
-    color: '#212529',
+    fontSize: 18,
+    color: '#333',
     flex: 1,
   },
   checkmarkContainer: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
     backgroundColor: '#6A5ACD',
     justifyContent: 'center',
     alignItems: 'center',
   },
   checkmark: {
     color: 'white',
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: 'bold',
   },
   
-  // Enhanced Grid Layout
+  // Grid View Styles
   gridContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
-    marginHorizontal: 8,
+    marginTop: 15,
   },
   gridItem: {
     width: '48%',
     aspectRatio: 1,
-    backgroundColor: 'white',
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 6,
-    elevation: 3,
-    position: 'relative',
+    marginBottom: 15,
+    borderRadius: 10,
+    padding: 10,
+    backgroundColor: '#f5f5f5',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: '#f5f5f5',
   },
   selectedGridItem: {
-    backgroundColor: '#F0F4FF',
     borderColor: '#6A5ACD',
-    borderWidth: 2,
+    backgroundColor: '#f0f0ff',
   },
   optionImage: {
-    width: '100%',
-    height: '100%',
+    width: '90%',
+    height: '90%',
     resizeMode: 'contain',
   },
   selectionIndicator: {
     position: 'absolute',
-    top: 8,
-    right: 8,
+    top: 5,
+    right: 5,
     width: 24,
     height: 24,
     borderRadius: 12,
@@ -1002,42 +1595,41 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   
-  // Enhanced Continue Button
+  // Continue Button Styles
   continueButtonContainer: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    padding: 16,
+    padding: 15,
     backgroundColor: 'white',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 6,
-    elevation: 10,
+    borderTopWidth: 1,
+    borderTopColor: '#e0e0e0',
   },
   enhancedContinueButton: {
-    padding: 16,
-    backgroundColor: '#CCCCCC',
-    borderRadius: 30,
+    backgroundColor: '#d1d1d1',
+    paddingVertical: 15,
+    borderRadius: 10,
     alignItems: 'center',
-    opacity: 0.5,
   },
   enhancedContinueButtonActive: {
     backgroundColor: '#6A5ACD',
-    opacity: 1,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 5,
   },
   enhancedContinueButtonText: {
     color: 'white',
     fontSize: 16,
-    fontWeight: '600',
-    letterSpacing: 1,
+    fontWeight: 'bold',
   },
+  
+  // Empty State
+  noQuestionsContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  noQuestionsText: {
+    fontSize: 18,
+    color: '#666',
+    textAlign: 'center',
+  }
 });
 
 export default QuizApp;
+

@@ -240,9 +240,7 @@ const HomeScreen = () => {
               <TouchableOpacity>
                 <Text style={styles.tabText} >DAILY TASKS</Text>
               </TouchableOpacity>
-              <TouchableOpacity>
-                <Text style={[styles.tabText, styles.inactiveTab]}>CHALLENGES</Text>
-              </TouchableOpacity>
+          
             </View>
             <TouchableOpacity>
               <Text style={styles.seeAll} onPress={() => navigation.navigate('Scheduler', {}, { animation: 'slide_from_right' })}>See all</Text>
