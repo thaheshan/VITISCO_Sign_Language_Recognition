@@ -2,7 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const axios = require('axios');
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 5000;
 
 // Middleware
 app.use(cors());
@@ -125,3 +125,4 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`Python service URL: ${PYTHON_SERVICE_URL}`);
   console.log(`Server started at: ${new Date().toISOString()}`);
 });
+
