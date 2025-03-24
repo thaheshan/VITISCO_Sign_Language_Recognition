@@ -25,7 +25,20 @@ db.connect((err) => {
   console.log("Connected to MySQL database");
 });
 
+// // Sample route
+// app.get("/", (req, res) => {
+//   res.send("Backend is running!");
+// });
 
+// Fetch data from database
+// app.get("/data", (req, res) => {
+//   db.query("SELECT * FROM user", (err, results) => {
+//     if (err) {
+//       return res.status(500).json({ error: err.message });
+//     }
+//     res.json(results);
+//   });
+// });
 //Fetch lesson completion status (Pass languageName and userId as parameters)
 app.get("/user-progress", (req, res) => {
   const { languageName, userId } = req.query; // Expecting query params
@@ -107,7 +120,6 @@ app.get("/user-xp/:userId", (req, res) => {
   });
 });
 
-// Fetch average quiz marks and time taken (Pass userId and languageName as parameters)
 app.get("/user-average", (req, res) => {
   const { userId, languageName } = req.query;
 
@@ -142,7 +154,7 @@ app.get("/user-average", (req, res) => {
   });
 });
 
-// Fetch weekly XP chart data (Pass userId as a parameter)
+
 app.get('/userXPchart/:userId', (req, res) => {
   const userId = req.params.userId;
   const query = `

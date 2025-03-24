@@ -5,16 +5,15 @@ import StatsCard from './StatsCard';
 import axios from 'axios';
 
 
-// QuizAPI component to fetch and display quiz performance statistics
+
 const QuizAPI = ({ userId, languageName }) => {
-  // State to hold the average marks and time
   const [averageMarks, setAverageMarks] = useState(0);
   const [averageTime, setAverageTime] = useState(0);
 
   useEffect(() => {
     const fetchQuizPerformance = async () => {
       try {
-        const response = await axios.get('https://backend-18-dot-future-champion-452808-r4.uw.r.appspot.com//user-average', {
+        const response = await axios.get('https://future-champion-452808-r4.uw.r.appspot.com/user-average', {
           params: {
             userId: userId,
             languageName: languageName,
@@ -32,7 +31,7 @@ const QuizAPI = ({ userId, languageName }) => {
 
     fetchQuizPerformance();
   }, [userId, languageName]); // Re-fetch if userId or languageName changes
-  // Function to format average marks to 2 decimal places
+
   const formatAverageMarks = (marks) => {
     if (marks !== undefined) {
       const formattedMarks = parseFloat(marks).toFixed(2); // Format to 2 decimal places
@@ -40,7 +39,7 @@ const QuizAPI = ({ userId, languageName }) => {
     }
     return 0;
   };
-   // Function to format average time to 1 decimal place
+
   const formatAverageTime = (time) => {
     if (time !== undefined) {
       const formattedTime = parseFloat(time).toFixed(1); // Format to 1 decimal place
