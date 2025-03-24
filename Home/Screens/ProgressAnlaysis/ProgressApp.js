@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect } from 'react';
+// userIds are hardcoded for now for demonstration purposes. In a real-world scenario, userIds should be fetched from the authentication system.
 import { SafeAreaView, ScrollView, Text, View, TouchableOpacity, Modal, Image, Dimensions } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import XPPoints from './XPpoints';
@@ -11,7 +10,7 @@ import Challenges from './Challenges';
 
 
 
-
+// Modal component to display language progress, quiz statistics and weekly XP points
 const LanguageProgressModal = ({ visible, onClose, language }) => (
   <Modal
     animationType="slide"
@@ -29,8 +28,11 @@ const LanguageProgressModal = ({ visible, onClose, language }) => (
         </View>
         
         <ScrollView>
+        {/* Display progress section(basic, intermediary and advanced) for the selected language */}
          <ProgressSection userId={1} languageName={language} />
+          {/* Display XP chart */}
           <XPChart/>
+            {/* Display quiz avarage time taken and the average marks percentage*/}
           <QuizAPI userId={10} languageName={language} />
 
          
@@ -39,9 +41,11 @@ const LanguageProgressModal = ({ visible, onClose, language }) => (
     </View>
   </Modal>
 );
-
+// Main component for progress analysis
 const ProgressApp = () => {
+   // State to hold the selected language
   const [selectedLanguage, setSelectedLanguage] = useState(null);
+  // Character image for the header
   const characterImage = require('./assets/logo.png');
   
 
@@ -61,6 +65,7 @@ const ProgressApp = () => {
               resizeMode="contain"
             />
           </View>
+            {/* Display XP points and the current league */}
 
           <XPPoints/>
         </View>
@@ -90,11 +95,11 @@ const ProgressApp = () => {
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Earn Rewards</Text>
-         
+         {/* Display challenges */}
           <Challenges/>
         </View>
       </ScrollView>
-
+       {/* Display language progress modal if a language is selected */}
       {selectedLanguage && (
         <LanguageProgressModal
           visible={!!selectedLanguage}

@@ -3,6 +3,7 @@ import { View, Text } from 'react-native';
 import styles from './styles';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
+// StatsCard component to display statistical information
 const StatsCard = ({ icon, value, subtitle }) => (
     <View style={styles.statsCard}>
       <Icon name={icon} size={24} color="green" />
