@@ -16,7 +16,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context"
 import Ionicons from "react-native-vector-icons/Ionicons"
 import Video from "react-native-video"
-import getSocketConnection from "./utilities/config/socket-config"
+import getSocketConnection from "./config/socket-config"
 
 const VirtualRoom = () => {
   // Socket.IO reference
@@ -272,7 +272,7 @@ const VirtualRoom = () => {
   const renderInitialScreen = () => (
     <View style={styles.container}>
       <View style={styles.logoContainer}>
-        <Image source={require("./assets/vitisco logo PNG.png")} style={styles.logo} resizeMode="contain" />
+        <Image source={require("../assets/vitisco logo PNG.png")} style={styles.logo} resizeMode="contain" />
       </View>
 
       <View style={styles.headerContainer}>
