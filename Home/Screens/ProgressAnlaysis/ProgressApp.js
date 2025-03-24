@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect } from 'react';
+// userIds are hardcoded for now for demonstration purposes. In a real-world scenario, userIds should be fetched from the authentication system.
 import { SafeAreaView, ScrollView, Text, View, TouchableOpacity, Modal, Image, Dimensions } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import XPPoints from './XPpoints';

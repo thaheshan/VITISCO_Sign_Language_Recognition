@@ -6,8 +6,10 @@ import axios from 'axios';
 import styles from './styles';
 
 const XPChart = () => {
+  // State to hold the chart data
   const [data, setData] = useState({ weeklyData: { labels: [], datasets: [{ data: [] }] } });
   const [loading, setLoading] = useState(true); // Track loading state
+   // Get the width of the window for responsive chart
   const width = Dimensions.get('window').width;
   const userId = 7;
 
@@ -35,7 +37,7 @@ const XPChart = () => {
       </View>
     );
   }
-
+  // Render the line chart with the fetched data
   return (
     <View style={styles.chartSection}>
       <Text style={styles.sectionTitle}>Weekly progress</Text>
