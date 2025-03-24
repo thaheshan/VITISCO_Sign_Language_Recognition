@@ -1,4 +1,6 @@
-import React, { useState, useEffect } from "react";
+"use client"
+
+import { useState, useEffect, useRef } from "react"
 import {
   View,
   Text,
@@ -7,23 +9,19 @@ import {
   Image,
   ScrollView,
   StyleSheet,
-  Alert,
   Clipboard,
   KeyboardAvoidingView,
   Platform,
-} from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import Ionicons from "react-native-vector-icons/Ionicons";
-import Video from "react-native-video";
-
-// Mock socket.io client - Replace with actual socket.io implementation
-const mockSocket = {
-  id: "mock-user-1",
-  emit: (event, data = {}) => console.log("Socket emit:", event, data),
-  on: (event) => console.log("Socket on:", event),
-};
+} from "react-native"
+import { SafeAreaView } from "react-native-safe-area-context"
+import Ionicons from "react-native-vector-icons/Ionicons"
+import Video from "react-native-video"
+import getSocketConnection from "./utilities/config/socket-config"
 
 const VirtualRoom = () => {
+  // Socket.IO reference
+  const socketRef = useRef(null)
+
   const [gameState, setGameState] = useState({
     phase: "initial", // initial, creating, joining, waiting, playing, finished
     roomCode: null,
@@ -34,318 +32,252 @@ const VirtualRoom = () => {
     timeLeft: 0,
     questionNumber: 0,
     totalQuestions: 5,
-  });
+    isCreator: false,
+  })
 
   const [userInput, setUserInput] = useState({
     roomCode: "",
     message: "",
     selectedAnswer: null,
-  });
-  
-  const [notification, setNotification] = useState(null);
+  })
 
-  // Simulate second player joining after room creation
+  const [notification, setNotification] = useState(null)
+
+  // Initialize socket connection
   useEffect(() => {
-    if (gameState.phase === "waiting" && gameState.players.length < 2) {
-      // Add current user to players list
-      if (gameState.players.length === 0) {
-        setTimeout(() => {
-          setGameState(prev => ({
-            ...prev,
-            players: [...prev.players, { id: mockSocket.id, name: "You (Player 1)" }]
-          }));
-        }, 500);
-      }
-      
-      // Simulate another player joining after a delay
-      if (gameState.players.length === 1) {
-        setTimeout(() => {
-          setGameState(prev => ({
-            ...prev,
-            players: [...prev.players, { id: "mock-user-2", name: "Player 2" }],
-            messages: [...prev.messages, {
-              id: Date.now(),
-              sender: "Player 2",
-              text: "Hi! Ready to play?"
-            }]
-          }));
-          showNotification("Player 2 has joined the room!");
-        }, 2000);
+    // Create socket connection
+    socketRef.current = getSocketConnection()
+
+    // Setup socket event listeners
+    setupSocketListeners()
+
+    // Cleanup on unmount
+    return () => {
+      if (socketRef.current) {
+        socketRef.current.disconnect()
       }
     }
-  }, [gameState.phase, gameState.players.length]);
+  }, [])
 
-  // Simulate game timer
-  useEffect(() => {
-    let timer;
-    if (gameState.phase === "playing" && gameState.timeLeft > 0) {
-      timer = setTimeout(() => {
-        setGameState(prev => ({
-          ...prev, 
-          timeLeft: prev.timeLeft - 1
-        }));
-      }, 1000);
-    } else if (gameState.phase === "playing" && gameState.timeLeft === 0 && userInput.selectedAnswer) {
-      // Auto-submit when timer runs out
-      submitAnswer();
+  // Setup all socket event listeners
+  const setupSocketListeners = () => {
+    const socket = socketRef.current
+    if (!socket) return
+
+    // Room events
+    socket.on("room-joined", handleRoomJoined)
+    socket.on("player-joined", handlePlayerJoined)
+    socket.on("player-left", handlePlayerLeft)
+
+    // Game events
+    socket.on("game-started", handleGameStarted)
+    socket.on("next-question", handleNextQuestion)
+    socket.on("time-update", handleTimeUpdate)
+    socket.on("question-ended", handleQuestionEnded)
+    socket.on("answer-result", handleAnswerResult)
+    socket.on("game-finished", handleGameFinished)
+    socket.on("game-ended", handleGameEnded)
+
+    // Chat events
+    socket.on("new-message", handleNewMessage)
+
+    // Error events
+    socket.on("error", handleError)
+  }
+
+  // Event handlers for socket events
+  const handleRoomJoined = (data) => {
+    setGameState((prev) => ({
+      ...prev,
+      phase: "waiting",
+      roomCode: data.roomCode,
+      players: data.players,
+      isCreator: data.isCreator,
+    }));
+    showNotification(`Joined room: ${data.roomCode}`)
+  }
+
+  const handlePlayerJoined = (data) => {
+    setGameState((prev) => ({
+      ...prev,
+      players: data.players,
+    }))
+    showNotification("A new player has joined!")
+  }
+
+  const handlePlayerLeft = (data) => {
+    setGameState((prev) => ({
+      ...prev,
+      players: data.players,
+    }))
+    showNotification("A player has left the room")
+  }
+
+  const handleGameStarted = (data) => {
+    setGameState((prev) => ({
+      ...prev,
+      phase: "playing",
+      currentQuestion: data.currentQuestion,
+      totalQuestions: data.totalQuestions,
+      questionNumber: data.questionNumber,
+      timeLeft: data.timeLeft,
+    }))
+  }
+
+  const handleNextQuestion = (data) => {
+    setGameState((prev) => ({
+      ...prev,
+      currentQuestion: data.currentQuestion,
+      questionNumber: data.questionNumber,
+      timeLeft: data.timeLeft,
+    }))
+    setUserInput((prev) => ({ ...prev, selectedAnswer: null }))
+  }
+
+  const handleTimeUpdate = (data) => {
+    setGameState((prev) => ({
+      ...prev,
+      timeLeft: data.timeLeft,
+    }))
+  }
+
+  const handleQuestionEnded = (data) => {
+    // Show correct answer
+    showNotification(`Correct answer: ${data.correctAnswer}`, "success")
+  }
+
+  const handleAnswerResult = (data) => {
+    if (data.correct) {
+      showNotification(`Correct! +${data.points} points`, "success")
+    } else {
+      showNotification("Incorrect answer", "error")
     }
-    
-    return () => clearTimeout(timer);
-  }, [gameState.timeLeft, gameState.phase]);
+
+    // Update local score
+    setGameState((prev) => ({
+      ...prev,
+      scores: {
+        ...prev.scores,
+        [socketRef.current.id]: data.totalScore,
+      },
+    }))
+  }
+
+  const handleGameFinished = (data) => {
+    setGameState((prev) => ({
+      ...prev,
+      phase: "finished",
+      scores: data.scores.reduce((acc, player) => {
+        acc[player.id] = player.score
+        return acc
+      }, {}),
+    }))
+  }
+
+  const handleGameEnded = (data) => {
+    setGameState((prev) => ({
+      ...prev,
+      phase: "waiting",
+    }))
+    showNotification(`Game ended: ${data.reason}`, "error")
+  }
+
+  const handleNewMessage = (message) => {
+    setGameState((prev) => ({
+      ...prev,
+      messages: [...prev.messages, message],
+    }))
+  }
+
+  const handleError = (data) => {
+    showNotification(data.message, "error")
+  }
 
   // Notification component
   const NotificationComponent = ({ message, type, onClose }) => (
-    <View
-      style={[
-        styles.notification,
-        type === "error"
-          ? styles.errorNotification
-          : styles.successNotification,
-      ]}
-    >
-      <Text style={type === "error" ? styles.errorText : styles.successText}>
-        {message}
-      </Text>
+    <View style={[styles.notification, type === "error" ? styles.errorNotification : styles.successNotification]}>
+      <Text style={type === "error" ? styles.errorText : styles.successText}>{message}</Text>
       <TouchableOpacity onPress={onClose}>
         <Ionicons name="close" size={16} color="#666" />
       </TouchableOpacity>
     </View>
-  );
+  )
 
   // Chat Message component
   const ChatMessage = ({ message, sender }) => (
-    <View style={[
-      styles.messageContainer,
-      sender === "You" || sender === "You (Player 1)" ? styles.myMessage : {}
-    ]}>
+    <View style={styles.messageContainer}>
       <Text style={styles.messageSender}>{sender}</Text>
-      <View style={[
-        styles.messageContent,
-        sender === "You" || sender === "You (Player 1)" ? styles.myMessageContent : {}
-      ]}>
+      <View style={styles.messageContent}>
         <Text style={styles.messageText}>{message}</Text>
       </View>
     </View>
-  );
+  )
 
-  const showNotification = (
-    message,
-    type = "success"
-  ) => {
-    setNotification({ message, type });
-    setTimeout(() => setNotification(null), 3000);
-  };
+  const showNotification = (message, type = "success") => {
+    setNotification({ message, type })
+    setTimeout(() => setNotification(null), 3000)
+  }
 
   const createRoom = () => {
-    const roomCode = Math.random().toString(36).substring(2, 8).toUpperCase();
-    setGameState((prev) => ({
-      ...prev,
-      phase: "waiting",
-      roomCode,
-    }));
-    mockSocket.emit("create-room", { roomCode });
-    showNotification("Room created successfully!");
-  };
+    const roomCode = Math.random().toString(36).substring(2, 8).toUpperCase()
+    socketRef.current.emit("create-room", { roomCode })
+  }
 
   const joinRoom = () => {
     if (!userInput.roomCode) {
-      showNotification("Please enter a room code", "error");
-      return;
+      showNotification("Please enter a room code", "error")
+      return
     }
-    setGameState((prev) => ({
-      ...prev,
-      phase: "waiting",
-      roomCode: userInput.roomCode,
-    }));
-    mockSocket.emit("join-room", { roomCode: userInput.roomCode });
-  };
+    socketRef.current.emit("join-room", { roomCode: userInput.roomCode })
+  }
 
   const joinRandomRoom = () => {
-    setGameState((prev) => ({
-      ...prev,
-      phase: "waiting",
-      roomCode: "RANDOM",
-    }));
-    mockSocket.emit("join-random");
-  };
+    socketRef.current.emit("join-random")
+  }
 
   const startGame = () => {
-    // Initialize scores for both players
-    const initialScores = {};
-    gameState.players.forEach(player => {
-      initialScores[player.id] = 0;
-    });
-
-    setGameState((prev) => ({
-      ...prev,
-      phase: "playing",
-      questionNumber: 1,
-      timeLeft: 20,
-      scores: initialScores,
-      currentQuestion: {
-        id: 1,
-        question: "What is the sign for 'Hello'?",
-        options: ["Wave hand", "Touch forehead", "Cross arms", "Point up"],
-        videoUrl: "https://example.com/signs/hello.mp4", // Placeholder URL
-      },
-    }));
-    
-    // Simulate the other player sending a message
-    setTimeout(() => {
-      setGameState(prev => ({
-        ...prev,
-        messages: [...prev.messages, {
-          id: Date.now(),
-          sender: "Player 2",
-          text: "Good luck everyone!"
-        }]
-      }));
-    }, 1500);
-  };
+    if (!gameState.roomCode){
+      showNotification("Room code not found", "error");
+      return;
+    } 
+    console.log("Starting game for room: ", gameState.roomCode);
+    socketRef.current.emit("start-game", { roomCode: gameState.roomCode });
+  }
 
   const submitAnswer = () => {
-    if (!userInput.selectedAnswer) return;
+    if (!userInput.selectedAnswer || !gameState.roomCode) return
 
-    // Mock score calculation
-    const newScores = { ...gameState.scores };
-    // Your score increases
-    newScores[mockSocket.id] = (newScores[mockSocket.id] || 0) + 10;
-    
-    // Simulate other player's score changing too
-    const otherPlayerId = gameState.players.find(p => p.id !== mockSocket.id)?.id;
-    if (otherPlayerId) {
-      // Random score between 0-10 for other player
-      const otherPlayerPoints = Math.floor(Math.random() * 11);
-      newScores[otherPlayerId] = (newScores[otherPlayerId] || 0) + otherPlayerPoints;
-      
-      // Simulate other player submitting answer message
-      setTimeout(() => {
-        setGameState(prev => ({
-          ...prev,
-          messages: [...prev.messages, {
-            id: Date.now(),
-            sender: "Player 2",
-            text: otherPlayerPoints > 5 ? "Got it!" : "That was a tough one!"
-          }]
-        }));
-      }, 1000);
-    }
-
-    // Questions data to simulate multiple questions
-    const questions = [
-      {
-        id: 1,
-        question: "What is the sign for 'Hello'?",
-        options: ["Wave hand", "Touch forehead", "Cross arms", "Point up"],
-        videoUrl: "https://example.com/signs/hello.mp4",
-      },
-      {
-        id: 2,
-        question: "What is the sign for 'Thank you'?",
-        options: ["Hand to chest", "Thumbs up", "Tapping forehead", "Peace sign"],
-        videoUrl: "https://example.com/signs/thankyou.mp4",
-      },
-      {
-        id: 3,
-        question: "What is the sign for 'Friend'?",
-        options: ["Linked fingers", "Wave", "Hands together", "Point at self"],
-        videoUrl: "https://example.com/signs/friend.mp4",
-      },
-      {
-        id: 4,
-        question: "What is the sign for 'Help'?",
-        options: ["Thumbs up on palm", "Crossed arms", "Raised hand", "Tapping shoulder"],
-        videoUrl: "https://example.com/signs/help.mp4",
-      },
-      {
-        id: 5,
-        question: "What is the sign for 'Understand'?",
-        options: ["Finger to forehead", "Nod", "OK gesture", "Hand wave"],
-        videoUrl: "https://example.com/signs/understand.mp4",
-      }
-    ];
-
-    const nextQuestionNumber = gameState.questionNumber + 1;
-    const nextQuestion = nextQuestionNumber <= gameState.totalQuestions ? 
-      questions[nextQuestionNumber - 1] : null;
-
-    setGameState((prev) => ({
-      ...prev,
-      scores: newScores,
-      questionNumber: nextQuestionNumber,
-      currentQuestion: nextQuestion,
-      timeLeft: nextQuestion ? 20 : 0,
-    }));
-
-    setUserInput((prev) => ({ ...prev, selectedAnswer: null }));
-
-    if (gameState.questionNumber >= gameState.totalQuestions) {
-      setTimeout(() => {
-        setGameState((prev) => ({ ...prev, phase: "finished" }));
-      }, 1000);
-    }
-  };
+    socketRef.current.emit("submit-answer", {
+      roomCode: gameState.roomCode,
+      answer: userInput.selectedAnswer,
+    })
+  }
 
   const sendMessage = () => {
-    if (!userInput.message.trim()) return;
+    if (!userInput.message.trim() || !gameState.roomCode) return
 
-    setGameState((prev) => ({
-      ...prev,
-      messages: [
-        ...prev.messages,
-        {
-          id: Date.now(),
-          sender: "You",
-          text: userInput.message,
-        },
-      ],
-    }));
+    socketRef.current.emit("send-message", {
+      roomCode: gameState.roomCode,
+      message: userInput.message,
+    })
 
-    setUserInput((prev) => ({ ...prev, message: "" }));
-    
-    // Simulate response from other player sometimes
-    if (Math.random() > 0.5 && gameState.players.length > 1) {
-      const responses = [
-        "I think I know this one!",
-        "This is fun!",
-        "Not sure about this question...",
-        "How are you doing so far?",
-        "We're doing great!"
-      ];
-      
-      setTimeout(() => {
-        setGameState(prev => ({
-          ...prev,
-          messages: [...prev.messages, {
-            id: Date.now(),
-            sender: "Player 2",
-            text: responses[Math.floor(Math.random() * responses.length)]
-          }]
-        }));
-      }, 1500 + Math.random() * 1500);
-    }
-  };
+    setUserInput((prev) => ({ ...prev, message: "" }))
+  }
 
   const copyToClipboard = (text) => {
-    Clipboard.setString(text);
-    showNotification("Room code copied!");
-  };
+    Clipboard.setString(text)
+    showNotification("Room code copied!")
+  }
 
   const renderInitialScreen = () => (
     <View style={styles.container}>
       <View style={styles.logoContainer}>
-        <Image
-          source={require("../assets/vitisco logo PNG.png")}
-          style={styles.logo}
-          resizeMode="contain"
-        />
+        <Image source={require("./assets/vitisco logo PNG.png")} style={styles.logo} resizeMode="contain" />
       </View>
 
       <View style={styles.headerContainer}>
         <Text style={styles.headerText}>Welcome to Virtual Room</Text>
-        <Text style={styles.subheaderText}>
-          Create a new room or join an existing one
-        </Text>
+        <Text style={styles.subheaderText}>Create a new room or join an existing one</Text>
       </View>
 
       <View style={styles.buttonContainer}>
@@ -358,9 +290,7 @@ const VirtualRoom = () => {
             style={styles.input}
             placeholder="Enter Room Code"
             value={userInput.roomCode}
-            onChangeText={(text) =>
-              setUserInput((prev) => ({ ...prev, roomCode: text }))
-            }
+            onChangeText={(text) => setUserInput((prev) => ({ ...prev, roomCode: text }))}
           />
           <TouchableOpacity style={styles.primaryButton} onPress={joinRoom}>
             <Text style={styles.buttonText}>Join Room</Text>
@@ -376,7 +306,7 @@ const VirtualRoom = () => {
         </TouchableOpacity>
       </View>
     </View>
-  );
+  )
 
   const renderWaitingRoom = () => (
     <View style={styles.container}>
@@ -389,8 +319,6 @@ const VirtualRoom = () => {
                 ...prev,
                 phase: "initial",
                 roomCode: null,
-                players: [],
-                messages: [],
               }))
             }
           >
@@ -399,14 +327,10 @@ const VirtualRoom = () => {
           <Text style={styles.sectionTitle}>Waiting Room</Text>
         </View>
         <View style={styles.roomCodeContainer}>
-          <Text style={styles.roomCodeText}>
-            Room Code: {gameState.roomCode}
-          </Text>
+          <Text style={styles.roomCodeText}>Room Code: {gameState.roomCode}</Text>
           <TouchableOpacity
             style={styles.copyButton}
-            onPress={() =>
-              gameState.roomCode ? copyToClipboard(gameState.roomCode) : null
-            }
+            onPress={() => (gameState.roomCode ? copyToClipboard(gameState.roomCode) : null)}
           >
             <Ionicons name="copy-outline" size={16} color="#333" />
           </TouchableOpacity>
@@ -414,9 +338,7 @@ const VirtualRoom = () => {
       </View>
 
       <View style={styles.playersContainer}>
-        <Text style={styles.mediumTitle}>
-          Players ({gameState.players.length}/2)
-        </Text>
+        <Text style={styles.mediumTitle}>Players ({gameState.players.length}/2)</Text>
         <View style={styles.playersList}>
           {gameState.players.map((player, index) => (
             <View key={index} style={styles.playerItem}>
@@ -427,18 +349,23 @@ const VirtualRoom = () => {
         </View>
       </View>
 
-      <TouchableOpacity
-        style={[
-          styles.primaryButton,
-          gameState.players.length < 2 && styles.disabledButton,
-        ]}
-        onPress={startGame}
-        disabled={gameState.players.length < 2}
-      >
-        <Text style={styles.buttonText}>Start Game</Text>
-      </TouchableOpacity>
+      {gameState.isCreator && (
+        <TouchableOpacity
+          style={[styles.primaryButton, gameState.players.length < 2 && styles.disabledButton]}
+          onPress={startGame}
+          disabled={gameState.players.length < 2}
+        >
+          <Text style={styles.buttonText}>Start Game</Text>
+        </TouchableOpacity>
+      )}
+
+      {!gameState.isCreator && (
+        <View style={styles.waitingMessage}>
+          <Text style={styles.waitingText}>Waiting for host to start the game...</Text>
+        </View>
+      )}
     </View>
-  );
+  )
 
   const renderGame = () => (
     <View style={styles.container}>
@@ -453,42 +380,27 @@ const VirtualRoom = () => {
       </View>
 
       {gameState.currentQuestion?.videoUrl && (
- // Replace the Video component with a placeholder
-<View style={styles.videoContainer}>
-  {/* Placeholder for video */}
-  <View style={styles.video}>
-    <Text style={{textAlign: 'center', marginTop: 20}}>
-      [Sign Language Video]
-    </Text>
-    <Ionicons name="videocam" size={50} color="#999" style={{alignSelf: 'center', marginTop: 20}} />
-  </View>
-</View>
+        <View style={styles.videoContainer}>
+          <Video
+            source={{ uri: gameState.currentQuestion.videoUrl }}
+            style={styles.video}
+            controls={true}
+            resizeMode="cover"
+          />
+        </View>
       )}
 
       <View style={styles.questionContainer}>
-        <Text style={styles.questionText}>
-          {gameState.currentQuestion?.question}
-        </Text>
+        <Text style={styles.questionText}>{gameState.currentQuestion?.question}</Text>
 
         <View style={styles.optionsContainer}>
           {gameState.currentQuestion?.options.map((option, index) => (
             <TouchableOpacity
               key={index}
-              style={[
-                styles.optionButton,
-                userInput.selectedAnswer === option && styles.selectedOption,
-              ]}
-              onPress={() =>
-                setUserInput((prev) => ({ ...prev, selectedAnswer: option }))
-              }
+              style={[styles.optionButton, userInput.selectedAnswer === option && styles.selectedOption]}
+              onPress={() => setUserInput((prev) => ({ ...prev, selectedAnswer: option }))}
             >
-              <Text
-                style={[
-                  styles.optionText,
-                  userInput.selectedAnswer === option &&
-                    styles.selectedOptionText,
-                ]}
-              >
+              <Text style={[styles.optionText, userInput.selectedAnswer === option && styles.selectedOptionText]}>
                 {option}
               </Text>
             </TouchableOpacity>
@@ -496,10 +408,7 @@ const VirtualRoom = () => {
         </View>
 
         <TouchableOpacity
-          style={[
-            styles.primaryButton,
-            !userInput.selectedAnswer && styles.disabledButton,
-          ]}
+          style={[styles.primaryButton, !userInput.selectedAnswer && styles.disabledButton]}
           onPress={submitAnswer}
           disabled={!userInput.selectedAnswer}
         >
@@ -510,80 +419,51 @@ const VirtualRoom = () => {
       <View style={styles.scoresSection}>
         <Text style={styles.mediumTitle}>Scores</Text>
         <View style={styles.scoresList}>
-          {Object.entries(gameState.scores).map(([playerId, score]) => {
-            const playerName = gameState.players.find(p => p.id === playerId)?.name || playerId;
-            return (
-              <View key={playerId} style={styles.scoreRow}>
-                <Text style={styles.regularText}>{playerName}</Text>
-                <Text style={styles.scoreText}>{score}</Text>
-              </View>
-            );
-          })}
+          {Object.entries(gameState.scores).map(([player, score]) => (
+            <View key={player} style={styles.scoreRow}>
+              <Text style={styles.regularText}>{player}</Text>
+              <Text style={styles.scoreText}>{score}</Text>
+            </View>
+          ))}
         </View>
       </View>
     </View>
-  );
+  )
 
   const renderResults = () => (
     <View style={styles.resultsContainer}>
-      <Ionicons
-        name="trophy"
-        size={64}
-        color="#FFD700"
-        style={styles.trophyIcon}
-      />
+      <Ionicons name="trophy" size={64} color="#FFD700" style={styles.trophyIcon} />
       <Text style={styles.resultsTitle}>Game Complete!</Text>
 
       <ScrollView style={styles.resultsScrollView}>
         {Object.entries(gameState.scores)
           .sort(([, a], [, b]) => b - a)
-          .map(([playerId, score], index) => {
-            const playerName = gameState.players.find(p => p.id === playerId)?.name || playerId;
-            return (
-              <View
-                key={playerId}
-                style={[styles.resultItem, index === 0 && styles.winnerItem]}
-              >
-                <View style={styles.resultNameContainer}>
-                  {index === 0 && (
-                    <Ionicons name="trophy" size={16} color="#FFD700" />
-                  )}
-                  <Text style={styles.resultName}>{playerName}</Text>
-                </View>
-                <Text style={styles.resultScore}>{score}</Text>
+          .map(([player, score], index) => (
+            <View key={player} style={[styles.resultItem, index === 0 && styles.winnerItem]}>
+              <View style={styles.resultNameContainer}>
+                {index === 0 && <Ionicons name="trophy" size={16} color="#FFD700" />}
+                <Text style={styles.resultName}>{player}</Text>
               </View>
-            );
-          })}
+              <Text style={styles.resultScore}>{score}</Text>
+            </View>
+          ))}
       </ScrollView>
 
       <TouchableOpacity
         style={styles.primaryButton}
-        onPress={() => setGameState((prev) => ({ 
-          ...prev, 
-          phase: "initial",
-          players: [],
-          messages: [],
-          scores: {},
-        }))}
+        onPress={() => setGameState((prev) => ({ ...prev, phase: "initial" }))}
       >
         <Text style={styles.buttonText}>Play Again</Text>
       </TouchableOpacity>
     </View>
-  );
+  )
 
   const renderChat = () => (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-      style={styles.chatContainer}
-    >
+    <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={styles.chatContainer}>
       <View style={styles.chatDivider} />
       <ScrollView style={styles.messagesScrollView}>
         {gameState.messages.map((message) => (
-          <ChatMessage
-            key={message.id}
-            message={message.text}
-            sender={message.sender}
-          />
+          <ChatMessage key={message.id} message={message.text} sender={message.sender} />
         ))}
       </ScrollView>
 
@@ -591,9 +471,7 @@ const VirtualRoom = () => {
         <TextInput
           style={styles.chatInput}
           value={userInput.message}
-          onChangeText={(text) =>
-            setUserInput((prev) => ({ ...prev, message: text }))
-          }
+          onChangeText={(text) => setUserInput((prev) => ({ ...prev, message: text }))}
           placeholder="Type a message..."
           onSubmitEditing={sendMessage}
         />
@@ -602,7 +480,7 @@ const VirtualRoom = () => {
         </TouchableOpacity>
       </View>
     </KeyboardAvoidingView>
-  );
+  )
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -622,12 +500,11 @@ const VirtualRoom = () => {
           {gameState.phase === "finished" && renderResults()}
         </View>
 
-        {(gameState.phase === "waiting" || gameState.phase === "playing") &&
-          renderChat()}
+        {(gameState.phase === "waiting" || gameState.phase === "playing") && renderChat()}
       </ScrollView>
     </SafeAreaView>
-  );
-};
+  )
+}
 
 const styles = StyleSheet.create({
   safeArea: {
@@ -636,7 +513,7 @@ const styles = StyleSheet.create({
   },
   scrollContainer: {
     flexGrow: 1,
-    padding: 10
+    padding: 10,
   },
   card: {
     backgroundColor: "#fff",
@@ -765,7 +642,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 20,
     fontWeight: "700",
-    marginBottom: 8
+    marginBottom: 8,
   },
   roomCodeContainer: {
     flexDirection: "row",
@@ -777,12 +654,12 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   backButtonContainer: {
-    flexDirection: 'row',
+    flexDirection: "row",
     alignItems: "flex-end",
   },
   backButton: {
     padding: 8,
-    marginRight: 8
+    marginRight: 8,
   },
   copyButton: {
     padding: 4,
@@ -934,9 +811,6 @@ const styles = StyleSheet.create({
   messageContainer: {
     marginBottom: 8,
   },
-  myMessage: {
-    alignItems: "flex-end",
-  },
   messageSender: {
     fontSize: 12,
     fontWeight: "500",
@@ -947,9 +821,6 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 8,
     maxWidth: "80%",
-  },
-  myMessageContent: {
-    backgroundColor: "#EBF5FF",
   },
   messageText: {
     fontSize: 14,
@@ -975,7 +846,16 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-});
+  waitingMessage: {
+    padding: 16,
+    backgroundColor: "#F9FAFB",
+    borderRadius: 8,
+    alignItems: "center",
+  },
+  waitingText: {
+    color: "#666",
+    fontStyle: "italic",
+  },
+})
 
-export default VirtualRoom;
-
+export default VirtualRoom
