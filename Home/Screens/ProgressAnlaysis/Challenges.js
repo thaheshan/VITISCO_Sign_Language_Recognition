@@ -16,7 +16,7 @@ const Challenges = () => {
     const fetchChallenges = async () => {
       try {
         // Fetch challenges from the API
-        const response = await fetch('https://future-champion-452808-r4.uw.r.appspot.com/weekly-challenges');
+        const response = await fetch('https://backend-18-dot-future-champion-452808-r4.uw.r.appspot.com//weekly-challenges');
         const data = await response.json();
         // Set the fetched challenges to the state
         setChallenges(data); // assuming the API returns an array of challenges

@@ -13,7 +13,7 @@ const QuizAPI = ({ userId, languageName }) => {
   useEffect(() => {
     const fetchQuizPerformance = async () => {
       try {
-        const response = await axios.get('https://future-champion-452808-r4.uw.r.appspot.com/user-average', {
+        const response = await axios.get('https://backend-18-dot-future-champion-452808-r4.uw.r.appspot.com//user-average', {
           params: {
             userId: userId,
             languageName: languageName,

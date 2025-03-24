@@ -12,7 +12,7 @@ const XPpoints = () => {
   useEffect(() => {
     const fetchXP = async () => {
       try {
-        const response = await fetch(`https://future-champion-452808-r4.uw.r.appspot.com/user-xp/${userId}`);
+        const response = await fetch(`https://backend-18-dot-future-champion-452808-r4.uw.r.appspot.com//${userId}`);
         const data = await response.json();
         if (data.totalXP !== undefined) {
           setTotalXP(data.totalXP);

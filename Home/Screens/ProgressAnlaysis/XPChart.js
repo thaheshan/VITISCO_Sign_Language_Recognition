@@ -14,7 +14,7 @@ const XPChart = () => {
   useEffect(() => {
     const fetchXPData = async () => {
       try {
-        const response = await axios.get(`https://future-champion-452808-r4.uw.r.appspot.com/userXPchart/${userId}`);
+        const response = await axios.get(`https://backend-18-dot-future-champion-452808-r4.uw.r.appspot.com//userXPchart/${userId}`);
         setData({ weeklyData: response.data });
       } catch (error) {
         console.error("Error fetching XP chart data:", error);
