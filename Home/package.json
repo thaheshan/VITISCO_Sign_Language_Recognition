@@ -30,6 +30,7 @@
     "expo-image-manipulator": "~13.0.6",
     "expo-linear-gradient": "~14.0.2",
     "expo-media-library": "~17.0.6",
+    "expo-notifications": "~0.29.14",
     "expo-speech": "~13.0.1",
     "expo-status-bar": "~2.0.1",
     "fingerpose": "^0.1.0",
@@ -49,12 +50,13 @@
     "react-native-screens": "~4.4.0",
     "react-native-svg": "15.8.0",
     "react-native-vector-icons": "^10.2.0",
-    "react-native-video": "^6.10.2",
-    "expo-notifications": "~0.29.14"
+    "react-native-video": "^6.10.2"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",
-    "@react-native-community/cli": "^18.0.0"
+    "@react-native-community/cli": "^18.0.0",
+    "@types/react": "^18.3.19",
+    "typescript": "^5.8.2"
   },
   "private": true
 }
