@@ -8,24 +8,19 @@ import {
   ActivityIndicator,
   SafeAreaView,
   Platform,
-  StatusBar
+  StatusBar,
+  BackHandler
 } from 'react-native';
 
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 
-// Properly import Camera and its constants with improved validation
+// Import camera module with better Samsung compatibility
 let Camera, CameraType, FlashMode;
 try {
   const ExpoCamera = require('expo-camera');
   Camera = ExpoCamera.Camera;
   CameraType = ExpoCamera.CameraType;
   FlashMode = ExpoCamera.FlashMode;
-  
-  // Verify Camera is a valid component
-  if (typeof Camera !== 'function' && typeof Camera !== 'object') {
-    console.error("Camera is not a valid component:", Camera);
-    Camera = null;
-  }
 } catch (error) {
   console.error("Error importing Camera:", error);
   Camera = null;
@@ -58,41 +53,100 @@ export default function SignLanguageTranslatorUI() {
   const [isDetecting, setIsDetecting] = useState(false);
   const [timer, setTimer] = useState(0);
   const [convertedText, setConvertedText] = useState('');
-  const [cameraType, setCameraType] = useState(CameraType?.front || 'front');
+  const [cameraType, setCameraType] = useState(CameraType?.back || 'back'); // Default to back camera for testing
   const [flashMode, setFlashMode] = useState(FlashMode?.off || 'off');
   const [isProcessing, setIsProcessing] = useState(false);
   const [detectionInterval, setDetectionInterval] = useState(null);
   const [cameraError, setCameraError] = useState(null);
   const [connectionStatus, setConnectionStatus] = useState('checking');
+  const [cameraReady, setCameraReady] = useState(false);
   
   const cameraRef = useRef(null);
   
-  // Request camera and media library permissions
+  // Handle back button to release camera
+  useFocusEffect(
+    React.useCallback(() => {
+      const onBackPress = () => {
+        if (cameraRef.current) {
+          // Release camera resources
+          try {
+            cameraRef.current = null;
+          } catch (e) {
+            console.log("Error releasing camera:", e);
+          }
+        }
+        return false;
+      };
+
+      BackHandler.addEventListener('hardwareBackPress', onBackPress);
+      return () => BackHandler.removeEventListener('hardwareBackPress', onBackPress);
+    }, [])
+  );
+
+  // Properly release camera when component unmounts
   useEffect(() => {
-    (async () => {
-      try {
-        if (!Camera) {
-          setCameraError('Camera module not available');
-          setHasPermission(false);
-          return;
-        }
-        
-        const { status: cameraStatus } = await Camera.requestCameraPermissionsAsync();
-        const { status: mediaStatus } = await MediaLibrary.requestPermissionsAsync();
-        
-        setHasPermission(cameraStatus === 'granted');
-        
-        if (cameraStatus !== 'granted') {
-          Alert.alert('Permission required', 'Camera permission is required for sign detection');
-        }
-      } catch (error) {
-        console.error('Error requesting permissions:', error);
-        Alert.alert('Permission Error', 'Failed to request camera permissions');
-        setHasPermission(false);
-        setCameraError(error.message);
+    return () => {
+      if (detectionInterval) {
+        clearInterval(detectionInterval);
       }
-    })();
+      // Release camera on unmount
+      if (cameraRef.current) {
+        try {
+          cameraRef.current = null;
+        } catch (e) {
+          console.log("Error releasing camera on unmount:", e);
+        }
+      }
+    };
   }, []);
+
+  // Request camera and media library permissions with retry mechanism
+  useEffect(() => {
+    requestCameraPermission();
+  }, []);
+
+  const requestCameraPermission = async () => {
+    try {
+      if (!Camera) {
+        setCameraError('Camera module not available');
+        setHasPermission(false);
+        return;
+      }
+      
+      // Samsung devices sometimes need this delay before requesting permissions
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      const { status: cameraStatus } = await Camera.requestCameraPermissionsAsync();
+      const { status: mediaStatus } = await MediaLibrary.requestPermissionsAsync();
+      
+      if (cameraStatus === 'granted') {
+        setHasPermission(true);
+        console.log("Camera permission granted!");
+      } else {
+        setHasPermission(false);
+        Alert.alert(
+          'Permission required', 
+          'Camera permission is required for sign detection',
+          [
+            { text: 'Cancel', style: 'cancel' },
+            { text: 'Try Again', onPress: requestCameraPermission }
+          ]
+        );
+      }
+    } catch (error) {
+      console.error('Error requesting permissions:', error);
+      Alert.alert(
+        'Permission Error', 
+        'Failed to request camera permissions: ' + error.message,
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Try Again', onPress: requestCameraPermission }
+        ]
+      );
+      setHasPermission(false);
+      setCameraError(error.message);
+    }
+  };
 
   // Check API connection on component mount
   useEffect(() => {
@@ -150,7 +204,7 @@ export default function SignLanguageTranslatorUI() {
     
     // Set new interval for detection (every 2 seconds)
     const interval = setInterval(() => {
-      if (!isProcessing) {
+      if (!isProcessing && cameraReady) {
         detectGesture();
       }
     }, 2000);
@@ -176,7 +230,7 @@ export default function SignLanguageTranslatorUI() {
 
   // Take picture and detect gesture
   const detectGesture = async () => {
-    if (cameraRef.current && !isProcessing) {
+    if (cameraRef.current && !isProcessing && cameraReady) {
       try {
         setIsProcessing(true);
         
@@ -189,11 +243,12 @@ export default function SignLanguageTranslatorUI() {
           }
         }
         
-        // Take photo
+        // Take photo with better Samsung compatibility
         const photo = await cameraRef.current.takePictureAsync({ 
           base64: true,
-          quality: 0.8,
-          exif: false
+          quality: 0.7,  // Lower quality for better performance
+          exif: false,
+          skipProcessing: true  // Skip processing to avoid Samsung-specific issues
         });
         
         console.log('Photo taken, sending to API for gesture detection');
@@ -242,7 +297,7 @@ export default function SignLanguageTranslatorUI() {
         }
       } catch (error) {
         console.error('Error detecting gesture:', error);
-        Alert.alert('Detection failed', 'Failed to detect gesture. Please check your network connection and try again.');
+        Alert.alert('Detection failed', 'Failed to detect gesture: ' + error.message);
         
         // Error haptic feedback
         if (Platform.OS === 'ios' || Platform.OS === 'android') {
@@ -255,6 +310,8 @@ export default function SignLanguageTranslatorUI() {
       } finally {
         setIsProcessing(false);
       }
+    } else if (!cameraReady) {
+      Alert.alert('Camera not ready', 'Please wait for the camera to initialize completely');
     }
   };
 
@@ -265,6 +322,8 @@ export default function SignLanguageTranslatorUI() {
         ? (CameraType?.back || 'back') 
         : (CameraType?.front || 'front')
     );
+    // Reset camera ready state when switching cameras
+    setCameraReady(false);
   };
 
   // Toggle flash (only for back camera)
@@ -280,6 +339,11 @@ export default function SignLanguageTranslatorUI() {
 
   // Toggle detection
   const toggleDetection = () => {
+    if (!cameraReady) {
+      Alert.alert('Camera not ready', 'Please wait for the camera to initialize completely');
+      return;
+    }
+    
     setIsDetecting(prev => !prev);
     
     // Provide haptic feedback
@@ -343,12 +407,22 @@ export default function SignLanguageTranslatorUI() {
     console.log('Camera available:', Camera !== null);
     console.log('CameraType available:', CameraType !== null);
     console.log('FlashMode available:', FlashMode !== null);
+    if (Platform.OS === 'android') {
+      console.log('Android device model:', Platform.constants.Model);
+      console.log('Android manufacturer:', Platform.constants.Manufacturer);
+    }
   };
 
   // Run check
   useEffect(() => {
     checkCameraModuleAvailability();
   }, []);
+
+  // Handle camera initialization
+  const handleCameraInitialized = () => {
+    console.log("Camera initialized and ready!");
+    setCameraReady(true);
+  };
 
   // Render connection status indicator
   const renderConnectionStatus = () => {
@@ -394,19 +468,7 @@ export default function SignLanguageTranslatorUI() {
         </Text>
         <TouchableOpacity 
           style={styles.retryButton}
-          onPress={async () => {
-            try {
-              if (!Camera) {
-                Alert.alert('Camera Module Error', 'The camera module is not available on this device.');
-                return;
-              }
-              const { status } = await Camera.requestCameraPermissionsAsync();
-              setHasPermission(status === 'granted');
-            } catch (error) {
-              console.error('Error requesting camera permission:', error);
-              Alert.alert('Permission Error', 'Failed to request camera permissions');
-            }
-          }}
+          onPress={requestCameraPermission}
         >
           <Text style={styles.retryButtonText}>Request Permission Again</Text>
         </TouchableOpacity>
@@ -421,11 +483,16 @@ export default function SignLanguageTranslatorUI() {
       <Text style={{ color: 'white', marginTop: 10 }}>
         Camera type: {cameraType === (CameraType?.front || 'front') ? 'front' : 'back'}
       </Text>
+      {Platform.OS === 'android' && (
+        <Text style={{ color: 'white', marginTop: 5, padding: 10, textAlign: 'center' }}>
+          Samsung devices may require additional permissions. Please check your device settings.
+        </Text>
+      )}
       <TouchableOpacity 
         style={{ marginTop: 20, backgroundColor: '#4169e1', padding: 10, borderRadius: 5 }}
-        onPress={detectGesture}
+        onPress={requestCameraPermission}
       >
-        <Text style={{ color: 'white' }}>Take Photo Anyway</Text>
+        <Text style={{ color: 'white' }}>Try Again</Text>
       </TouchableOpacity>
     </View>
   );
@@ -440,17 +507,35 @@ export default function SignLanguageTranslatorUI() {
       </View>
       
       <View style={styles.cameraContainer}>
-        {/* Improved Camera component check */}
+        {/* Improved Camera component with Samsung compatibility */}
         {(Camera && typeof Camera === 'function') ? (
           <Camera
             ref={cameraRef}
             style={styles.camera}
             type={cameraType}
             flashMode={flashMode}
-            ratio="16:9"
+            onCameraReady={handleCameraInitialized}
+            autoFocus={Camera.Constants?.AutoFocus?.on || "on"}
+            useCamera2Api={Platform.OS === 'android'} // Use Camera2 API for better compatibility
+            onMountError={(error) => {
+              console.error("Camera mount error:", error);
+              setCameraError(error.message || "Camera mount error");
+              Alert.alert(
+                "Camera Error", 
+                `There was an error mounting the camera: ${error.message}`,
+                [
+                  { text: 'Try Again', onPress: () => {
+                    // Force re-mounting of camera
+                    setCameraType(prevType => prevType === 'front' ? 'back' : 'front');
+                    setTimeout(() => setCameraType(prevType => prevType === 'front' ? 'back' : 'front'), 500);
+                  }}
+                ]
+              );
+            }}
             onError={(error) => {
               console.error("Camera error:", error);
               setCameraError(error.message || "Unknown camera error");
+              Alert.alert("Camera Error", `Camera error: ${error.message}`);
             }}
           />
         ) : (
@@ -466,15 +551,19 @@ export default function SignLanguageTranslatorUI() {
             {isDetecting ? 'Detecting...' : 'Paused'}
           </Text>
           <TouchableOpacity 
-            style={styles.recordButton}
+            style={[styles.recordButton, !cameraReady && styles.disabledButton]}
             onPress={toggleDetection}
+            disabled={!cameraReady}
           >
             <View style={isDetecting ? styles.recordButtonInnerActive : styles.recordButtonInner} />
           </TouchableOpacity>
         </View>
         
         <View style={styles.cameraControls}>
-          <TouchableOpacity style={styles.cameraButton} onPress={toggleCameraType}>
+          <TouchableOpacity 
+            style={styles.cameraButton} 
+            onPress={toggleCameraType}
+          >
             <Text style={styles.cameraButtonText}>Flip</Text>
           </TouchableOpacity>
           
@@ -486,6 +575,13 @@ export default function SignLanguageTranslatorUI() {
             </TouchableOpacity>
           )}
         </View>
+
+        {!cameraReady && (
+          <View style={styles.processingOverlay}>
+            <ActivityIndicator size="large" color="#fff" />
+            <Text style={styles.processingText}>Initializing camera...</Text>
+          </View>
+        )}
 
         {isProcessing && (
           <View style={styles.processingOverlay}>
@@ -499,10 +595,10 @@ export default function SignLanguageTranslatorUI() {
         <TouchableOpacity 
           style={[
             styles.convertButton,
-            isProcessing && styles.disabledButton
+            (isProcessing || !cameraReady) && styles.disabledButton
           ]}
           onPress={detectGesture}
-          disabled={isProcessing}
+          disabled={isProcessing || !cameraReady}
         >
           <Text style={styles.convertButtonText}>Detect Sign</Text>
         </TouchableOpacity>
@@ -753,6 +849,7 @@ const styles = StyleSheet.create({
     color: 'red',
     textAlign: 'center',
     marginTop: 40,
+    padding: 20,
   },
   loadingText: {
     fontSize: 16,
