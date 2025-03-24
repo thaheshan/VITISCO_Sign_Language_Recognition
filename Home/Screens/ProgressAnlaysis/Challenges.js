@@ -5,15 +5,20 @@ import styles from './styles';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
 const Challenges = () => {
+  // State to hold the list of challenges
   const [challenges, setChallenges] = useState([]);
+   // State to hold the progress of the challenges
   const [progress, setProgress] = useState(1);
+  // State to indicate if the challenges are completed
   const [completed, setCompleted] = useState(true);
 
   useEffect(() => {
     const fetchChallenges = async () => {
       try {
+        // Fetch challenges from the API
         const response = await fetch('https://future-champion-452808-r4.uw.r.appspot.com/weekly-challenges');
         const data = await response.json();
+        // Set the fetched challenges to the state
         setChallenges(data); // assuming the API returns an array of challenges
       } catch (error) {
         console.error("Error fetching challenges:", error);
@@ -33,6 +38,7 @@ const Challenges = () => {
               <View style={[styles.rewardIconContainer, { backgroundColor: completed ? '#4C4469' : '#4C88FF' }]}>
                 <Icon
                   name={
+                     // Determine the icon based on the challenge title
                     challenge.title.includes('Learn') ? 'school' :
                     challenge.title.includes('Quiz') ? 'lightbulb-auto' :
                     challenge.title.includes('Compete') ? 'human-greeting-variant' : 'trophy-outline'
