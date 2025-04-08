@@ -12,34 +12,6 @@ const crypto = require('crypto');
 const nodemailer = require('nodemailer');
 const { body, validationResult } = require('express-validator');
 
-// Add to your state variables
-const [isLoading, setIsLoading] = useState(false);
-const [apiError, setApiError] = useState('');
-
-
-
-require("dotenv").config();
-
-
-// Middleware
-app.use(cors());
-app.use(express.json());
-
-// Database connection
-const db = mysql.createConnection({
-  host: "localhost",
-  user: "root",
-  password: "",
-  database: "vitisco",
-});
-
-db.connect((err) => {
-  if (err) {
-    console.error("Database connection failed: " + err.stack);
-    return;
-  }
-  console.log("Connected to MySQL database");
-});
 // Load environment variables
 dotenv.config();
 
@@ -48,9 +20,7 @@ const PORT = process.env.PORT || 5000;
 
 const getApiUrl = () => {
     // For Expo Go, use your computer's local network IP
-    // You'll need to update this with YOUR computer's IP address on the network
-    // This is the IP other devices on your network can use to reach your computer
-    return 'http://192.168.1.25:5000';
+    return 'http://192.168.58.40:5000';
     
     // Alternative approach using Expo's manifest.debuggerHost (if available)
     // This works in some Expo environments but not all
@@ -63,7 +33,7 @@ const getApiUrl = () => {
     }
     return 'http://YOUR_FALLBACK_IP:5000';
     */
-  };
+};
 
 const API_BASE_URL = getApiUrl();
 console.log("Using API URL:", API_BASE_URL);
@@ -90,17 +60,20 @@ app.use(morgan('combined'));
 // Parse JSON bodies
 app.use(express.json({ limit: '1mb' })); // Limit payload size
 
-// Database connection pool
+runtime: nodejs20
+service: backend-12
 
+// Database connection pool
 const pool = mysql.createPool({
-  host: process.env.DB_HOST || 'localhost',
-  user: process.env.DB_USER || 'root',
-  password: process.env.DB_PASSWORD || '',
-  database: process.env.DB_NAME || 'vitisco_db',
+  host: process.env.DB_HOST || '34.67.39.101',
+  user: process.env.DB_USER || 'admin123',
+  password: process.env.DB_PASSWORD || 'vitisco123',
+  database: process.env.DB_NAME || 'vitisco',
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0
 });
+
 
 // Setup email transporter
 const transporter = nodemailer.createTransport({
@@ -382,11 +355,6 @@ app.post('/api/verify-otp', [
   }
 });
 
-// Make sure the server is listening on 0.0.0.0 to accept connections from all network interfaces
-app.listen(PORT, '0.0.0.0', () => {
-    console.log(`Server running on port ${PORT}`);
-  });
-
 // Reset password
 app.post('/api/reset-password', [
   body('email').isEmail().normalizeEmail().withMessage('Valid email is required'),
@@ -473,178 +441,177 @@ app.post('/api/resend-otp', [
 });
 
 // Protected route example - Get user profile
-// Protected route example - Get user profile
 app.get('/api/user-profile', authenticateToken, async (req, res) => {
+  try {
+    // Fetch user profile data
+    const [profiles] = await pool.query(
+      'SELECT * FROM user_profiles WHERE user_id = ?',
+      [req.user.id]
+    );
+    
+    if (profiles.length === 0) {
+      return res.status(404).json({ error: 'Profile not found' });
+    }
+    
+    // Fetch user data
+    const [users] = await pool.query(
+      'SELECT id, username, email, profile_name, birth_date, phone_number, gender, native_language, preferred_language FROM users WHERE id = ?',
+      [req.user.id]
+    );
+    
+    const userData = {
+      ...users[0],
+      profile: profiles[0]
+    };
+    
+    res.json({
+      user: userData
+    });
+    
+  } catch (error) {
+    console.error('Profile fetch error:', error);
+    res.status(500).json({ error: 'Server error while fetching profile' });
+  }
+});
+
+// Update user profile
+app.put('/api/user-profile', authenticateToken, [
+  body('profileName').trim().optional(),
+  body('bio').trim().optional(),
+  body('avatarUrl').optional().isURL().withMessage('Avatar URL must be valid')
+], async (req, res) => {
+  // Check for validation errors
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+  
+  const { profileName, bio, avatarUrl } = req.body;
+  
+  try {
+    // Start a transaction
+    const connection = await pool.getConnection();
+    await connection.beginTransaction();
+    
     try {
-      // Fetch user profile data
-      const [profiles] = await pool.query(
-        'SELECT * FROM user_profiles WHERE user_id = ?',
-        [req.user.id]
-      );
-      
-      if (profiles.length === 0) {
-        return res.status(404).json({ error: 'Profile not found' });
+      // Update user data if profileName provided
+      if (profileName) {
+        await connection.query(
+          'UPDATE users SET profile_name = ? WHERE id = ?',
+          [profileName, req.user.id]
+        );
       }
       
-      // Fetch user data
-      const [users] = await pool.query(
-        'SELECT id, username, email, profile_name, birth_date, phone_number, gender, native_language, preferred_language FROM users WHERE id = ?',
-        [req.user.id]
-      );
-      
-      const userData = {
-        ...users[0],
-        profile: profiles[0]
-      };
-      
-      res.json({
-        user: userData
-      });
-      
-    } catch (error) {
-      console.error('Profile fetch error:', error);
-      res.status(500).json({ error: 'Server error while fetching profile' });
-    }
-  });
-  
-  // Update user profile
-  app.put('/api/user-profile', authenticateToken, [
-    body('profileName').trim().optional(),
-    body('bio').trim().optional(),
-    body('avatarUrl').optional().isURL().withMessage('Avatar URL must be valid')
-  ], async (req, res) => {
-    // Check for validation errors
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
-    }
-    
-    const { profileName, bio, avatarUrl } = req.body;
-    
-    try {
-      // Start a transaction
-      const connection = await pool.getConnection();
-      await connection.beginTransaction();
-      
-      try {
-        // Update user data if profileName provided
-        if (profileName) {
-          await connection.query(
-            'UPDATE users SET profile_name = ? WHERE id = ?',
-            [profileName, req.user.id]
-          );
+      // Update profile data
+      if (bio !== undefined || avatarUrl !== undefined) {
+        const updateFields = [];
+        const updateValues = [];
+        
+        if (bio !== undefined) {
+          updateFields.push('bio = ?');
+          updateValues.push(bio);
         }
         
-        // Update profile data
-        if (bio !== undefined || avatarUrl !== undefined) {
-          const updateFields = [];
-          const updateValues = [];
-          
-          if (bio !== undefined) {
-            updateFields.push('bio = ?');
-            updateValues.push(bio);
-          }
-          
-          if (avatarUrl !== undefined) {
-            updateFields.push('avatar_url = ?');
-            updateValues.push(avatarUrl);
-          }
-          
-          updateFields.push('updated_at = NOW()');
-          updateValues.push(req.user.id);
-          
-          await connection.query(
-            `UPDATE user_profiles SET ${updateFields.join(', ')} WHERE user_id = ?`,
-            [...updateValues]
-          );
+        if (avatarUrl !== undefined) {
+          updateFields.push('avatar_url = ?');
+          updateValues.push(avatarUrl);
         }
         
-        await connection.commit();
+        updateFields.push('updated_at = NOW()');
+        updateValues.push(req.user.id);
         
-        res.json({ message: 'Profile updated successfully' });
-        
-      } catch (error) {
-        await connection.rollback();
-        throw error;
-      } finally {
-        connection.release();
+        await connection.query(
+          `UPDATE user_profiles SET ${updateFields.join(', ')} WHERE user_id = ?`,
+          [...updateValues]
+        );
       }
+      
+      await connection.commit();
+      
+      res.json({ message: 'Profile updated successfully' });
       
     } catch (error) {
-      console.error('Profile update error:', error);
-      res.status(500).json({ error: 'Server error while updating profile' });
-    }
-  });
-  
-  // Change password
-  app.post('/api/change-password', authenticateToken, [
-    body('currentPassword').notEmpty().withMessage('Current password is required'),
-    body('newPassword').isLength({ min: 8 }).withMessage('New password must be at least 8 characters')
-  ], async (req, res) => {
-    // Check for validation errors
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
+      await connection.rollback();
+      throw error;
+    } finally {
+      connection.release();
     }
     
-    const { currentPassword, newPassword } = req.body;
+  } catch (error) {
+    console.error('Profile update error:', error);
+    res.status(500).json({ error: 'Server error while updating profile' });
+  }
+});
+
+// Change password
+app.post('/api/change-password', authenticateToken, [
+  body('currentPassword').notEmpty().withMessage('Current password is required'),
+  body('newPassword').isLength({ min: 8 }).withMessage('New password must be at least 8 characters')
+], async (req, res) => {
+  // Check for validation errors
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+  
+  const { currentPassword, newPassword } = req.body;
+  
+  try {
+    // Get user with password
+    const [users] = await pool.query(
+      'SELECT * FROM users WHERE id = ?',
+      [req.user.id]
+    );
     
-    try {
-      // Get user with password
-      const [users] = await pool.query(
-        'SELECT * FROM users WHERE id = ?',
-        [req.user.id]
-      );
-      
-      if (users.length === 0) {
-        return res.status(404).json({ error: 'User not found' });
-      }
-      
-      const user = users[0];
-      
-      // Validate current password
-      const validPassword = await bcrypt.compare(currentPassword, user.password);
-      if (!validPassword) {
-        return res.status(400).json({ error: 'Current password is incorrect' });
-      }
-      
-      // Hash new password
-      const salt = await bcrypt.genSalt(10);
-      const hashedPassword = await bcrypt.hash(newPassword, salt);
-      
-      // Update password
-      await pool.query(
-        'UPDATE users SET password = ? WHERE id = ?',
-        [hashedPassword, req.user.id]
-      );
-      
-      res.json({ message: 'Password changed successfully' });
-      
-    } catch (error) {
-      console.error('Password change error:', error);
-      res.status(500).json({ error: 'Server error while changing password' });
+    if (users.length === 0) {
+      return res.status(404).json({ error: 'User not found' });
     }
-  });
-  
-  // Logout (client-side implementation, just for completeness)
-  app.post('/api/logout', authenticateToken, (req, res) => {
-    // JWT tokens are stateless, so we don't need to do anything server-side
-    // The client should discard the token
-    res.json({ message: 'Logged out successfully' });
-  });
-  
-  // Error handling middleware
-  app.use((err, req, res, next) => {
-    console.error(err.stack);
-    res.status(500).json({ error: 'Something went wrong!' });
-  });
-  
-  // 404 middleware for unhandled routes
-  app.use((req, res) => {
-    res.status(404).json({ error: 'Resource not found' });
-  });
-  
-  // Start the server
-  app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-  });
+    
+    const user = users[0];
+    
+    // Validate current password
+    const validPassword = await bcrypt.compare(currentPassword, user.password);
+    if (!validPassword) {
+      return res.status(400).json({ error: 'Current password is incorrect' });
+    }
+    
+    // Hash new password
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(newPassword, salt);
+    
+    // Update password
+    await pool.query(
+      'UPDATE users SET password = ? WHERE id = ?',
+      [hashedPassword, req.user.id]
+    );
+    
+    res.json({ message: 'Password changed successfully' });
+    
+  } catch (error) {
+    console.error('Password change error:', error);
+    res.status(500).json({ error: 'Server error while changing password' });
+  }
+});
+
+// Logout (client-side implementation, just for completeness)
+app.post('/api/logout', authenticateToken, (req, res) => {
+  // JWT tokens are stateless, so we don't need to do anything server-side
+  // The client should discard the token
+  res.json({ message: 'Logged out successfully' });
+});
+
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({ error: 'Something went wrong!' });
+});
+
+// 404 middleware for unhandled routes
+app.use((req, res) => {
+  res.status(404).json({ error: 'Resource not found' });
+});
+
+// Start the server (use only once, remove duplicate listener)
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`Server running on port ${PORT}`);
+});

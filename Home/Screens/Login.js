@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
-  AppRegistry,
   StyleSheet,
   Text,
   View,
@@ -14,6 +13,8 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  Keyboard,
+  TouchableWithoutFeedback,
 } from 'react-native';
 
 
@@ -36,7 +37,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 // Make this more dynamic
 const API_BASE_URL = Platform.OS === 'web' 
   ? 'http://localhost:5000' 
-  : 'http://192.168.1.25:5000';  // Use your actual IP address
+  : 'http://192.168.58.40:5000';  // Use your actual IP address
 
 
 // Replace X with your actual IP address segment
@@ -86,7 +87,7 @@ const Logo = ({ small = false }) => {
   return (
     <View style={small ? styles.smallLogoContainer : styles.logoContainer}>
       <Animated.Image
-        source={require('../assets/splash-icon.png')}
+        source={require('../assets/vitisco logo PNG.png')}
         style={[
           small ? styles.smallLogo : styles.logo,
           { transform: [{ scale: scaleAnim }] },
@@ -658,7 +659,7 @@ const handleLogin = () => {
           }}
           activeOpacity={0.8}
         >
-          <Text style={styles.buttonText} onPress={() => navigation.navigate('Home', {}, { animation: 'slide_from_right' })}>Finish</Text>
+          <Text style={styles.buttonText}  onPress={() => navigation.navigate('Home', {}, { animation: 'slide_from_right' })}>Finish</Text>
         </TouchableOpacity>
       </View>
     </Animated.View>
