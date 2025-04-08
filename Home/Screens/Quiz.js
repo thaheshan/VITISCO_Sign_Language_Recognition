@@ -1236,14 +1236,15 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#6A5ACD',
     padding: 20,
+    marginTop: 0,
+
   },
   languageSelectionText: {
     color: 'white',
     fontSize: 24,
     fontWeight: 'bold',
     textAlign: 'center',
-    marginTop: 20,
-  },
+    marginBottom: 10,},
   languageSelectionSubtext: {
     color: 'white',
     fontSize: 16,

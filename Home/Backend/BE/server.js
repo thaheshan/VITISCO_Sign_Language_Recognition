@@ -1,635 +1,181 @@
-// server.js
-const express = require("express");
-const http = require("http");
-const socketIo = require("socket.io");
-const mysql = require("mysql2/promise");
-const cors = require("cors");
-require("dotenv").config();
+const express = require('express');
+const cors = require('cors');
+const { exec } = require('child_process');
+const os = require('os');
 
-const app = express();
-app.use(cors());
-app.use(express.json());
+class CameraManager {
+  constructor() {
+    this.isCameraOpen = false;
+    this.currentProcess = null;
+  }
 
-const server = http.createServer(app);
-const io = socketIo(server, {
-  cors: {
-    origin: "*",
-    methods: ["GET", "POST"],
-  },
-});
-
-// MySQL connection pool
-const pool = mysql.createPool({
-  host: process.env.DB_HOST || "34.67.39.101",
-  user: process.env.DB_USER || "admin123",
-  password: process.env.DB_PASSWORD || "vitisco123",
-  database: process.env.DB_NAME || "vitisco",
-  waitForConnections: true,
-  connectionLimit: 10,
-  queueLimit: 0,
-});
-
-// Room data in memory for quick access
-const rooms = new Map();
-// Available room codes for random joining
-const availableRooms = new Set();
-
-// API routes
-app.get("/api/health", (req, res) => {
-  res.json({ status: "ok" });
-});
-
-// Socket.IO connection handling
-io.on("connection", (socket) => {
-  console.log(`User connected: ${socket.id}`);
-
-  // When a user creates a room
-  socket.on("create-room", async ({ roomCode }) => {
-    try {
-      // Insert room in database
-      await pool.execute("INSERT INTO rooms (room_code) VALUES (?)", [
-        roomCode,
-      ]);
-
-      // Default player name (can be updated later)
-      const playerName = `Player_${socket.id.substring(0, 5)}`;
-
-      // Insert player in database
-      await pool.execute(
-        "INSERT INTO players (socket_id, name, room_code) VALUES (?, ?, ?)",
-        [socket.id, playerName, roomCode]
-      );
-
-      // Add room to memory
-      rooms.set(roomCode, {
-        players: [{ id: socket.id, name: playerName, score: 0 }],
-        status: "waiting",
-        messages: [],
-      });
-
-      availableRooms.add(roomCode);
-
-      // Join socket room
-      socket.join(roomCode);
-
-      // Send room info to client
-      socket.emit("room-joined", {
-        roomCode,
-        players: rooms.get(roomCode).players,
-        isCreator: true,
-      });
-
-      console.log(`Room created: ${roomCode}`);
-    } catch (error) {
-      console.error("Error creating room: ", error);
-    }
-  });
-
-  // When a user joins a room
-  socket.on("join-room", async ({ roomCode }) => {
-    try {
-      // Check if room exists
-      const [roomRows] = await pool.execute(
-        'SELECT * FROM rooms WHERE room_code = ? AND status = "waiting"',
-        [roomCode]
-      );
-
-      if (roomRows.length === 0) {
-        return socket.emit("error", {
-          message: "Room not found or game already started.",
+  openCamera() {
+    return new Promise((resolve, reject) => {
+      // Check if camera is already open
+      if (this.isCameraOpen) {
+        return resolve({
+          success: true,
+          message: 'Camera already open',
+          status: 'active'
         });
       }
 
-      // Get current players in room
-      const [playerRows] = await pool.execute(
-        "SELECT * FROM players WHERE room_code = ?",
-        [roomCode]
-      );
-
-      // Check if room is full (max 2 players)
-      if (playerRows.length >= 2) {
-        return socket.emit("error", { message: "Room is full." });
-      }
-
-      // Default player name (can be updated later)
-      const playerName = `Player_${socket.id.substring(0, 5)}`;
-
-      // Insert player in database
-      await pool.execute(
-        "INSERT INTO players (socket_id, name, room_code) VALUES (?, ?, ?)",
-        [socket.id, playerName, roomCode]
-      );
-
-      // Update room in memory or create if doesn't exist
-      if (!rooms.has(roomCode)) {
-        const players = playerRows.map((p) => ({
-          id: p.socket_id,
-          name: p.name,
-          score: p.score,
-        }));
-        players.push({ id: socket.id, name: playerName, score: 0 });
-
-        rooms.set(roomCode, {
-          players,
-          status: "waiting",
-          messages: [],
-        });
-      } else {
-        rooms.get(roomCode).players.push({
-          id: socket.id,
-          name: playerName,
-          score: 0,
-        });
-      }
-
-      // Join socket room
-      socket.join(roomCode);
-
-      // Notify all clients in room about new player
-      io.to(roomCode).emit("player-joined", {
-        players: rooms.get(roomCode).players,
-      });
-
-      // Send room info to client
-      socket.emit("room-joined", {
-        roomCode,
-        players: rooms.get(roomCode).players,
-        isCreator: false,
-      });
-
-      console.log(`Player ${socket.id} joined room: ${roomCode}`);
-
-      // If room is now full, remove from available rooms
-      if (rooms.get(roomCode).players.length >= 2) {
-        availableRooms.delete(roomCode);
-      }
-    } catch (error) {
-      console.error("Error joining room:", error);
-      socket.emit("error", {
-        message: "Failed to join room. Please try again.",
-      });
-    }
-  });
-
-  // When a user wants to join a random room
-  socket.on("join-random", async () => {
-    try {
-      // If no available rooms, create a new one
-      if (availableRooms.size === 0) {
-        const roomCode = Math.random()
-          .toString(36)
-          .substring(2, 8)
-          .toUpperCase();
-
-        // Insert room in database
-        await pool.execute("INSERT INTO rooms (room_code) VALUES (?)", [
-          roomCode,
-        ]);
-
-        // Default player name
-        const playerName = `Player_${socket.id.substring(0, 5)}`;
-
-        // Insert player in database
-        await pool.execute(
-          "INSERT INTO players (socket_id, name, room_code) VALUES (?, ?, ?)",
-          [socket.id, playerName, roomCode]
-        );
-
-        // Add room to memory
-        rooms.set(roomCode, {
-          players: [{ id: socket.id, name: playerName, score: 0 }],
-          status: "waiting",
-          messages: [],
-        });
-
-        availableRooms.add(roomCode);
-
-        // Join socket room
-        socket.join(roomCode);
-
-        // Send room info to client
-        socket.emit("room-joined", {
-          roomCode,
-          players: rooms.get(roomCode).players,
-          isCreator: true,
-        });
-
-        console.log(`Random room created: ${roomCode}`);
-      } else {
-        // Join an existing room
-        const roomCode = [...availableRooms][0]; // Get first available room
-
-        // Default player name
-        const playerName = `Player_${socket.id.substring(0, 5)}`;
-
-        // Insert player in database
-        await pool.execute(
-          "INSERT INTO players (socket_id, name, room_code) VALUES (?, ?, ?)",
-          [socket.id, playerName, roomCode]
-        );
-
-        // Update room in memory
-        rooms.get(roomCode).players.push({
-          id: socket.id,
-          name: playerName,
-          score: 0,
-        });
-
-        // Join socket room
-        socket.join(roomCode);
-
-        // Notify all clients in room about new player
-        io.to(roomCode).emit("player-joined", {
-          players: rooms.get(roomCode).players,
-        });
-
-        // Send room info to client
-        socket.emit("room-joined", {
-          roomCode,
-          players: rooms.get(roomCode).players,
-          isCreator: false,
-        });
-
-        console.log(`Player ${socket.id} joined random room: ${roomCode}`);
-
-        // If room is now full, remove from available rooms
-        if (rooms.get(roomCode).players.length >= 2) {
-          availableRooms.delete(roomCode);
-        }
-      }
-    } catch (error) {
-      console.error("Error joining random room:", error);
-      socket.emit("error", {
-        message: "Failed to join random room. Please try again.",
-      });
-    }
-  });
-
-  // Start the game
-  socket.on("start-game", async ({ roomCode }) => {
-    console.log(`Start game requested for room: ${roomCode}`); // Debugging log
-    const room = rooms.get(roomCode);
-    console.log(`Current player count: ${room.players.length}`); // Debugging log
-    try {
-      const room = rooms.get(roomCode);
-
-      if (!room) {
-        return socket.emit("error", { message: "Room not found." });
-      }
-
-      // Check if player is allowed to start game (must be creator)
-      const isCreator = room.players[0].id === socket.id;
-      if (!isCreator) {
-        return socket.emit("error", {
-          message: "Only room creator can start the game.",
-        });
-      }
-
-      // Check if enough players
-      if (room.players.length < 2) {
-        return socket.emit("error", {
-          message: "Need at least 2 players to start.",
-        });
-      }
-
-      // Update room status in database
-      await pool.execute(
-        'UPDATE rooms SET status = "playing" WHERE room_code = ?',
-        [roomCode]
-      );
-
-      // Get questions from database
-      const [questions] = await pool.execute(
-        "SELECT * FROM questions ORDER BY RAND() LIMIT 5"
-      );
-
-      console.log("Questions fetched from DB:", questions);
-
-      // Format questions for the client
-      const formattedQuestions = questions.map((q) => ({
-        id: q.id,
-        question: q.question,
-        options: Array.isArray(q.options) ? q.options : JSON.parse(q.options),
-        correctAnswer: q.correct_answer,
-      }));
-
-      // Update room in memory
-      room.status = "playing";
-      room.questions = formattedQuestions;
-      room.currentQuestionIndex = 0;
-      room.timeLeft = 20;
-
-      // Start game for all clients in room
-      io.to(roomCode).emit("game-started", {
-        currentQuestion: {
-          ...formattedQuestions[0],
-          correctAnswer: undefined, // Don't send correct answer to clients
-        },
-        totalQuestions: formattedQuestions.length,
-        questionNumber: 1,
-        timeLeft: 20,
-      });
-
-      // Start countdown timer
-      let countdown = 20;
-      const timer = setInterval(() => {
-        countdown--;
-
-        // Send time update to clients
-        io.to(roomCode).emit("time-update", { timeLeft: countdown });
-
-        // If time runs out, move to next question
-        if (countdown <= 0) {
-          clearInterval(timer);
-
-          // Show correct answer to everyone
-          io.to(roomCode).emit("question-ended", {
-            correctAnswer:
-              formattedQuestions[room.currentQuestionIndex].correctAnswer,
+      // Platform-specific camera opening commands
+      let command;
+      switch (os.platform()) {
+        case 'darwin':  // macOS
+          command = 'open -a /Applications/FaceTime.app';
+          break;
+        case 'win32':  // Windows
+          command = 'start microsoft.windows.camera:';
+          break;
+        case 'linux':
+          // Try multiple common camera apps
+          command = 'which cheese && cheese || which guvcview && guvcview || which kamoso && kamoso';
+          break;
+        default:
+          return reject({
+            success: false,
+            message: 'Unsupported platform',
+            platform: os.platform()
           });
-
-          // Wait 3 seconds before showing next question
-          setTimeout(() => {
-            nextQuestion(roomCode);
-          }, 3000);
-        }
-      }, 1000);
-
-      // Store timer reference in room object to clear it if needed
-      room.timer = timer;
-
-      console.log(`Game started in room: ${roomCode}`);
-    } catch (error) {
-      console.error("Error starting game:", error);
-      socket.emit("error", {
-        message: "Failed to start game. Please try again.",
-      });
-    }
-  });
-
-  // Handle answer submission
-  socket.on("submit-answer", async ({ roomCode, answer }) => {
-    try {
-      const room = rooms.get(roomCode);
-
-      if (!room || room.status !== "playing") {
-        return;
       }
 
-      // Find player
-      const playerIndex = room.players.findIndex((p) => p.id === socket.id);
-      if (playerIndex === -1) return;
-
-      // Check if answer is correct
-      const currentQuestion = room.questions[room.currentQuestionIndex];
-      const isCorrect = answer === currentQuestion.correctAnswer;
-
-      // Update score based on time left and correctness
-      if (isCorrect) {
-        // Award points based on time left (faster = more points)
-        const points = 10 + Math.floor(room.timeLeft * 0.5);
-        room.players[playerIndex].score += points;
-
-        // Update score in database
-        await pool.execute(
-          "UPDATE players SET score = score + ? WHERE socket_id = ?",
-          [points, socket.id]
-        );
-
-        // Notify player about their score
-        socket.emit("answer-result", {
-          correct: true,
-          points,
-          totalScore: room.players[playerIndex].score,
-        });
-      } else {
-        // Notify player their answer was wrong
-        socket.emit("answer-result", {
-          correct: false,
-          points: 0,
-          totalScore: room.players[playerIndex].score,
-        });
-      }
-
-      // Check if all players have answered
-      const allAnswered = room.players.every((p) => p.hasAnswered);
-
-      if (allAnswered) {
-        // Clear timer
-        clearInterval(room.timer);
-
-        // Show correct answer to everyone
-        io.to(roomCode).emit("question-ended", {
-          correctAnswer: currentQuestion.correctAnswer,
-        });
-
-        // Wait 3 seconds before showing next question
-        setTimeout(() => {
-          nextQuestion(roomCode);
-        }, 3000);
-      }
-    } catch (error) {
-      console.error("Error submitting answer:", error);
-    }
-  });
-
-  // Send chat message
-  socket.on("send-message", async ({ roomCode, message }) => {
-    try {
-      const room = rooms.get(roomCode);
-
-      if (!room) return;
-
-      // Find player
-      const player = room.players.find((p) => p.id === socket.id);
-      if (!player) return;
-
-      // Get player id from database
-      const [rows] = await pool.execute(
-        "SELECT id FROM players WHERE socket_id = ?",
-        [socket.id]
-      );
-
-      if (rows.length === 0) return;
-
-      const playerId = rows[0].id;
-
-      // Store message in database
-      await pool.execute(
-        "INSERT INTO messages (room_code, sender_id, message) VALUES (?, ?, ?)",
-        [roomCode, playerId, message]
-      );
-
-      // Add message to room memory
-      const newMessage = {
-        id: Date.now(),
-        sender: player.name,
-        text: message,
-      };
-
-      room.messages.push(newMessage);
-
-      // Send message to all clients in room
-      io.to(roomCode).emit("new-message", newMessage);
-    } catch (error) {
-      console.error("Error sending message:", error);
-    }
-  });
-
-  // Handle disconnection
-  socket.on("disconnect", async () => {
-    try {
-      console.log(`User disconnected: ${socket.id}`);
-
-      // Find which room the player was in
-      for (const [roomCode, room] of rooms.entries()) {
-        const playerIndex = room.players.findIndex((p) => p.id === socket.id);
-
-        if (playerIndex !== -1) {
-          // Remove player from room
-          room.players.splice(playerIndex, 1);
-
-          // Remove player from database
-          await pool.execute("DELETE FROM players WHERE socket_id = ?", [
-            socket.id,
-          ]);
-
-          // If room is empty, remove it
-          if (room.players.length === 0) {
-            rooms.delete(roomCode);
-            availableRooms.delete(roomCode);
-
-            // Remove room from database
-            await pool.execute("DELETE FROM rooms WHERE room_code = ?", [
-              roomCode,
-            ]);
-
-            console.log(`Room deleted: ${roomCode}`);
-          } else {
-            // Notify remaining players
-            io.to(roomCode).emit("player-left", {
-              players: room.players,
+      try {
+        this.currentProcess = exec(command, (error, stdout, stderr) => {
+          if (error) {
+            this.isCameraOpen = false;
+            return reject({
+              success: false,
+              message: 'Failed to open camera',
+              error: error.message
             });
-
-            // If game was in progress, end it
-            if (room.status === "playing") {
-              // Clear timer if exists
-              if (room.timer) {
-                clearInterval(room.timer);
-              }
-
-              // Update room status in database
-              await pool.execute(
-                'UPDATE rooms SET status = "waiting" WHERE room_code = ?',
-                [roomCode]
-              );
-
-              room.status = "waiting";
-
-              // Notify remaining players that game ended
-              io.to(roomCode).emit("game-ended", {
-                reason: "Player disconnected",
-              });
-            }
-
-            // If room now has space, add to available rooms
-            if (room.players.length === 1 && room.status === "waiting") {
-              availableRooms.add(roomCode);
-            }
           }
 
-          break;
-        }
-      }
-    } catch (error) {
-      console.error("Error handling disconnection:", error);
-    }
-  });
-});
-
-// Helper function to move to next question
-async function nextQuestion(roomCode) {
-  try {
-    const room = rooms.get(roomCode);
-    if (!room) return;
-
-    // Move to next question
-    room.currentQuestionIndex++;
-
-    // If all questions answered, end game
-    if (room.currentQuestionIndex >= room.questions.length) {
-      // Update room status in database
-      await pool.execute(
-        'UPDATE rooms SET status = "finished" WHERE room_code = ?',
-        [roomCode]
-      );
-
-      room.status = "finished";
-
-      // Send final scores to all clients
-      io.to(roomCode).emit("game-finished", {
-        scores: room.players.map((p) => ({
-          id: p.id,
-          name: p.name,
-          score: p.score,
-        })),
-      });
-
-      return;
-    }
-
-    // Reset timer
-    room.timeLeft = 20;
-
-    // Reset player answer status
-    room.players.forEach((p) => {
-      p.hasAnswered = false;
-    });
-
-    // Send next question to all clients
-    const currentQuestion = room.questions[room.currentQuestionIndex];
-    io.to(roomCode).emit("next-question", {
-      currentQuestion: {
-        ...currentQuestion,
-        correctAnswer: undefined, // Don't send correct answer
-      },
-      questionNumber: room.currentQuestionIndex + 1,
-      timeLeft: 20,
-    });
-
-    // Start new countdown timer
-    let countdown = 20;
-    room.timer = setInterval(() => {
-      countdown--;
-
-      // Update time left in room
-      room.timeLeft = countdown;
-
-      // Send time update to clients
-      io.to(roomCode).emit("time-update", { timeLeft: countdown });
-
-      // If time runs out, move to next question
-      if (countdown <= 0) {
-        clearInterval(room.timer);
-
-        // Show correct answer to everyone
-        io.to(roomCode).emit("question-ended", {
-          correctAnswer: currentQuestion.correctAnswer,
+          this.isCameraOpen = true;
+          resolve({
+            success: true,
+            message: 'Camera opened successfully',
+            platform: os.platform(),
+            timestamp: new Date().toISOString()
+          });
         });
-
-        // Wait 3 seconds before showing next question
-        setTimeout(() => {
-          nextQuestion(roomCode);
-        }, 3000);
+      } catch (catchError) {
+        this.isCameraOpen = false;
+        reject({
+          success: false,
+          message: 'Exception in opening camera',
+          error: catchError.message
+        });
       }
-    }, 1000);
-  } catch (error) {
-    console.error("Error moving to next question:", error);
+    });
+  }
+
+  closeCamera() {
+    return new Promise((resolve, reject) => {
+      if (!this.isCameraOpen) {
+        return resolve({
+          success: true,
+          message: 'Camera already closed'
+        });
+      }
+
+      let command;
+      switch (os.platform()) {
+        case 'darwin':  // macOS
+          command = 'killall FaceTime';
+          break;
+        case 'win32':  // Windows
+          command = 'taskkill /F /IM WindowsCamera.exe';
+          break;
+        case 'linux':
+          command = 'pkill -f "cheese\|guvcview\|kamoso"';
+          break;
+        default:
+          return reject({
+            success: false,
+            message: 'Unsupported platform for camera closing'
+          });
+      }
+
+      exec(command, (error) => {
+        if (error && error.code !== 1) {  // Ignore error code 1 which often means no process found
+          return reject({
+            success: false,
+            message: 'Failed to close camera',
+            error: error.message
+          });
+        }
+
+        this.isCameraOpen = false;
+        this.currentProcess = null;
+        
+        resolve({
+          success: true,
+          message: 'Camera closed successfully',
+          timestamp: new Date().toISOString()
+        });
+      });
+    });
+  }
+
+  getCameraStatus() {
+    return {
+      isOpen: this.isCameraOpen,
+      platform: os.platform(),
+      timestamp: new Date().toISOString()
+    };
   }
 }
 
-// Start server
-const PORT = process.env.PORT || 3001;
-server.listen(PORT, async () => {
-  console.log(`Server running on port ${PORT}`);
+// Express App Setup
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+// Middleware
+app.use(cors());
+app.use(express.json());
+
+// Initialize Camera Manager
+const cameraManager = new CameraManager();
+
+// Routes
+app.post('/camera/open', async (req, res) => {
+  try {
+    const result = await cameraManager.openCamera();
+    res.json(result);
+  } catch (error) {
+    res.status(500).json(error);
+  }
 });
+
+app.post('/camera/close', async (req, res) => {
+  try {
+    const result = await cameraManager.closeCamera();
+    res.json(result);
+  } catch (error) {
+    res.status(500).json(error);
+  }
+});
+
+app.get('/camera/status', (req, res) => {
+  const status = cameraManager.getCameraStatus();
+  res.json(status);
+});
+
+// Error Handling Middleware
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({
+    success: false,
+    message: 'Something went wrong!',
+    error: err.message
+  });
+});
+
+// Start Server
+app.listen(PORT, () => {
+  console.log(`Camera Management Server running on port ${PORT}`);
+});
+
+module.exports = app;

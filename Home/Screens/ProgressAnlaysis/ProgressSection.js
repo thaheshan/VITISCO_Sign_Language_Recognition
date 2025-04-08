@@ -1,13 +1,40 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text } from 'react-native';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  Animated,
+  Dimensions,
+  SafeAreaView,
+  ScrollView,
+} from 'react-native';
 import ProgressCard from './ProgressCard'; // Adjust this import based on where your ProgressCard is
 import axios from 'axios';
 import styles from './styles';
+import { Ionicons, Feather } from "@expo/vector-icons";
 
-const ProgressSection = ({ userId, languageName }) => {
+const ProgressSection = ({ userId, languageName, navigation }) => {
   const [progressData, setProgressData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const rotateAnim = new Animated.Value(0);
+
+  // Animation for the add button
+  const rotateInterpolation = rotateAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '45deg']
+  });
+
+  // Toggle menu function
+  const toggleMenu = () => {
+    const toValue = menuOpen ? 0 : 1;
+    Animated.spring(rotateAnim, {
+      toValue,
+      useNativeDriver: true,
+    }).start();
+    setMenuOpen(!menuOpen);
+  };
 
   useEffect(() => {
     const fetchProgress = async () => {
@@ -26,7 +53,7 @@ const ProgressSection = ({ userId, languageName }) => {
         setLoading(false);
       }
     };
-
+    
     fetchProgress();
   }, [userId, languageName]); // Depend on userId and languageName
 
@@ -39,17 +66,24 @@ const ProgressSection = ({ userId, languageName }) => {
   }
 
   return (
-    <View style={styles.progressSection}>
-      {progressData.map((category) => (
-        <ProgressCard
-          key={category.categoryName}
-          title={category.categoryName}
-          progress={category.progress}
-          total={category.total}
-        />
-      ))}
-    </View>
+    <SafeAreaView style={styles.container}>
+      <ScrollView>
+        <View style={styles.progressSection}>
+          {progressData.map((category) => (
+            <ProgressCard
+              key={category.categoryName}
+              title={category.categoryName}
+              progress={category.progress}
+              total={category.total}
+            />
+          ))}
+        </View>
+      </ScrollView>
+
+
+    </SafeAreaView>
   );
 };
 
 export default ProgressSection;
+

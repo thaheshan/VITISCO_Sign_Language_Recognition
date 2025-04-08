@@ -52,10 +52,10 @@ const App = () => {
       <Stack.Navigator initialRouteName={ "Home" }>
         <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
         <Stack.Screen name="Home" component={HomeScreen} options={{ headerShown: false }} />
-        <Stack.Screen name="Lesson" component={LessonScreen} options={{ title: "Lesson Details" }} /> 
-        <Stack.Screen name="Quiz" component={QuizScreen} options={{ title: "Quiz Details" }} />
-        <Stack.Screen name="VirtualRoom" component={VirtualRoomScreen} options={{ title: "Virtual Room" }} />
-        <Stack.Screen name="ProgressAnalysis" component={ProgressAnalysisScreen} options={{ title: "Progress Analysis" }} />
+        <Stack.Screen name="Lesson" component={LessonScreen} options={{ title: "" }} /> 
+        <Stack.Screen name="Quiz" component={QuizScreen} options={{ title: "" }} />
+        <Stack.Screen name="VirtualRoom" component={VirtualRoomScreen} options={{ title: "" }} />
+        <Stack.Screen name="ProgressAnalysis" component={ProgressAnalysisScreen} options={{ title: "" }} />
         <Stack.Screen name="Profile" component={ProfileScreen} />
         <Stack.Screen name="Settings" component={SettingsScreen} />
         <Stack.Screen name="Translator" component={TranslatorScreen} />  

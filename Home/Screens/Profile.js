@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   View,
   Text,
@@ -8,23 +8,73 @@ import {
   TouchableOpacity,
   StatusBar,
   ScrollView,
+  Animated,
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import { Ionicons, Feather } from "@expo/vector-icons";
+
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import { Avatar, Title, Caption, TouchableRipple } from "react-native-paper";
-// import { userAPI } from "./api/api-client";
+// import { userAPI } from ".";
 
-const ProfileScreen = () => {
+import * as Haptics from 'expo-haptics';
+
+const ProfileScreen = ({navigation, route}) => {
   const [profileData, setProfileData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const rotateAnim = useRef(new Animated.Value(0)).current;
+
+  
+      // Animation values
+      const addButtonRotation = useRef(new Animated.Value(0)).current;
+      const menuHeight = useRef(new Animated.Value(0)).current;
+
+ // Toggle menu animation
+  const toggleMenu = () => {
+    const toValue = menuOpen ? 0 : 1;
+    
+    Animated.parallel([
+      Animated.timing(addButtonRotation, {
+        toValue,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+      Animated.timing(menuHeight, {
+        toValue,
+        duration: 300,
+        useNativeDriver: false,
+      })
+    ]).start();
+    
+    setMenuOpen(!menuOpen);
+  };
+  
+  // Interpolate rotation for + to x animation
+  const rotateInterpolation = addButtonRotation.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '45deg']
+  });
+
+  
+    // Interpolate height for menu animation
+    const menuHeightInterpolation = menuHeight.interpolate({
+      inputRange: [0, 1],
+      outputRange: [0, 100]
+    });
+
+
 
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        const response = await userAPI.getProfile();
-        if (response.success) {
-          setProfileData(response.data);
-        }
+        // Commented out because userAPI is not defined
+        // const response = await userAPI.getProfile();
+        // if (response.success) {
+        //   setProfileData(response.data);
+        // }
+        
+        // Simulate successful data fetch for demo
+        setProfileData(userData);
       } catch (error) {
         console.error("Error fetching profile:", error);
       } finally {
@@ -99,6 +149,11 @@ const ProfileScreen = () => {
     notifications: 21,
   };
 
+  const handleSettings = () => {
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    navigation.navigate('Settings');
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" />
@@ -163,23 +218,6 @@ const ProfileScreen = () => {
             <Text style={styles.infoText}>
               Native: {userData.nativeLanguage}
             </Text>
-          </View>
-        </View>
-
-        {/* Follower Stats */}
-        <View style={styles.infoBoxWrapper}>
-          <View
-            style={[
-              styles.infoBox,
-              { borderRightWidth: 1, borderRightColor: "#dddddd" },
-            ]}
-          >
-            <Title style={styles.statsNumber}>{userData.following}</Title>
-            <Caption style={styles.statsCaption}>Following</Caption>
-          </View>
-          <View style={styles.infoBox}>
-            <Title style={styles.statsNumber}>{userData.followers}</Title>
-            <Caption style={styles.statsCaption}>Followers</Caption>
           </View>
         </View>
 
@@ -320,13 +358,7 @@ const ProfileScreen = () => {
 
           <TouchableOpacity
             style={styles.menuItem}
-            onPress={() =>
-              navigation.navigate(
-                "Settings",
-                {},
-                { animation: "slide_from_right" }
-              )
-            }
+            onPress={handleSettings}
           >
             <Text style={styles.menuItemText}>Settings</Text>
             <Ionicons name="chevron-forward" size={20} color="#555" />
@@ -338,9 +370,57 @@ const ProfileScreen = () => {
           <Text style={styles.logoutButtonText}>LOGOUT</Text>
         </TouchableOpacity>
       </ScrollView>
+
+
+                    {/* Popup Menu */}
+                    <Animated.View style={[styles.popupMenu, { height: menuHeightInterpolation }]}>
+                      <TouchableOpacity style={styles.menuItem}>
+                        <Text style={styles.menuText} onPress={() => navigation.navigate('Translator', {}, { animation: 'slide_from_right' })}>Translator</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity style={styles.menuItem}>
+                        <Text style={styles.menuText} onPress={() => navigation.navigate('Scheduler', {}, { animation: 'slide_from_right' })}>ADD SCHEDULE</Text>
+                      </TouchableOpacity>
+                    </Animated.View>
+
+
+
+      {/* Bottom Navigation - Fixed */}
+      <View style={styles.bottomNav}>
+        <TouchableOpacity style={styles.navItem} 
+          onPress={() => navigation && navigation.navigate("Home", {}, { animation: 'slide_from_right' })}>
+          <Ionicons name="grid-outline" size={24} color="#352561" />
+        </TouchableOpacity>
+        <TouchableOpacity 
+          style={styles.navItem} 
+          onPress={() => navigation && navigation.navigate("ProgressAnalysis", {}, { animation: 'slide_from_right' })}
+        >
+          <Feather name="pie-chart" size={26} color="#9E9AA7" />
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.addButton} onPress={toggleMenu}>
+          <Animated.View style={{ transform: [{ rotate: rotateInterpolation }] }}>
+            <Ionicons name="add" size={32} color="#FFF" />
+          </Animated.View>
+        </TouchableOpacity>
+        <TouchableOpacity 
+          style={styles.navItem} 
+          onPress={() => navigation && navigation.navigate('Notifications', {}, { animation: 'slide_from_right' })}
+        >
+          <Ionicons name="notifications-outline" size={24} color="#9E9AA7" />
+         
+        </TouchableOpacity>
+        <TouchableOpacity 
+          style={styles.navItem} 
+          onPress={() => navigation && navigation.navigate('Profile', {}, { animation: 'slide_from_right' })}
+        >
+          <Ionicons name="person-outline" size={24} color="#9E9AA7" />
+          <View style={styles.activeNavIndicator} />
+        </TouchableOpacity>
+      </View>
     </SafeAreaView>
   );
 };
+
+
 
 const styles = StyleSheet.create({
   container: {
@@ -660,6 +740,129 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
+
+
+  bottomNav: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    padding: 16,
+    borderTopLeftRadius: 30,
+    borderTopRightRadius: 30,
+  },
+  navItem: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: 40,
+  },
+  activeNavIndicator: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: '#352561',
+    position: 'absolute',
+    bottom: -6,
+  },
+  addButton: {
+    backgroundColor: '#6B5ECD',
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 20,
+    bottom: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+    elevation: 5,
+    zIndex: 1000,
+  },
+  bottomPadding: {
+    height: 80,
+  },
+  
+  // Instruction overlay styles
+  instructionsContainer: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+  },
+  instructionCard: {
+    position: 'absolute',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 16,
+    width: '80%',
+    maxWidth: 300,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+    elevation: 5,
+  },
+  instructionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#352561',
+    marginBottom: 8,
+  },
+  instructionText: {
+    fontSize: 15,
+    color: '#333',
+    marginBottom: 16,
+    lineHeight: 22,
+  },
+  progressIndicator: {
+    flexDirection: 'row',
+    marginBottom: 12,
+  },
+  progressDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#B2B5E7',
+    marginRight: 4,
+  },
+  activeDot: {
+    backgroundColor: '#6B5ECD',
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+  },
+  instructionButtons: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+  },
+
+
+
+  popupMenu: {
+    position: 'absolute',
+    bottom: 90,
+    left: 0,
+    right: 0,
+    backgroundColor: 'rgba(107, 94, 205, 0.95)',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    overflow: 'hidden',
+    zIndex: 999,
+  },
+  menuItem: {
+    paddingVertical: 14,
+    alignItems: 'center',
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  
+  menuText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+
+  
 });
 
 export default ProfileScreen;

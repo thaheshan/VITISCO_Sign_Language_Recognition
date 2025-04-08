@@ -232,6 +232,47 @@ const App = () => {
           </View>
         </View>
 
+
+
+           {/* Bottom Navigation - Fixed */}
+      <View style={styles.bottomNav}>
+        <TouchableOpacity style={styles.navItem} 
+          onPress={() => navigation && navigation.navigate("Home", {}, { animation: 'slide_from_right' })}>
+          <Ionicons name="grid-outline" size={24} color="#352561" />
+        </TouchableOpacity>
+        <TouchableOpacity 
+          style={styles.navItem} 
+          onPress={() => navigation && navigation.navigate("ProgressAnalysis", {}, { animation: 'slide_from_right' })}
+        >
+          <Feather name="pie-chart" size={26} color="#9E9AA7" />
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.addButton} onPress={toggleMenu}>
+          <Animated.View style={{ transform: [{ rotate: rotateInterpolation }] }}>
+            <Ionicons name="add" size={32} color="#FFF" />
+            <View style={styles.activeNavIndicator} />
+          </Animated.View>
+        </TouchableOpacity>
+        <TouchableOpacity 
+          style={styles.navItem} 
+          onPress={() => navigation && navigation.navigate('Notifications', {}, { animation: 'slide_from_right' })}
+        >
+          <Ionicons name="notifications-outline" size={24} color="#9E9AA7" />
+         
+        </TouchableOpacity>
+        <TouchableOpacity 
+          style={styles.navItem} 
+          onPress={() => navigation && navigation.navigate('Profile', {}, { animation: 'slide_from_right' })}
+        >
+          <Ionicons name="person-outline" size={24} color="#9E9AA7" />
+          
+        </TouchableOpacity>
+      </View>
+
+
+
+
+
+
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Earn Rewards</Text>
           <RewardCard
@@ -273,6 +314,10 @@ const App = () => {
     </SafeAreaView>
   );
 };
+
+
+
+
 
 const styles = StyleSheet.create({
   container: {

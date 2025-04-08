@@ -1,128 +1,289 @@
 const express = require('express');
+const mysql = require('mysql2/promise');
+const multer = require('multer');
+const { spawn } = require('child_process');
+const path = require('path');
+const fs = require('fs');
 const cors = require('cors');
-const axios = require('axios');
+require('dotenv').config();
+
 const app = express();
-const PORT = process.env.PORT || 5000;
+
+// Enhanced multer storage configuration
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const uploadDir = path.join(__dirname, 'uploads');
+    
+    // Create uploads directory if it doesn't exist
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
+    
+    cb(null, uploadDir);
+  },
+  filename: (req, file, cb) => {
+    cb(null, `sign-detection-${Date.now()}${path.extname(file.originalname)}`);
+  }
+});
+
+const upload = multer({ 
+  storage: storage,
+  limits: {
+    fileSize: 10 * 1024 * 1024 // 10MB file size limit
+  },
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg'];
+    if (allowedTypes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error('Invalid file type. Only JPEG and PNG are allowed.'), false);
+    }
+  }
+});
 
 // Middleware
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use('/audio', express.static(path.join(__dirname, 'audio')));
 
-// Configure Python service URL - update with your actual Python service IP
-// This should match the IP address where your Python Flask service is running
-const PYTHON_SERVICE_URL = 'http://192.168.136.40:3000/detect';
-
-// Add request logging for debugging
-app.use((req, res, next) => {
-  console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
-  next();
+// MySQL Connection Pool
+const pool = mysql.createPool({
+  host: process.env.DB_HOST || '34.67.39.101',
+  user: process.env.DB_USER || 'admin123',
+  password: process.env.DB_PASSWORD || 'vitisco123',
+  database: process.env.DB_NAME || 'vitisco',
+  waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0
 });
 
-// Routes
-app.post('/api/detect-gesture', async (req, res) => {
+// Database Initialization Function
+async function initializeDatabase() {
   try {
-    console.log('Received gesture detection request');
-    const { image } = req.body;
+    const connection = await pool.getConnection();
     
-    if (!image) {
-      console.log('No image provided in request');
-      return res.status(400).json({ error: 'No image provided' });
+    // Create Users Table
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS users (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        username VARCHAR(255) UNIQUE NOT NULL,
+        email VARCHAR(255) UNIQUE NOT NULL,
+        password VARCHAR(255) NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    // Create Translations Table with Improved Schema
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS translations (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        user_id INT,
+        original_text TEXT,
+        translated_text TEXT,
+        translation_type ENUM('sign_to_text', 'text_to_sign') DEFAULT 'sign_to_text',
+        confidence FLOAT,
+        image_path VARCHAR(500),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      )
+    `);
+
+    connection.release();
+    console.log('Database initialized successfully');
+  } catch (error) {
+    console.error('Database initialization error:', error);
+  }
+}
+
+// Advanced Gesture Detection Endpoint
+app.post('/api/detect-gesture', upload.single('image'), async (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ error: 'No image uploaded' });
+  }
+
+  try {
+    const imagePath = req.file.path;
+    
+    // Validate image file
+    const stats = fs.statSync(imagePath);
+    if (stats.size === 0) {
+      fs.unlinkSync(imagePath);
+      return res.status(400).json({ error: 'Empty image file' });
     }
-    
-    console.log(`Forwarding request to Python service at: ${PYTHON_SERVICE_URL}`);
-    
-    // Forward the request to Python service
-    const response = await axios.post(PYTHON_SERVICE_URL, { 
-      image 
-    }, {
-      timeout: 30000, // 30-second timeout for image processing
-      headers: {
-        'Content-Type': 'application/json'
+
+    // Spawn Python detection process with timeout
+    const pythonProcess = spawn('python', [
+      path.join(__dirname, 'sign_detection_model.py'), 
+      imagePath
+    ]);
+
+    let result = '';
+    let error = '';
+
+    const timeoutId = setTimeout(() => {
+      pythonProcess.kill();
+      fs.unlinkSync(imagePath);
+      res.status(500).json({ error: 'Gesture detection timed out' });
+    }, 10000); // 10-second timeout
+
+    pythonProcess.stdout.on('data', (data) => {
+      result += data.toString();
+    });
+
+    pythonProcess.stderr.on('data', (data) => {
+      error += data.toString();
+    });
+
+    pythonProcess.on('close', async (code) => {
+      clearTimeout(timeoutId);
+      
+      // Always remove the temporary file
+      if (fs.existsSync(imagePath)) {
+        fs.unlinkSync(imagePath);
+      }
+
+      if (code !== 0) {
+        return res.status(500).json({ 
+          error: 'Gesture detection failed', 
+          details: error 
+        });
+      }
+
+      try {
+        const detectionResult = JSON.parse(result);
+        
+        // Save translation to database
+        const [insertResult] = await pool.execute(
+          'INSERT INTO translations (original_text, translated_text, confidence, image_path) VALUES (?, ?, ?, ?)',
+          [
+            detectionResult.original || 'Unknown', 
+            detectionResult.translated || 'Unknown', 
+            detectionResult.confidence || 0, 
+            imagePath
+          ]
+        );
+
+        res.json({
+          detected: true,
+          gestures: [detectionResult],
+          translationId: insertResult.insertId
+        });
+      } catch (parseError) {
+        res.status(500).json({ 
+          error: 'Failed to parse detection result', 
+          details: parseError.message 
+        });
       }
     });
-    
-    console.log('Received response from Python service');
-    return res.json(response.data);
   } catch (error) {
-    console.error('Error processing gesture detection:', error.message);
-    
-    // Provide more detailed error response for debugging
-    return res.status(500).json({
-      error: 'Failed to process image',
-      details: error.message,
-      pythonServiceUrl: PYTHON_SERVICE_URL
+    res.status(500).json({ 
+      error: 'Gesture detection process failed', 
+      details: error.message 
     });
   }
 });
 
-// Text-to-speech endpoint
-app.post('/api/text-to-speech', (req, res) => {
+// Advanced Text to Speech Endpoint
+app.post('/api/text-to-speech', async (req, res) => {
+  const { text } = req.body;
+
+  if (!text || text.trim() === '') {
+    return res.status(400).json({ error: 'Text cannot be empty' });
+  }
+
   try {
-    const { text } = req.body;
+    const audioDir = path.join(__dirname, 'audio');
     
-    if (!text) {
-      return res.status(400).json({ error: 'No text provided' });
+    // Create audio directory if it doesn't exist
+    if (!fs.existsSync(audioDir)) {
+      fs.mkdirSync(audioDir, { recursive: true });
     }
-    
-    console.log(`Received text for speech conversion: "${text}"`);
-    
-    // For now, just return a dummy response
-    // In a real implementation, you would call a TTS service
-    return res.json({
-      success: true,
-      message: 'Text received for speech conversion',
+
+    const pythonProcess = spawn('python', [
+      path.join(__dirname, 'text_to_speech_model.py'), 
       text,
-      audioUrl: null // In production you would generate a real audio URL
+      audioDir
+    ]);
+
+    let audioPath = '';
+    let error = '';
+
+    pythonProcess.stdout.on('data', (data) => {
+      audioPath += data.toString().trim();
+    });
+
+    pythonProcess.stderr.on('data', (data) => {
+      error += data.toString();
+    });
+
+    pythonProcess.on('close', async (code) => {
+      if (code !== 0) {
+        return res.status(500).json({ 
+          error: 'Text to speech conversion failed', 
+          details: error 
+        });
+      }
+
+      // Save TTS record in translations table
+      try {
+        await pool.execute(
+          'INSERT INTO translations (original_text, translated_text, translation_type) VALUES (?, ?, ?)',
+          [text, 'TTS', 'text_to_sign']
+        );
+      } catch (dbError) {
+        console.error('Failed to log TTS translation:', dbError);
+      }
+
+      res.json({
+        audioUrl: `/audio/${path.basename(audioPath)}`,
+        text: text
+      });
     });
   } catch (error) {
-    console.error('Error processing text to speech:', error);
-    return res.status(500).json({ error: 'Failed to process text to speech' });
+    res.status(500).json({ 
+      error: 'Text to speech conversion error', 
+      details: error.message 
+    });
   }
 });
 
-// Test endpoint to verify Express server is working
-app.get('/api/test', (req, res) => {
-  res.json({ 
-    status: 'ok', 
-    message: 'Express server is working',
-    timestamp: new Date().toISOString()
-  });
-});
-
-// Health check endpoint
-app.get('/api/health', (req, res) => {
-  res.json({ 
-    status: 'ok', 
-    message: 'Server is running',
-    pythonServiceUrl: PYTHON_SERVICE_URL,
-    timestamp: new Date().toISOString()
-  });
-});
-
-// Python service availability check
-app.get('/api/check-python-service', async (req, res) => {
+// Enhanced Health Check Endpoint
+app.get('/api/health', async (req, res) => {
   try {
-    const pythonUrl = PYTHON_SERVICE_URL.replace('/detect', '/test');
-    console.log(`Checking Python service availability at: ${pythonUrl}`);
-    
-    const response = await axios.get(pythonUrl, { timeout: 5000 });
-    return res.json({
-      pythonServiceStatus: 'available',
-      pythonServiceResponse: response.data
+    // Check database connection
+    const connection = await pool.getConnection();
+    connection.release();
+
+    res.json({
+      status: 'healthy',
+      database: 'connected',
+      timestamp: new Date().toISOString(),
+      services: {
+        textToSpeech: 'available',
+        gestureDetection: 'available'
+      }
     });
   } catch (error) {
-    console.error('Python service unavailable:', error.message);
-    return res.json({
-      pythonServiceStatus: 'unavailable',
-      error: error.message
+    res.status(500).json({
+      status: 'unhealthy',
+      error: 'Database connection failed',
+      timestamp: new Date().toISOString()
     });
   }
 });
 
-// Start server
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Server running on port ${PORT}`);
-  console.log(`Python service URL: ${PYTHON_SERVICE_URL}`);
-  console.log(`Server started at: ${new Date().toISOString()}`);
+// Error Handling Middleware
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({
+    error: 'Something went wrong',
+    message: err.message
+  });
 });
 
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+  initializeDatabase();
+});

@@ -32,7 +32,7 @@ Notifications.setNotificationHandler({
 });
 
 // API base URL - replace with your actual backend URL
-const API_BASE_URL = 'https://192.168.136.40/api';
+const API_BASE_URL = 'http://192.168.1.82:5000';
 
 // Create axios instance with default config
 const api = axios.create({
@@ -43,19 +43,9 @@ const api = axios.create({
   }
 });
 
-// Add request interceptor for authentication
-api.interceptors.request.use(
-  async config => {
-    const token = await AsyncStorage.getItem('userToken');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  error => {
-    return Promise.reject(error);
-  }
-);
+
+
+
 
 const App = () => {
   // State variables
@@ -127,6 +117,54 @@ const App = () => {
     }
   };
 
+  const fetchTasks = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      // Try to fetch from API first
+      try {
+        const response = await api.get('/tasks');
+        const fetchedTasks = response.data;
+        
+        // Schedule notifications for all tasks
+        for (const task of fetchedTasks) {
+          if (!task.notificationId && new Date(task.date) >= new Date()) {
+            const notificationId = await scheduleTaskNotification(task);
+            if (notificationId) {
+              task.notificationId = notificationId;
+              // Update task on server with notification ID
+              await api.put(`/tasks/${task.id}`, { notificationId });
+            }
+          }
+        }
+        
+        setTasks(fetchedTasks);
+      } catch (apiErr) {
+        console.error('Error fetching tasks from API:', apiErr);
+        
+        // If API fails, try to load from local storage
+        const storedTasks = await AsyncStorage.getItem('offlineTasks');
+        if (storedTasks) {
+          setTasks(JSON.parse(storedTasks));
+        } else {
+          setTasks([]);
+        }
+        
+        // Only show error if we couldn't get tasks from either source
+        if (!storedTasks) {
+          setError('Could not connect to server. Please check your internet connection.');
+        }
+      }
+    } catch (err) {
+      console.error('Error in fetch tasks flow:', err);
+      setError('An unexpected error occurred loading your tasks.');
+      setTasks([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Schedule notification for a task
   const scheduleTaskNotification = async (task) => {
     try {
@@ -173,52 +211,9 @@ const App = () => {
     }
   };
 
-  // Fetch tasks from API
-  const fetchTasks = async () => {
-    try {
-      setLoading(true);
-      const response = await api.get('/tasks');
-      const fetchedTasks = response.data;
-      
-      // Schedule notifications for all tasks
-      for (const task of fetchedTasks) {
-        const notificationId = await scheduleTaskNotification(task);
-        if (notificationId && !task.notificationId) {
-          task.notificationId = notificationId;
-          // Update task on server to save notification ID
-          await api.put(`/tasks/${task.id}`, { notificationId });
-        }
-      }
-      
-      setTasks(fetchedTasks);
-      setError(null);
-    } catch (err) {
-      console.error('Error fetching tasks:', err);
-      setError('Failed to load tasks. Please try again.');
-      
-      // If API is unavailable, try to load from AsyncStorage
-      try {
-        const savedTasks = await AsyncStorage.getItem('offlineTasks');
-        if (savedTasks) {
-          const parsedTasks = JSON.parse(savedTasks);
-          // Schedule notifications for saved tasks
-          for (const task of parsedTasks) {
-            if (!task.notificationId) {
-              const notificationId = await scheduleTaskNotification(task);
-              if (notificationId) {
-                task.notificationId = notificationId;
-              }
-            }
-          }
-          setTasks(parsedTasks);
-        }
-      } catch (storageErr) {
-        console.error('Error loading from storage:', storageErr);
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
+ 
+
+
 
   // Fetch user profile data
   const fetchUserProfile = async () => {

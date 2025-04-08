@@ -339,6 +339,27 @@ const HomeScreen = () => {
               <Text style={styles.progressText}>60%</Text>
             </View>
           </TouchableOpacity>
+
+                    {/* Virtual Room Card */}
+                    <TouchableOpacity 
+            style={styles.lessonCard} 
+            onPress={() => navigation.navigate('VirtualRoom', {}, { animation: 'slide_from_right' })}
+            activeOpacity={0.9}
+          >
+            <View>
+              <Text style={styles.cardTitle}>Speech Theraphy</Text>
+              <Text style={styles.activeText}>Active</Text>
+              <View style={styles.avatarRow}>
+                <View style={[styles.avatar, { backgroundColor: '#FFC107' }]} />
+                <View style={[styles.avatar, { backgroundColor: '#FF9800' }]} />
+                <View style={[styles.avatar, { backgroundColor: '#FF5722' }]} />
+              </View>
+              <Text style={styles.dueDate}>Due on : 06 June</Text>
+            </View>
+            <View style={styles.progressCircle}>
+              <Text style={styles.progressText}>60%</Text>
+            </View>
+          </TouchableOpacity>
         </View>
         
         {/* Add extra padding at bottom for scrolling past the nav bar */}

@@ -247,6 +247,129 @@ const styles = StyleSheet.create({
       color: '#666',
       textAlign: 'center',
     },
+
+    bottomNav: {
+      flexDirection: 'row',
+      justifyContent: 'space-around',
+      alignItems: 'center',
+      backgroundColor: '#FFFFFF',
+      padding: 16,
+      borderTopLeftRadius: 30,
+      borderTopRightRadius: 30,
+    },
+    navItem: {
+      alignItems: 'center',
+      justifyContent: 'center',
+      height: 40,
+    },
+    activeNavIndicator: {
+      width: 4,
+      height: 4,
+      borderRadius: 2,
+      backgroundColor: '#352561',
+      position: 'absolute',
+      bottom: -6,
+    },
+    addButton: {
+      backgroundColor: '#6B5ECD',
+      width: 56,
+      height: 56,
+      borderRadius: 28,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginBottom: 20,
+      bottom: 10,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.3,
+      shadowRadius: 5,
+      elevation: 5,
+      zIndex: 1000,
+    },
+    bottomPadding: {
+      height: 80,
+    },
+    
+    // Instruction overlay styles
+    instructionsContainer: {
+      flex: 1,
+      backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    },
+    instructionCard: {
+      position: 'absolute',
+      backgroundColor: '#FFFFFF',
+      borderRadius: 16,
+      padding: 16,
+      width: '80%',
+      maxWidth: 300,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.3,
+      shadowRadius: 5,
+      elevation: 5,
+    },
+    instructionTitle: {
+      fontSize: 18,
+      fontWeight: 'bold',
+      color: '#352561',
+      marginBottom: 8,
+    },
+    instructionText: {
+      fontSize: 15,
+      color: '#333',
+      marginBottom: 16,
+      lineHeight: 22,
+    },
+    progressIndicator: {
+      flexDirection: 'row',
+      marginBottom: 12,
+    },
+    progressDot: {
+      width: 8,
+      height: 8,
+      borderRadius: 4,
+      backgroundColor: '#B2B5E7',
+      marginRight: 4,
+    },
+    activeDot: {
+      backgroundColor: '#6B5ECD',
+      width: 10,
+      height: 10,
+      borderRadius: 5,
+    },
+    instructionButtons: {
+      flexDirection: 'row',
+      justifyContent: 'flex-end',
+    },
+
+    
+  popupMenu: {
+    position: 'absolute',
+    bottom: 90,
+    left: 0,
+    right: 0,
+    backgroundColor: 'rgba(107, 94, 205, 0.95)',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    overflow: 'hidden',
+    zIndex: 999,
+  },
+  menuItem: {
+    paddingVertical: 14,
+    alignItems: 'center',
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  
+  menuText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+
+  
+
+    
   });
   
   export default styles;

@@ -1,1341 +1,693 @@
-// server.js - Complete Language Learning App Backend (MySQL version)
+// server.js - Main entry point for the Language Learning Task Manager API
+require('dotenv').config();
 const express = require('express');
-const mysql = require('mysql2/promise');
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
 const cors = require('cors');
 const bodyParser = require('body-parser');
-const scheduler = require('node-schedule');
-const moment = require('moment');
-const dotenv = require('dotenv');
-const { v4: uuidv4 } = require('uuid');
-const nodemailer = require('nodemailer');
-const admin = require('firebase-admin');
+const mysql = require('mysql2/promise');
+const morgan = require('morgan');
 
-// Load environment variables
-dotenv.config();
-
-// Initialize express app
+// Create Express app
 const app = express();
 const PORT = process.env.PORT || 5000;
 
 // Middleware
 app.use(cors());
 app.use(bodyParser.json());
-app.use(express.json());
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(morgan('dev')); // Logging
 
-// MySQL Database Connection
+// MySQL Connection Pool
 const pool = mysql.createPool({
-  host: process.env.DB_HOST || "34.67.39.101",
-  user: process.env.DB_USER || "admin123",
-  password: process.env.DB_PASSWORD || "vitisco123",
-  database: process.env.DB_NAME || "vitisco",
+  host: process.env.DB_HOST || '34.67.39.101',
+  user: process.env.DB_USER || 'admin123',
+  password: process.env.DB_PASSWORD || 'vitisco123',
+  database: process.env.DB_NAME || 'vitisco',
   waitForConnections: true,
   connectionLimit: 10,
-  queueLimit: 0,
+  queueLimit: 0
 });
 
-// Initialize Database Tables
+// Test database connection
+async function testConnection() {
+  try {
+    const connection = await pool.getConnection();
+    console.log('Database connection established successfully');
+    connection.release();
+  } catch (error) {
+    console.error('Database connection failed:', error);
+    process.exit(1);
+  }
+}
+
+testConnection();
+
+// =============================================================================
+// DATABASE INITIALIZATION - Run on first start or for migrations
+// =============================================================================
 async function initializeDatabase() {
   try {
     const connection = await pool.getConnection();
     
-    // Users Table
+    // Create users table
     await connection.query(`
       CREATE TABLE IF NOT EXISTS users (
         id INT AUTO_INCREMENT PRIMARY KEY,
-        username VARCHAR(255) NOT NULL UNIQUE,
+        username VARCHAR(100) NOT NULL UNIQUE,
         email VARCHAR(255) NOT NULL UNIQUE,
         password VARCHAR(255) NOT NULL,
-        target_language VARCHAR(255) NOT NULL,
-        proficiency_level ENUM('beginner', 'intermediate', 'advanced') DEFAULT 'beginner',
-        fcm_token VARCHAR(255),
-        notification_email BOOLEAN DEFAULT TRUE,
-        notification_push BOOLEAN DEFAULT TRUE,
-        notification_sms BOOLEAN DEFAULT FALSE,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
       )
     `);
     
-    // Tasks Table
+    // Create user_profiles table
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS user_profiles (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        user_id INT NOT NULL,
+        vocabulary_progress INT DEFAULT 0,
+        grammar_progress INT DEFAULT 0,
+        listening_progress INT DEFAULT 0,
+        speaking_progress INT DEFAULT 0,
+        reading_progress INT DEFAULT 0,
+        overall_progress INT DEFAULT 0,
+        target_language VARCHAR(50),
+        native_language VARCHAR(50),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+      )
+    `);
+    
+    // Create tasks table
     await connection.query(`
       CREATE TABLE IF NOT EXISTS tasks (
         id INT AUTO_INCREMENT PRIMARY KEY,
         user_id INT NOT NULL,
         title VARCHAR(255) NOT NULL,
         description TEXT,
-        category ENUM('vocabulary', 'grammar', 'listening', 'speaking', 'reading', 'writing', 'custom') NOT NULL,
-        task_date DATE NOT NULL,
-        task_time TIME NOT NULL,
+        date DATE NOT NULL,
+        time TIME NOT NULL,
         reminder_minutes INT DEFAULT 15,
         progress ENUM('Not Started', 'In Progress', 'Completed') DEFAULT 'Not Started',
+        notification_id VARCHAR(255),
+        suggested_task_id VARCHAR(50),
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
       )
     `);
     
-    // Progress Table
+    // Create suggested_tasks table
     await connection.query(`
-      CREATE TABLE IF NOT EXISTS progress (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        user_id INT NOT NULL,
-        progress_date DATE NOT NULL,
-        vocabulary_progress INT DEFAULT 0,
-        grammar_progress INT DEFAULT 0,
-        listening_progress INT DEFAULT 0,
-        speaking_progress INT DEFAULT 0,
-        reading_progress INT DEFAULT 0,
-        writing_progress INT DEFAULT 0,
-        overall_progress INT DEFAULT 0,
-        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-        UNIQUE KEY unique_user_date (user_id, progress_date)
+      CREATE TABLE IF NOT EXISTS suggested_tasks (
+        id VARCHAR(50) PRIMARY KEY,
+        title VARCHAR(255) NOT NULL,
+        description TEXT,
+        type VARCHAR(50) NOT NULL,
+        difficulty ENUM('Beginner', 'Intermediate', 'Advanced') DEFAULT 'Beginner',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
     
-    // Feedback Table
-    await connection.query(`
-      CREATE TABLE IF NOT EXISTS feedback (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        user_id INT NOT NULL,
-        task_id INT NOT NULL,
-        rating INT NOT NULL,
-        comment TEXT,
-        difficulty ENUM('Too Easy', 'Just Right', 'Too Difficult') NOT NULL,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-        FOREIGN KEY (task_id) REFERENCES tasks(id) ON DELETE CASCADE
-      )
-    `);
+    // Insert default suggested tasks if none exist
+    const [existingTasks] = await connection.query('SELECT COUNT(*) as count FROM suggested_tasks');
     
-    // Reminders Table
-    await connection.query(`
-      CREATE TABLE IF NOT EXISTS reminders (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        user_id INT NOT NULL,
-        task_id INT NOT NULL,
-        scheduled_time DATETIME NOT NULL,
-        sent BOOLEAN DEFAULT FALSE,
-        method_email BOOLEAN DEFAULT TRUE,
-        method_push BOOLEAN DEFAULT TRUE,
-        method_sms BOOLEAN DEFAULT FALSE,
-        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-        FOREIGN KEY (task_id) REFERENCES tasks(id) ON DELETE CASCADE
-      )
-    `);
+    if (existingTasks[0].count === 0) {
+      await connection.query(`
+        INSERT INTO suggested_tasks (id, title, description, type, difficulty) VALUES
+        ('vocab_food', 'Vocabulary Practice: Food', 'Learn and practice common food vocabulary', 'vocabulary', 'Beginner'),
+        ('grammar_past', 'Grammar: Past Tense', 'Practice forming and using past tense verbs', 'grammar', 'Intermediate'),
+        ('listening', 'Listening Exercise: Conversations', 'Listen to and comprehend everyday conversations', 'listening', 'Beginner'),
+        ('speaking', 'Speaking Practice: Introductions', 'Practice introducing yourself and asking basic questions', 'speaking', 'Beginner'),
+        ('reading', 'Reading: Short Stories', 'Read and comprehend short stories with basic vocabulary', 'reading', 'Intermediate')
+      `);
+    }
     
-    console.log('Database initialized successfully');
+    // Insert a test user if none exist
+    const [existingUsers] = await connection.query('SELECT COUNT(*) as count FROM users');
+    
+    if (existingUsers[0].count === 0) {
+      // In production, you would hash passwords
+      const [result] = await connection.query(`
+        INSERT INTO users (username, email, password) VALUES
+        ('testuser', 'test@example.com', 'password123')
+      `);
+      
+      const userId = result.insertId;
+      
+      // Create profile for test user
+      await connection.query(`
+        INSERT INTO user_profiles 
+        (user_id, vocabulary_progress, grammar_progress, listening_progress, speaking_progress, reading_progress, overall_progress, target_language, native_language) 
+        VALUES (?, 65, 78, 42, 51, 70, 61, 'Spanish', 'English')
+      `, [userId]);
+    }
+    
     connection.release();
+    console.log('Database initialized successfully');
   } catch (error) {
     console.error('Database initialization error:', error);
-    process.exit(1);
   }
 }
 
-// Initialize Firebase for Push Notifications (if needed)
-if (process.env.FIREBASE_CREDENTIALS) {
-  const serviceAccount = JSON.parse(process.env.FIREBASE_CREDENTIALS);
-  admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount)
-  });
-}
+// Run initialization
+initializeDatabase();
 
-// Configure email service for reminders
-const emailTransporter = nodemailer.createTransport({
-  service: process.env.EMAIL_SERVICE || 'gmail',
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASSWORD
-  }
-});
+// =============================================================================
+// API ROUTES
+// =============================================================================
 
-// ======================
-// MIDDLEWARE
-// ======================
+// Default user ID (for demo purposes - in production you would use authentication)
+const DEFAULT_USER_ID = 1;
 
-// Authentication middleware
-const authMiddleware = async (req, res, next) => {
-  // Get token from header
-  const token = req.header('x-auth-token');
+// Helper function to validate date format (YYYY-MM-DD)
+function isValidDate(dateString) {
+  const regex = /^\d{4}-\d{2}-\d{2}$/;
+  if (!regex.test(dateString)) return false;
   
-  // Check if no token
-  if (!token) {
-    return res.status(401).json({ message: 'No token, authorization denied' });
-  }
-  
-  try {
-    // Verify token
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'languagelearningsecret');
-    
-    // Add user from payload
-    req.user = decoded;
-    next();
-  } catch (error) {
-    res.status(401).json({ message: 'Token is not valid' });
-  }
-};
-
-// ======================
-// HELPER FUNCTIONS
-// ======================
-
-// Calculate category progress
-async function calculateCategoryProgress(userId, category) {
-  try {
-    const [tasks] = await pool.query(
-      'SELECT * FROM tasks WHERE user_id = ? AND category = ?',
-      [userId, category]
-    );
-    
-    if (tasks.length === 0) return 0;
-    
-    const [completedTasks] = await pool.query(
-      'SELECT COUNT(*) as count FROM tasks WHERE user_id = ? AND category = ? AND progress = ?',
-      [userId, category, 'Completed']
-    );
-    
-    return Math.round((completedTasks[0].count / tasks.length) * 100);
-  } catch (error) {
-    console.error('Error calculating category progress:', error);
-    throw error;
-  }
+  const date = new Date(dateString);
+  return date instanceof Date && !isNaN(date);
 }
 
-// Send email reminder
-async function sendEmailReminder(user, task) {
-  if (!user.email || !process.env.EMAIL_USER) return;
-  
-  const mailOptions = {
-    from: process.env.EMAIL_USER,
-    to: user.email,
-    subject: `Reminder: ${task.title}`,
-    html: `
-      <h2>Language Learning Reminder</h2>
-      <p>This is a reminder for your scheduled learning task:</p>
-      <p><strong>${task.title}</strong></p>
-      <p><strong>Time:</strong> ${task.task_time}</p>
-      <p><strong>Description:</strong> ${task.description || 'No description provided'}</p>
-      <p>Keep up the good work with your language learning journey!</p>
-    `
-  };
-  
-  try {
-    await emailTransporter.sendMail(mailOptions);
-    console.log(`Email reminder sent to ${user.email} for task ${task.title}`);
-  } catch (error) {
-    console.error('Error sending email reminder:', error);
-  }
+// Helper function to validate time format (HH:MM)
+function isValidTime(timeString) {
+  const regex = /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/;
+  return regex.test(timeString);
 }
 
-// Send push notification
-async function sendPushNotification(user, task) {
-  if (!user.fcm_token || !admin) return;
-  
-  const message = {
-    notification: {
-      title: 'Language Learning Reminder',
-      body: `Time for: ${task.title}`
-    },
-    data: {
-      taskId: task.id.toString(),
-      category: task.category,
-      click_action: 'OPEN_TASK_DETAILS'
-    },
-    token: user.fcm_token
-  };
-  
-  try {
-    await admin.messaging().send(message);
-    console.log(`Push notification sent to user ${user.id} for task ${task.title}`);
-  } catch (error) {
-    console.error('Error sending push notification:', error);
-  }
-}
-
-// Update user progress based on completed task
-async function updateProgressForCompletedTask(userId, task) {
-  const connection = await pool.getConnection();
-  
-  try {
-    await connection.beginTransaction();
-    
-    const today = moment().format('YYYY-MM-DD');
-    
-    // Check if progress record exists for today
-    const [existingProgress] = await connection.query(
-      'SELECT * FROM progress WHERE user_id = ? AND progress_date = ?',
-      [userId, today]
-    );
-    
-    let progressId;
-    
-    // If no record exists, create one with baseline values
-    if (existingProgress.length === 0) {
-      // Get the most recent progress record to use as baseline
-      const [lastProgress] = await connection.query(
-        'SELECT * FROM progress WHERE user_id = ? ORDER BY progress_date DESC LIMIT 1',
-        [userId]
-      );
-      
-      let baseProgress = {
-        vocabulary_progress: 0,
-        grammar_progress: 0,
-        listening_progress: 0,
-        speaking_progress: 0,
-        reading_progress: 0,
-        writing_progress: 0,
-        overall_progress: 0
-      };
-      
-      // Use last progress values if available
-      if (lastProgress.length > 0) {
-        baseProgress = {
-          vocabulary_progress: lastProgress[0].vocabulary_progress,
-          grammar_progress: lastProgress[0].grammar_progress,
-          listening_progress: lastProgress[0].listening_progress,
-          speaking_progress: lastProgress[0].speaking_progress,
-          reading_progress: lastProgress[0].reading_progress,
-          writing_progress: lastProgress[0].writing_progress,
-          overall_progress: lastProgress[0].overall_progress
-        };
-      }
-      
-      // Insert new progress record
-      const [result] = await connection.query(
-        'INSERT INTO progress (user_id, progress_date, vocabulary_progress, grammar_progress, listening_progress, speaking_progress, reading_progress, writing_progress, overall_progress) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-        [
-          userId, today, 
-          baseProgress.vocabulary_progress, 
-          baseProgress.grammar_progress, 
-          baseProgress.listening_progress, 
-          baseProgress.speaking_progress, 
-          baseProgress.reading_progress, 
-          baseProgress.writing_progress, 
-          baseProgress.overall_progress
-        ]
-      );
-      
-      progressId = result.insertId;
-    } else {
-      progressId = existingProgress[0].id;
-    }
-    
-    // Increment progress in the relevant category (between 2-5 points)
-    const incrementValue = Math.floor(Math.random() * 4) + 2;
-    
-    // Get current progress values
-    const [currentProgress] = await connection.query(
-      'SELECT * FROM progress WHERE id = ?',
-      [progressId]
-    );
-    
-    const progress = currentProgress[0];
-    
-    // Update the specific category based on task
-    let fieldToUpdate;
-    switch (task.category) {
-      case 'vocabulary':
-        fieldToUpdate = 'vocabulary_progress';
-        break;
-      case 'grammar':
-        fieldToUpdate = 'grammar_progress';
-        break;
-      case 'listening':
-        fieldToUpdate = 'listening_progress';
-        break;
-      case 'speaking':
-        fieldToUpdate = 'speaking_progress';
-        break;
-      case 'reading':
-        fieldToUpdate = 'reading_progress';
-        break;
-      case 'writing':
-        fieldToUpdate = 'writing_progress';
-        break;
-      default:
-        // For custom tasks, increment a random category
-        const categories = ['vocabulary_progress', 'grammar_progress', 'listening_progress', 
-                            'speaking_progress', 'reading_progress', 'writing_progress'];
-        fieldToUpdate = categories[Math.floor(Math.random() * categories.length)];
-    }
-    
-    // Calculate new value ensuring it doesn't exceed 100
-    const newValue = Math.min(100, progress[fieldToUpdate] + incrementValue);
-    
-    // Update the specific field
-    await connection.query(
-      `UPDATE progress SET ${fieldToUpdate} = ? WHERE id = ?`,
-      [newValue, progressId]
-    );
-    
-    // Recalculate overall progress (average of all categories)
-    const [updatedProgress] = await connection.query(
-      'SELECT * FROM progress WHERE id = ?',
-      [progressId]
-    );
-    
-    const up = updatedProgress[0];
-    const overallProgress = Math.round(
-      (up.vocabulary_progress + 
-       up.grammar_progress + 
-       up.listening_progress + 
-       up.speaking_progress + 
-       up.reading_progress + 
-       up.writing_progress) / 6
-    );
-    
-    // Update overall progress
-    await connection.query(
-      'UPDATE progress SET overall_progress = ? WHERE id = ?',
-      [overallProgress, progressId]
-    );
-    
-    await connection.commit();
-    
-    const [finalProgress] = await connection.query(
-      'SELECT * FROM progress WHERE id = ?',
-      [progressId]
-    );
-    
-    connection.release();
-    return finalProgress[0];
-  } catch (error) {
-    await connection.rollback();
-    connection.release();
-    console.error('Error updating progress:', error);
-    throw error;
-  }
-}
-
-// Create reminder for task
-async function createReminderForTask(task) {
-  try {
-    // Get task time components
-    const taskTime = task.task_time;
-    
-    // Create reminder date
-    const taskDate = new Date(task.task_date);
-    const timeArray = taskTime.split(':');
-    
-    // Set hours and minutes, accounting for reminder time
-    const reminderDate = new Date(taskDate);
-    reminderDate.setHours(parseInt(timeArray[0]), parseInt(timeArray[1]) - task.reminder_minutes, 0, 0);
-    
-    // Don't create reminder if the time has already passed
-    if (reminderDate < new Date()) {
-      console.log('Reminder time has already passed, not creating reminder');
-      return null;
-    }
-    
-    // Get user notification preferences
-    const [users] = await pool.query(
-      'SELECT * FROM users WHERE id = ?',
-      [task.user_id]
-    );
-    
-    if (users.length === 0) {
-      console.log(`User ${task.user_id} not found, not creating reminder`);
-      return null;
-    }
-    
-    const user = users[0];
-    
-    // Create the reminder
-    const [result] = await pool.query(
-      'INSERT INTO reminders (user_id, task_id, scheduled_time, method_email, method_push, method_sms) VALUES (?, ?, ?, ?, ?, ?)',
-      [
-        task.user_id,
-        task.id,
-        reminderDate,
-        user.notification_email,
-        user.notification_push,
-        user.notification_sms
-      ]
-    );
-    
-    console.log(`Reminder created for task ${task.title} at ${reminderDate}`);
-    
-    // Return the created reminder
-    const [reminders] = await pool.query(
-      'SELECT * FROM reminders WHERE id = ?',
-      [result.insertId]
-    );
-    
-    return reminders[0];
-  } catch (error) {
-    console.error('Error creating reminder:', error);
-    throw error;
-  }
-}
-
-// Update reminder for task
-async function updateReminderForTask(task) {
-  try {
-    // Delete existing reminders for this task
-    await pool.query(
-      'DELETE FROM reminders WHERE task_id = ?',
-      [task.id]
-    );
-    
-    // Create new reminder
-    return await createReminderForTask(task);
-  } catch (error) {
-    console.error('Error updating reminder:', error);
-    throw error;
-  }
-}
-
-// Process pending reminders
-async function processReminders() {
-  try {
-    const now = new Date();
-    const fiveMinutesFromNow = new Date(now.getTime() + 5 * 60 * 1000);
-    
-    // Find reminders that are due but haven't been sent
-    const [dueReminders] = await pool.query(
-      'SELECT * FROM reminders WHERE scheduled_time <= ? AND scheduled_time >= ? AND sent = FALSE',
-      [fiveMinutesFromNow, now]
-    );
-    
-    console.log(`Processing ${dueReminders.length} pending reminders`);
-    
-    for (const reminder of dueReminders) {
-      // Get task info
-      const [tasks] = await pool.query(
-        'SELECT * FROM tasks WHERE id = ?',
-        [reminder.task_id]
-      );
-      
-      // Get user info
-      const [users] = await pool.query(
-        'SELECT * FROM users WHERE id = ?',
-        [reminder.user_id]
-      );
-      
-      if (tasks.length === 0 || users.length === 0) {
-        console.log(`Task or user not found for reminder ${reminder.id}`);
-        await pool.query(
-          'UPDATE reminders SET sent = TRUE WHERE id = ?',
-          [reminder.id]
-        );
-        continue;
-      }
-      
-      const task = tasks[0];
-      const user = users[0];
-      
-      // Send reminders based on user preferences
-      if (reminder.method_email && user.notification_email) {
-        await sendEmailReminder(user, task);
-      }
-      
-      if (reminder.method_push && user.notification_push) {
-        await sendPushNotification(user, task);
-      }
-      
-      // Mark reminder as sent
-      await pool.query(
-        'UPDATE reminders SET sent = TRUE WHERE id = ?',
-        [reminder.id]
-      );
-      
-      console.log(`Reminder processed for task: ${task.title}`);
-    }
-  } catch (error) {
-    console.error('Error processing reminders:', error);
-  }
-}
-
-// ======================
-// ROUTES
-// ======================
-
-// --------- Authentication Routes ---------
-
-// Register a new user
-app.post('/api/auth/register', async (req, res) => {
-  const connection = await pool.getConnection();
-  
-  try {
-    await connection.beginTransaction();
-    
-    const { username, email, password, targetLanguage, proficiencyLevel } = req.body;
-    
-    // Check if user already exists
-    const [existingUsers] = await connection.query(
-      'SELECT * FROM users WHERE email = ?',
-      [email]
-    );
-    
-    if (existingUsers.length > 0) {
-      await connection.rollback();
-      connection.release();
-      return res.status(400).json({ message: 'User already exists' });
-    }
-    
-    // Hash password
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
-    
-    // Create new user
-    const [result] = await connection.query(
-      'INSERT INTO users (username, email, password, target_language, proficiency_level) VALUES (?, ?, ?, ?, ?)',
-      [username, email, hashedPassword, targetLanguage, proficiencyLevel]
-    );
-    
-    const userId = result.insertId;
-    
-    await connection.commit();
-    
-    // Generate JWT
-    const token = jwt.sign({ id: userId }, process.env.JWT_SECRET || 'languagelearningsecret', {
-      expiresIn: '7d'
-    });
-    
-    // Get the created user (without password)
-    const [users] = await connection.query(
-      'SELECT id, username, email, target_language, proficiency_level FROM users WHERE id = ?',
-      [userId]
-    );
-    
-    connection.release();
-    
-    res.status(201).json({
-      token,
-      user: {
-        id: users[0].id,
-        username: users[0].username,
-        email: users[0].email,
-        targetLanguage: users[0].target_language,
-        proficiencyLevel: users[0].proficiency_level
-      }
-    });
-  } catch (error) {
-    await connection.rollback();
-    connection.release();
-    console.error('Registration error:', error);
-    res.status(500).json({ message: 'Server error' });
-  }
-});
-
-// Login user
-app.post('/api/auth/login', async (req, res) => {
-  try {
-    const { email, password } = req.body;
-    
-    // Check if user exists
-    const [users] = await pool.query(
-      'SELECT * FROM users WHERE email = ?',
-      [email]
-    );
-    
-    if (users.length === 0) {
-      return res.status(400).json({ message: 'Invalid credentials' });
-    }
-    
-    const user = users[0];
-    
-    // Check password
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      return res.status(400).json({ message: 'Invalid credentials' });
-    }
-    
-    // Generate JWT
-    const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET || 'languagelearningsecret', {
-      expiresIn: '7d'
-    });
-    
-    res.json({
-      token,
-      user: {
-        id: user.id,
-        username: user.username,
-        email: user.email,
-        targetLanguage: user.target_language,
-        proficiencyLevel: user.proficiency_level
-      }
-    });
-  } catch (error) {
-    console.error('Login error:', error);
-    res.status(500).json({ message: 'Server error' });
-  }
-});
+// =============================================================================
+// USER ROUTES
+// =============================================================================
 
 // Get user profile
-app.get('/api/auth/profile', authMiddleware, async (req, res) => {
+app.get('/user/profile', async (req, res) => {
   try {
-    const [users] = await pool.query(
-      'SELECT id, username, email, target_language, proficiency_level, fcm_token, notification_email, notification_push, notification_sms, created_at FROM users WHERE id = ?',
-      [req.user.id]
-    );
+    const [profiles] = await pool.query(`
+      SELECT 
+        u.username,
+        p.vocabulary_progress,
+        p.grammar_progress,
+        p.listening_progress,
+        p.speaking_progress,
+        p.reading_progress,
+        p.overall_progress,
+        p.target_language,
+        p.native_language
+      FROM user_profiles p
+      JOIN users u ON p.user_id = u.id
+      WHERE p.user_id = ?
+    `, [DEFAULT_USER_ID]);
     
-    if (users.length === 0) {
-      return res.status(404).json({ message: 'User not found' });
+    if (profiles.length === 0) {
+      return res.status(404).json({ message: 'Profile not found' });
     }
     
-    const user = users[0];
+    // Generate personalized recommendations based on progress
+    const profile = profiles[0];
+    const recommendations = [];
     
-    res.json({
-      id: user.id,
-      username: user.username,
-      email: user.email,
-      targetLanguage: user.target_language,
-      proficiencyLevel: user.proficiency_level,
-      fcmToken: user.fcm_token,
-      notificationPreferences: {
-        email: user.notification_email,
-        push: user.notification_push,
-        sms: user.notification_sms
-      },
-      createdAt: user.created_at
-    });
+    // Add recommendations based on lowest progress areas
+    if (profile.listening_progress < 50) {
+      recommendations.push('Listening exercises would help improve your comprehension');
+    }
+    
+    if (profile.speaking_progress < 60) {
+      recommendations.push('Regular speaking practice is recommended to improve fluency');
+    }
+    
+    if (profile.vocabulary_progress < 70) {
+      recommendations.push('Focus on expanding your vocabulary with daily practice');
+    }
+    
+    if (recommendations.length === 0) {
+      recommendations.push('Continue with regular practice in all language areas');
+    }
+    
+    // Add recommendations to the response
+    profile.recommendations = recommendations;
+    
+    res.status(200).json(profile);
   } catch (error) {
-    console.error('Get profile error:', error);
-    res.status(500).json({ message: 'Server error' });
+    console.error('Error fetching user profile:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
 
 // Update user profile
-app.put('/api/auth/profile', authMiddleware, async (req, res) => {
+app.put('/user/profile', async (req, res) => {
   try {
-    const { username, targetLanguage, proficiencyLevel, notificationPreferences, fcmToken } = req.body;
+    const { 
+      vocabulary_progress, 
+      grammar_progress, 
+      listening_progress, 
+      speaking_progress, 
+      reading_progress,
+      target_language,
+      native_language
+    } = req.body;
     
-    let updateFields = [];
-    let queryParams = [];
-    
-    if (username) {
-      updateFields.push('username = ?');
-      queryParams.push(username);
-    }
-    
-    if (targetLanguage) {
-      updateFields.push('target_language = ?');
-      queryParams.push(targetLanguage);
-    }
-    
-    if (proficiencyLevel) {
-      updateFields.push('proficiency_level = ?');
-      queryParams.push(proficiencyLevel);
-    }
-    
-    if (notificationPreferences) {
-      updateFields.push('notification_email = ?');
-      queryParams.push(notificationPreferences.email);
-      
-      updateFields.push('notification_push = ?');
-      queryParams.push(notificationPreferences.push);
-      
-      updateFields.push('notification_sms = ?');
-      queryParams.push(notificationPreferences.sms);
-    }
-    
-    if (fcmToken) {
-      updateFields.push('fcm_token = ?');
-      queryParams.push(fcmToken);
-    }
-    
-    // Add user id to params
-    queryParams.push(req.user.id);
-    
-    // Update user
-    await pool.query(
-      `UPDATE users SET ${updateFields.join(', ')} WHERE id = ?`,
-      queryParams
+    // Calculate overall progress
+    const overall_progress = Math.round(
+      (vocabulary_progress + grammar_progress + listening_progress + speaking_progress + reading_progress) / 5
     );
     
-    // Get updated user
-    const [users] = await pool.query(
-      'SELECT id, username, email, target_language, proficiency_level, fcm_token, notification_email, notification_push, notification_sms, created_at FROM users WHERE id = ?',
-      [req.user.id]
-    );
+    await pool.query(`
+      UPDATE user_profiles SET
+        vocabulary_progress = ?,
+        grammar_progress = ?,
+        listening_progress = ?,
+        speaking_progress = ?,
+        reading_progress = ?,
+        overall_progress = ?,
+        target_language = ?,
+        native_language = ?,
+        updated_at = CURRENT_TIMESTAMP
+      WHERE user_id = ?
+    `, [
+      vocabulary_progress, 
+      grammar_progress, 
+      listening_progress, 
+      speaking_progress, 
+      reading_progress,
+      overall_progress,
+      target_language,
+      native_language,
+      DEFAULT_USER_ID
+    ]);
     
-    if (users.length === 0) {
-      return res.status(404).json({ message: 'User not found' });
-    }
-    
-    const user = users[0];
-    
-    res.json({
-      id: user.id,
-      username: user.username,
-      email: user.email,
-      targetLanguage: user.target_language,
-      proficiencyLevel: user.proficiency_level,
-      fcmToken: user.fcm_token,
-      notificationPreferences: {
-        email: user.notification_email,
-        push: user.notification_push,
-        sms: user.notification_sms
-      },
-      createdAt: user.created_at
+    res.status(200).json({ 
+      message: 'Profile updated successfully',
+      overall_progress
     });
   } catch (error) {
-    console.error('Update profile error:', error);
-    res.status(500).json({ message: 'Server error' });
+    console.error('Error updating user profile:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
 
-// --------- Task Routes ---------
+// =============================================================================
+// TASK ROUTES
+// =============================================================================
 
-// Create a new task
-app.post('/api/tasks', authMiddleware, async (req, res) => {
+// Get all tasks for user
+app.get('/tasks', async (req, res) => {
   try {
-    const { title, description, category, date, time, reminderMinutes } = req.body;
+    const [tasks] = await pool.query(`
+      SELECT 
+        id,
+        title,
+        description,
+        DATE_FORMAT(date, '%Y-%m-%d') as date,
+        TIME_FORMAT(time, '%H:%i') as time,
+        reminder_minutes,
+        progress,
+        notification_id,
+        suggested_task_id
+      FROM tasks
+      WHERE user_id = ?
+      ORDER BY date ASC, time ASC
+    `, [DEFAULT_USER_ID]);
     
-    // Create new task
-    const [result] = await pool.query(
-      'INSERT INTO tasks (user_id, title, description, category, task_date, task_time, reminder_minutes) VALUES (?, ?, ?, ?, ?, ?, ?)',
-      [req.user.id, title, description, category, date, time, reminderMinutes]
-    );
-    
-    const taskId = result.insertId;
-    
-    // Get the created task
-    const [tasks] = await pool.query(
-      'SELECT * FROM tasks WHERE id = ?',
-      [taskId]
-    );
-    
-    const task = tasks[0];
-    
-    // Create reminder for this task
-    await createReminderForTask(task);
-    
-    res.status(201).json(task);
+    res.status(200).json(tasks);
   } catch (error) {
-    console.error('Create task error:', error);
-    res.status(500).json({ message: 'Server error' });
-  }
-});
-
-// Get all tasks for a user
-app.get('/api/tasks', authMiddleware, async (req, res) => {
-  try {
-    const [tasks] = await pool.query(
-      'SELECT * FROM tasks WHERE user_id = ? ORDER BY task_date ASC, task_time ASC',
-      [req.user.id]
-    );
-    
-    res.json(tasks);
-  } catch (error) {
-    console.error('Get tasks error:', error);
-    res.status(500).json({ message: 'Server error' });
+    console.error('Error fetching tasks:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
 
 // Get tasks for a specific date
-app.get('/api/tasks/date/:date', authMiddleware, async (req, res) => {
+app.get('/tasks/date/:date', async (req, res) => {
   try {
-    const dateStr = req.params.date;
+    const { date } = req.params;
     
-    const [tasks] = await pool.query(
-      'SELECT * FROM tasks WHERE user_id = ? AND task_date = ? ORDER BY task_time ASC',
-      [req.user.id, dateStr]
-    );
+    if (!isValidDate(date)) {
+      return res.status(400).json({ message: 'Invalid date format. Please use YYYY-MM-DD' });
+    }
     
-    res.json(tasks);
+    const [tasks] = await pool.query(`
+      SELECT 
+        id,
+        title,
+        description,
+        DATE_FORMAT(date, '%Y-%m-%d') as date,
+        TIME_FORMAT(time, '%H:%i') as time,
+        reminder_minutes,
+        progress,
+        notification_id,
+        suggested_task_id
+      FROM tasks
+      WHERE user_id = ? AND date = ?
+      ORDER BY time ASC
+    `, [DEFAULT_USER_ID, date]);
+    
+    res.status(200).json(tasks);
   } catch (error) {
-    console.error('Get tasks by date error:', error);
-    res.status(500).json({ message: 'Server error' });
+    console.error('Error fetching tasks for date:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
 
-// Get a specific task by ID
-app.get('/api/tasks/:id', authMiddleware, async (req, res) => {
+// Get a specific task
+app.get('/tasks/:id', async (req, res) => {
   try {
-    const [tasks] = await pool.query(
-      'SELECT * FROM tasks WHERE id = ? AND user_id = ?',
-      [req.params.id, req.user.id]
-    );
+    const { id } = req.params;
+    
+    const [tasks] = await pool.query(`
+      SELECT 
+        id,
+        title,
+        description,
+        DATE_FORMAT(date, '%Y-%m-%d') as date,
+        TIME_FORMAT(time, '%H:%i') as time,
+        reminder_minutes,
+        progress,
+        notification_id,
+        suggested_task_id
+      FROM tasks
+      WHERE id = ? AND user_id = ?
+    `, [id, DEFAULT_USER_ID]);
     
     if (tasks.length === 0) {
       return res.status(404).json({ message: 'Task not found' });
     }
     
-    res.json(tasks[0]);
+    res.status(200).json(tasks[0]);
   } catch (error) {
-    console.error('Get task by ID error:', error);
-    res.status(500).json({ message: 'Server error' });
+    console.error('Error fetching task:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+// Create a new task
+app.post('/tasks', async (req, res) => {
+  try {
+    const { 
+      title, 
+      description, 
+      date, 
+      time, 
+      reminderMinutes, 
+      progress = 'Not Started', 
+      notificationId = null,
+      suggestedTaskId = null
+    } = req.body;
+    
+    // Validate required fields
+    if (!title || !date || !time) {
+      return res.status(400).json({ message: 'Title, date, and time are required' });
+    }
+    
+    // Validate date format
+    if (!isValidDate(date)) {
+      return res.status(400).json({ message: 'Invalid date format. Please use YYYY-MM-DD' });
+    }
+    
+    // Validate time format
+    if (!isValidTime(time)) {
+      return res.status(400).json({ message: 'Invalid time format. Please use HH:MM' });
+    }
+    
+    const [result] = await pool.query(`
+      INSERT INTO tasks 
+      (user_id, title, description, date, time, reminder_minutes, progress, notification_id, suggested_task_id)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `, [
+      DEFAULT_USER_ID,
+      title,
+      description || null,
+      date,
+      time,
+      reminderMinutes || 15,
+      progress,
+      notificationId,
+      suggestedTaskId
+    ]);
+    
+    const taskId = result.insertId;
+    
+    // Fetch the created task to return
+    const [tasks] = await pool.query(`
+      SELECT 
+        id,
+        title,
+        description,
+        DATE_FORMAT(date, '%Y-%m-%d') as date,
+        TIME_FORMAT(time, '%H:%i') as time,
+        reminder_minutes,
+        progress,
+        notification_id,
+        suggested_task_id
+      FROM tasks
+      WHERE id = ?
+    `, [taskId]);
+    
+    res.status(201).json(tasks[0]);
+  } catch (error) {
+    console.error('Error creating task:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
 
 // Update a task
-app.put('/api/tasks/:id', authMiddleware, async (req, res) => {
+app.put('/tasks/:id', async (req, res) => {
   try {
-    const { title, description, category, date, time, reminderMinutes } = req.body;
+    const { id } = req.params;
+    const { 
+      title, 
+      description, 
+      date, 
+      time, 
+      reminderMinutes, 
+      progress,
+      notificationId
+    } = req.body;
     
-    // Update task
-    const [result] = await pool.query(
-      'UPDATE tasks SET title = ?, description = ?, category = ?, task_date = ?, task_time = ?, reminder_minutes = ? WHERE id = ? AND user_id = ?',
-      [title, description, category, date, time, reminderMinutes, req.params.id, req.user.id]
-    );
+    // Build dynamic query based on provided fields
+    let updateQuery = 'UPDATE tasks SET updated_at = CURRENT_TIMESTAMP';
+    const params = [];
     
-    if (result.affectedRows === 0) {
-      return res.status(404).json({ message: 'Task not found' });
+    if (title !== undefined) {
+      updateQuery += ', title = ?';
+      params.push(title);
     }
     
-    // Get updated task
-    const [tasks] = await pool.query(
-      'SELECT * FROM tasks WHERE id = ?',
-      [req.params.id]
-    );
+    if (description !== undefined) {
+      updateQuery += ', description = ?';
+      params.push(description);
+    }
     
-    const task = tasks[0];
+    if (date !== undefined) {
+      if (!isValidDate(date)) {
+        return res.status(400).json({ message: 'Invalid date format. Please use YYYY-MM-DD' });
+      }
+      updateQuery += ', date = ?';
+      params.push(date);
+    }
     
-    // Update reminder for this task
-    await updateReminderForTask(task);
+    if (time !== undefined) {
+      if (!isValidTime(time)) {
+        return res.status(400).json({ message: 'Invalid time format. Please use HH:MM' });
+      }
+      updateQuery += ', time = ?';
+      params.push(time);
+    }
     
-    res.json(task);
+    if (reminderMinutes !== undefined) {
+      updateQuery += ', reminder_minutes = ?';
+      params.push(reminderMinutes);
+    }
+    
+    if (progress !== undefined) {
+      updateQuery += ', progress = ?';
+      params.push(progress);
+    }
+    
+    if (notificationId !== undefined) {
+      updateQuery += ', notification_id = ?';
+      params.push(notificationId);
+    }
+    
+    updateQuery += ' WHERE id = ? AND user_id = ?';
+    params.push(id, DEFAULT_USER_ID);
+    
+    const [result] = await pool.query(updateQuery, params);
+    
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: 'Task not found or you do not have permission to update it' });
+    }
+    
+    // Fetch updated task
+    const [tasks] = await pool.query(`
+      SELECT 
+        id,
+        title,
+        description,
+        DATE_FORMAT(date, '%Y-%m-%d') as date,
+        TIME_FORMAT(time, '%H:%i') as time,
+        reminder_minutes,
+        progress,
+        notification_id,
+        suggested_task_id
+      FROM tasks
+      WHERE id = ?
+    `, [id]);
+    
+    res.status(200).json(tasks[0]);
   } catch (error) {
-    console.error('Update task error:', error);
-    res.status(500).json({ message: 'Server error' });
+    console.error('Error updating task:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
 
-// Update task progress status
-app.put('/api/tasks/:id/progress', authMiddleware, async (req, res) => {
+// Delete a task
+app.delete('/tasks/:id', async (req, res) => {
   try {
-    const { progress } = req.body;
+    const { id } = req.params;
     
-    if (!['Not Started', 'In Progress', 'Completed'].includes(progress)) {
-      return res.status(400).json({ message: 'Invalid progress status' });
-    }
-    
-    // Update task progress
     const [result] = await pool.query(
-      'UPDATE tasks SET progress = ? WHERE id = ? AND user_id = ?',
-      [progress, req.params.id, req.user.id]
+      'DELETE FROM tasks WHERE id = ? AND user_id = ?',
+      [id, DEFAULT_USER_ID]
     );
     
     if (result.affectedRows === 0) {
-      return res.status(404).json({ message: 'Task not found' });
+      return res.status(404).json({ message: 'Task not found or you do not have permission to delete it' });
     }
     
-    // Get updated task
-    const [tasks] = await pool.query(
-      'SELECT * FROM tasks WHERE id = ?',
-      [req.params.id]
-    );
-    
-    const task = tasks[0];
-    
-    // If task is completed, update user progress
-    if (progress === 'Completed') {
-      await updateProgressForCompletedTask(req.user.id, task);
-    }
-    
-    res.json(task);
+    res.status(200).json({ message: 'Task deleted successfully' });
   } catch (error) {
-    console.error('Update task progress error:', error);
-      res.status(500).json({ message: 'Server error' });
-    }
-  });
-  
-  // Delete a task
-  app.delete('/api/tasks/:id', authMiddleware, async (req, res) => {
-    try {
-      // Delete associated reminders first
-      await pool.query(
-        'DELETE FROM reminders WHERE task_id = ?',
-        [req.params.id]
-      );
-      
-      // Delete task
-      const [result] = await pool.query(
-        'DELETE FROM tasks WHERE id = ? AND user_id = ?',
-        [req.params.id, req.user.id]
-      );
-      
-      if (result.affectedRows === 0) {
-        return res.status(404).json({ message: 'Task not found' });
-      }
-      
-      res.json({ message: 'Task deleted successfully' });
-    } catch (error) {
-      console.error('Delete task error:', error);
-      res.status(500).json({ message: 'Server error' });
-    }
-  });
-  
-  // --------- Progress Routes ---------
-  
-  // Get user's progress
-  app.get('/api/progress', authMiddleware, async (req, res) => {
-    try {
-      // Get the most recent progress entry
-      const [progress] = await pool.query(
-        'SELECT * FROM progress WHERE user_id = ? ORDER BY progress_date DESC LIMIT 1',
-        [req.user.id]
-      );
-      
-      if (progress.length === 0) {
-        return res.json({
-          overallProgress: 0,
-          categories: {
-            vocabulary: 0,
-            grammar: 0,
-            listening: 0,
-            speaking: 0,
-            reading: 0,
-            writing: 0
-          }
-        });
-      }
-      
-      const latestProgress = progress[0];
-      
-      res.json({
-        overallProgress: latestProgress.overall_progress,
-        categories: {
-          vocabulary: latestProgress.vocabulary_progress,
-          grammar: latestProgress.grammar_progress,
-          listening: latestProgress.listening_progress,
-          speaking: latestProgress.speaking_progress,
-          reading: latestProgress.reading_progress,
-          writing: latestProgress.writing_progress
-        },
-        date: latestProgress.progress_date
-      });
-    } catch (error) {
-      console.error('Get progress error:', error);
-      res.status(500).json({ message: 'Server error' });
-    }
-  });
-  
-  // Get progress history (past 30 days)
-  app.get('/api/progress/history', authMiddleware, async (req, res) => {
-    try {
-      const days = req.query.days || 30;
-      const startDate = moment().subtract(days, 'days').format('YYYY-MM-DD');
-      
-      const [progressHistory] = await pool.query(
-        'SELECT * FROM progress WHERE user_id = ? AND progress_date >= ? ORDER BY progress_date ASC',
-        [req.user.id, startDate]
-      );
-      
-      const formattedHistory = progressHistory.map(entry => ({
-        date: entry.progress_date,
-        overallProgress: entry.overall_progress,
-        categories: {
-          vocabulary: entry.vocabulary_progress,
-          grammar: entry.grammar_progress,
-          listening: entry.listening_progress,
-          speaking: entry.speaking_progress,
-          reading: entry.reading_progress,
-          writing: entry.writing_progress
-        }
-      }));
-      
-      res.json(formattedHistory);
-    } catch (error) {
-      console.error('Get progress history error:', error);
-      res.status(500).json({ message: 'Server error' });
-    }
-  });
-  
-  // --------- Feedback Routes ---------
-  
-  // Submit feedback for a task
-  app.post('/api/feedback', authMiddleware, async (req, res) => {
-    try {
-      const { taskId, rating, comment, difficulty } = req.body;
-      
-      // Check if task exists and belongs to user
-      const [tasks] = await pool.query(
-        'SELECT * FROM tasks WHERE id = ? AND user_id = ?',
-        [taskId, req.user.id]
-      );
-      
-      if (tasks.length === 0) {
-        return res.status(404).json({ message: 'Task not found' });
-      }
-      
-      // Check if feedback already exists
-      const [existingFeedback] = await pool.query(
-        'SELECT * FROM feedback WHERE task_id = ? AND user_id = ?',
-        [taskId, req.user.id]
-      );
-      
-      if (existingFeedback.length > 0) {
-        // Update existing feedback
-        await pool.query(
-          'UPDATE feedback SET rating = ?, comment = ?, difficulty = ? WHERE task_id = ? AND user_id = ?',
-          [rating, comment, difficulty, taskId, req.user.id]
-        );
-        
-        const [updatedFeedback] = await pool.query(
-          'SELECT * FROM feedback WHERE task_id = ? AND user_id = ?',
-          [taskId, req.user.id]
-        );
-        
-        return res.json(updatedFeedback[0]);
-      }
-      
-      // Create new feedback
-      const [result] = await pool.query(
-        'INSERT INTO feedback (user_id, task_id, rating, comment, difficulty) VALUES (?, ?, ?, ?, ?)',
-        [req.user.id, taskId, rating, comment, difficulty]
-      );
-      
-      const feedbackId = result.insertId;
-      
-      // Get created feedback
-      const [feedback] = await pool.query(
-        'SELECT * FROM feedback WHERE id = ?',
-        [feedbackId]
-      );
-      
-      res.status(201).json(feedback[0]);
-    } catch (error) {
-      console.error('Submit feedback error:', error);
-      res.status(500).json({ message: 'Server error' });
-    }
-  });
-  
-  // Get feedback for a task
-  app.get('/api/feedback/:taskId', authMiddleware, async (req, res) => {
-    try {
-      const [feedback] = await pool.query(
-        'SELECT * FROM feedback WHERE task_id = ? AND user_id = ?',
-        [req.params.taskId, req.user.id]
-      );
-      
-      if (feedback.length === 0) {
-        return res.status(404).json({ message: 'Feedback not found' });
-      }
-      
-      res.json(feedback[0]);
-    } catch (error) {
-      console.error('Get feedback error:', error);
-      res.status(500).json({ message: 'Server error' });
-    }
-  });
-  
-  // --------- Notification Routes ---------
-  
-  // Update FCM token
-  app.post('/api/notifications/token', authMiddleware, async (req, res) => {
-    try {
-      const { fcmToken } = req.body;
-      
-      await pool.query(
-        'UPDATE users SET fcm_token = ? WHERE id = ?',
-        [fcmToken, req.user.id]
-      );
-      
-      res.json({ message: 'FCM token updated successfully' });
-    } catch (error) {
-      console.error('Update FCM token error:', error);
-      res.status(500).json({ message: 'Server error' });
-    }
-  });
-  
-  // Update notification preferences
-  app.post('/api/notifications/preferences', authMiddleware, async (req, res) => {
-    try {
-      const { email, push, sms } = req.body;
-      
-      await pool.query(
-        'UPDATE users SET notification_email = ?, notification_push = ?, notification_sms = ? WHERE id = ?',
-        [email, push, sms, req.user.id]
-      );
-      
-      res.json({
-        message: 'Notification preferences updated successfully',
-        preferences: { email, push, sms }
-      });
-    } catch (error) {
-      console.error('Update notification preferences error:', error);
-      res.status(500).json({ message: 'Server error' });
-    }
-  });
-  
-  // --------- Analytics Routes ---------
-  
-  // Get task completion stats
-  app.get('/api/analytics/tasks', authMiddleware, async (req, res) => {
-    try {
-      // Get total tasks
-      const [totalResult] = await pool.query(
-        'SELECT COUNT(*) as total FROM tasks WHERE user_id = ?',
-        [req.user.id]
-      );
-      
-      // Get completed tasks
-      const [completedResult] = await pool.query(
-        'SELECT COUNT(*) as completed FROM tasks WHERE user_id = ? AND progress = ?',
-        [req.user.id, 'Completed']
-      );
-      
-      // Get in progress tasks
-      const [inProgressResult] = await pool.query(
-        'SELECT COUNT(*) as inProgress FROM tasks WHERE user_id = ? AND progress = ?',
-        [req.user.id, 'In Progress']
-      );
-      
-      // Get tasks by category
-      const [categoryResult] = await pool.query(
-        'SELECT category, COUNT(*) as count FROM tasks WHERE user_id = ? GROUP BY category',
-        [req.user.id]
-      );
-      
-      const categoryStats = {};
-      categoryResult.forEach(item => {
-        categoryStats[item.category] = item.count;
-      });
-      
-      res.json({
-        total: totalResult[0].total,
-        completed: completedResult[0].completed,
-        inProgress: inProgressResult[0].inProgress,
-        notStarted: totalResult[0].total - completedResult[0].completed - inProgressResult[0].inProgress,
-        completionRate: totalResult[0].total > 0 ? 
-          Math.round((completedResult[0].completed / totalResult[0].total) * 100) : 0,
-        byCategory: categoryStats
-      });
-    } catch (error) {
-      console.error('Get task analytics error:', error);
-      res.status(500).json({ message: 'Server error' });
-    }
-  });
-  
-  // Get learning streak
-  app.get('/api/analytics/streak', authMiddleware, async (req, res) => {
-    try {
-      const today = moment().format('YYYY-MM-DD');
-      
-      // Get completed tasks for each day, going back 60 days
-      const startDate = moment().subtract(60, 'days').format('YYYY-MM-DD');
-      
-      const [completedTasks] = await pool.query(
-        `SELECT DATE(task_date) as date, COUNT(*) as count 
-         FROM tasks 
-         WHERE user_id = ? AND task_date BETWEEN ? AND ? AND progress = 'Completed'
-         GROUP BY DATE(task_date)
-         ORDER BY date DESC`,
-        [req.user.id, startDate, today]
-      );
-      
-      // Calculate streak
-      let streak = 0;
-      let currentDate = moment();
-      
-      while (true) {
-        const dateStr = currentDate.format('YYYY-MM-DD');
-        const dayCompletedTasks = completedTasks.find(day => day.date === dateStr);
-        
-        if (dayCompletedTasks && dayCompletedTasks.count > 0) {
-          streak++;
-          currentDate = currentDate.subtract(1, 'days');
-        } else {
-          // Check if it's today and no tasks completed yet
-          if (dateStr === today && streak === 0) {
-            // Check yesterday instead
-            currentDate = currentDate.subtract(1, 'days');
-            const yesterdayStr = currentDate.format('YYYY-MM-DD');
-            const yesterdayTasks = completedTasks.find(day => day.date === yesterdayStr);
-            
-            if (yesterdayTasks && yesterdayTasks.count > 0) {
-              streak = 1;
-            }
-          }
-          break;
-        }
-      }
-      
-      res.json({ streak });
-    } catch (error) {
-      console.error('Get streak error:', error);
-      res.status(500).json({ message: 'Server error' });
-    }
-  });
-  
-  // Get recommended learning time
-  app.get('/api/analytics/recommended-time', authMiddleware, async (req, res) => {
-    try {
-      // Get the most common times for completed tasks
-      const [completedTaskTimes] = await pool.query(
-        `SELECT HOUR(task_time) as hour, COUNT(*) as count 
-         FROM tasks 
-         WHERE user_id = ? AND progress = 'Completed'
-         GROUP BY HOUR(task_time)
-         ORDER BY count DESC
-         LIMIT 3`,
-        [req.user.id]
-      );
-      
-      // Get most productive day of the week
-      const [productiveDays] = await pool.query(
-        `SELECT DAYOFWEEK(task_date) as day, COUNT(*) as count 
-         FROM tasks 
-         WHERE user_id = ? AND progress = 'Completed'
-         GROUP BY DAYOFWEEK(task_date)
-         ORDER BY count DESC
-         LIMIT 1`,
-        [req.user.id]
-      );
-      
-      const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-      
-      let recommendedTime = {};
-      
-      if (completedTaskTimes.length > 0) {
-        recommendedTime.preferredHours = completedTaskTimes.map(item => ({
-          hour: item.hour,
-          count: item.count
-        }));
-      }
-      
-      if (productiveDays.length > 0) {
-        const day = productiveDays[0].day;
-        recommendedTime.mostProductiveDay = {
-          day: dayNames[day - 1],
-          dayNumber: day,
-          count: productiveDays[0].count
-        };
-      }
-      
-      res.json(recommendedTime);
-    } catch (error) {
-      console.error('Get recommended time error:', error);
-      res.status(500).json({ message: 'Server error' });
-    }
-  });
-  
-  // --------- Scheduler ---------
-  
-  // Schedule reminder processing every minute
-  scheduler.scheduleJob('* * * * *', processReminders);
-  
-  // --------- Server Initialization ---------
-  
-  // Initialize database and start server
-  async function startServer() {
-    try {
-      await initializeDatabase();
-      app.listen(PORT, () => {
-        console.log(`Server running on port ${PORT}`);
-      });
-    } catch (error) {
-      console.error('Server initialization error:', error);
-      process.exit(1);
-    }
+    console.error('Error deleting task:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
   }
-  
-  startServer();
-  
-  // Handle graceful shutdown
-  process.on('SIGINT', async () => {
-    try {
-      console.log('Closing database connections...');
-      await pool.end();
-      console.log('Database connections closed');
-      process.exit(0);
-    } catch (error) {
-      console.error('Error during shutdown:', error);
-      process.exit(1);
+});
+
+// =============================================================================
+// SUGGESTED TASKS ROUTES
+// =============================================================================
+
+// Get all suggested tasks
+app.get('/suggested-tasks', async (req, res) => {
+  try {
+    const [tasks] = await pool.query(`
+      SELECT id, title, description, type, difficulty
+      FROM suggested_tasks
+      ORDER BY type, title
+    `);
+    
+    res.status(200).json(tasks);
+  } catch (error) {
+    console.error('Error fetching suggested tasks:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+// Get suggested tasks by type
+app.get('/suggested-tasks/type/:type', async (req, res) => {
+  try {
+    const { type } = req.params;
+    
+    const [tasks] = await pool.query(`
+      SELECT id, title, description, type, difficulty
+      FROM suggested_tasks
+      WHERE type = ?
+      ORDER BY title
+    `, [type]);
+    
+    res.status(200).json(tasks);
+  } catch (error) {
+    console.error('Error fetching suggested tasks by type:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+// Get suggested tasks by difficulty
+app.get('/suggested-tasks/difficulty/:difficulty', async (req, res) => {
+  try {
+    const { difficulty } = req.params;
+    
+    if (!['Beginner', 'Intermediate', 'Advanced'].includes(difficulty)) {
+      return res.status(400).json({ message: 'Invalid difficulty level. Must be one of: Beginner, Intermediate, Advanced' });
     }
-  });
-  
-  module.exports = app;
+    
+    const [tasks] = await pool.query(`
+      SELECT id, title, description, type, difficulty
+      FROM suggested_tasks
+      WHERE difficulty = ?
+      ORDER BY type, title
+    `, [difficulty]);
+    
+    res.status(200).json(tasks);
+  } catch (error) {
+    console.error('Error fetching suggested tasks by difficulty:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+// =============================================================================
+// STATS ROUTES
+// =============================================================================
+
+// Get task completion stats
+app.get('/stats/completion', async (req, res) => {
+  try {
+    const [stats] = await pool.query(`
+      SELECT 
+        COUNT(*) as total_tasks,
+        SUM(CASE WHEN progress = 'Completed' THEN 1 ELSE 0 END) as completed_tasks,
+        SUM(CASE WHEN progress = 'In Progress' THEN 1 ELSE 0 END) as in_progress_tasks,
+        SUM(CASE WHEN progress = 'Not Started' THEN 1 ELSE 0 END) as not_started_tasks
+      FROM tasks
+      WHERE user_id = ?
+    `, [DEFAULT_USER_ID]);
+    
+    const completionStats = stats[0];
+    
+    // Calculate percentages
+    const totalTasks = completionStats.total_tasks;
+    if (totalTasks > 0) {
+      completionStats.completion_rate = Math.round((completionStats.completed_tasks / totalTasks) * 100);
+      completionStats.in_progress_rate = Math.round((completionStats.in_progress_tasks / totalTasks) * 100);
+      completionStats.not_started_rate = Math.round((completionStats.not_started_tasks / totalTasks) * 100);
+    } else {
+      completionStats.completion_rate = 0;
+      completionStats.in_progress_rate = 0;
+      completionStats.not_started_rate = 0;
+    }
+    
+    res.status(200).json(completionStats);
+  } catch (error) {
+    console.error('Error fetching completion stats:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+// Get task type distribution
+app.get('/stats/task-types', async (req, res) => {
+  try {
+    // This query joins with suggested_tasks to get the type for each task
+    const [stats] = await pool.query(`
+      SELECT 
+        COALESCE(st.type, 'custom') as task_type,
+        COUNT(*) as count
+      FROM tasks t
+      LEFT JOIN suggested_tasks st ON t.suggested_task_id = st.id
+      WHERE t.user_id = ?
+      GROUP BY COALESCE(st.type, 'custom')
+      ORDER BY count DESC
+    `, [DEFAULT_USER_ID]);
+    
+    res.status(200).json(stats);
+  } catch (error) {
+    console.error('Error fetching task type stats:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+// Start server
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
+
+module.exports = app;
+
 

@@ -22,10 +22,9 @@ const db = knex({
   }
 });
 
-// Routes
-app.get('/api/user-progress/:userId', async (req, res) => {
+// Routes0.get('0
   try {
-    const { userId } = req.params;
+   0const { userId } = req.params;
     
     // Get user progress data for lessons, quizzes, and virtual rooms
     const progress = await getUserProgress(userId);

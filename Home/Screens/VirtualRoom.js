@@ -272,7 +272,7 @@ const VirtualRoom = () => {
   const renderInitialScreen = () => (
     <View style={styles.container}>
       <View style={styles.logoContainer}>
-        <Image source={require("./assets/vitisco logo PNG.png")} style={styles.logo} resizeMode="contain" />
+        <Image source={require("../assets/vitisco logo PNG.png")} style={styles.logo} resizeMode="contain" />
       </View>
 
       <View style={styles.headerContainer}>
