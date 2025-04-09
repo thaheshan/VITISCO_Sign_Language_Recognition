@@ -289,7 +289,7 @@ const VirtualRoom = () => {
           <TextInput
             style={styles.input}
             placeholder="Enter Room Code"
-            placeholderTextColor="#B2B5E7"
+            placeholderTextColor="black"
             value={userInput.roomCode}
             onChangeText={(text) => setUserInput((prev) => ({ ...prev, roomCode: text }))}
           />
@@ -333,7 +333,7 @@ const VirtualRoom = () => {
             style={styles.copyButton}
             onPress={() => (gameState.roomCode ? copyToClipboard(gameState.roomCode) : null)}
           >
-            <Ionicons name="copy-outline" size={16} color="#FFFFFF" />
+            <Ionicons name="copy-outline" size={16} color="#FFFFFF"/>
           </TouchableOpacity>
         </View>
       </View>
@@ -590,7 +590,7 @@ const styles = StyleSheet.create({
     padding: 12,
     marginBottom: 8,
     fontSize: 16,
-    color: "#000",
+    color: "white",
     backgroundColor: "rgba(255, 255, 255, 0.1)",
   },
   orContainer: {
@@ -598,8 +598,8 @@ const styles = StyleSheet.create({
     marginVertical: 8,
   },
   orText: {
-    color: "rgba(255, 255, 255, 0.7)",
-    fontSize: 14,
+    color: "black",
+    fontSize: 16,
   },
   outlineButton: {
     borderWidth: 1,
