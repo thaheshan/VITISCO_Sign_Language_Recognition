@@ -17,7 +17,7 @@ import {
   State,
   GestureHandlerRootView,
 } from "react-native-gesture-handler";
-import { api } from "./api"; // Import the API client
+import { api } from "../Backend/FeedbackBE/api"; // Import the API client
 
 const { width, height } = Dimensions.get("window");
 
@@ -27,14 +27,15 @@ const NotificationScreen = () => {
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedLesson, setSelectedLesson] = useState(null);
   const [timeFilter, setTimeFilter] = useState("all"); // 'all', 'today', 'yesterday'
-  
+
   // Data states
   const [notifications, setNotifications] = useState([]);
   const [feedbacks, setFeedbacks] = useState([]);
   const [suggestions, setSuggestions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [selectedNotificationDetails, setSelectedNotificationDetails] = useState(null);
+  const [selectedNotificationDetails, setSelectedNotificationDetails] =
+    useState(null);
 
   // Animation values
   const tabPosition = useRef(new Animated.Value(0)).current;
@@ -106,7 +107,7 @@ const NotificationScreen = () => {
   // Functions for modal handling
   const openLessonModal = async (item) => {
     setSelectedLesson(item);
-    
+
     // If we're opening a notification, fetch its detailed data
     if (activeTab === "Notifications" && item.id) {
       try {
@@ -116,7 +117,7 @@ const NotificationScreen = () => {
         console.error("Error fetching notification details:", err);
       }
     }
-    
+
     setModalVisible(true);
 
     Animated.parallel([
@@ -229,8 +230,8 @@ const NotificationScreen = () => {
             <View style={styles.lessonContent}>
               <Text style={styles.lessonTitle}>{notification.title}</Text>
               <Text style={styles.lessonDescription}>
-                {notification.description || 
-                `You Completed ${notification.completion}% from the expected lesson on this day and your learning progress was so good.`}
+                {notification.description ||
+                  `You Completed ${notification.completion}% from the expected lesson on this day and your learning progress was so good.`}
               </Text>
               <Text style={styles.lessonDate}>on: {notification.nextDate}</Text>
             </View>
@@ -255,8 +256,8 @@ const NotificationScreen = () => {
             <View style={styles.lessonContent}>
               <Text style={styles.lessonTitle}>{feedback.title}</Text>
               <Text style={styles.lessonDescription}>
-                {feedback.description || 
-                `You Completed ${feedback.completion}% from the expected lesson on this day and your learning progress was so good.`}
+                {feedback.description ||
+                  `You Completed ${feedback.completion}% from the expected lesson on this day and your learning progress was so good.`}
               </Text>
               <Text style={styles.lessonDate}>on: {feedback.date}</Text>
             </View>
@@ -292,7 +293,7 @@ const NotificationScreen = () => {
       )}
     </ScrollView>
   );
-  
+
   // Function to handle time filter changes
   const handleTimeFilterChange = (filter) => {
     setTimeFilter(filter);
@@ -411,8 +412,8 @@ const NotificationScreen = () => {
                   </View>
 
                   <Text style={styles.modalDescription}>
-                    {selectedLesson.description || 
-                     `You completed ${selectedLesson.completion}% from the expected lesson on this day. Your learning progress was so good!`}
+                    {selectedLesson.description ||
+                      `You completed ${selectedLesson.completion}% from the expected lesson on this day. Your learning progress was so good!`}
                   </Text>
 
                   <View style={styles.statsContainer}>
@@ -549,7 +550,7 @@ const NotificationScreen = () => {
           <TouchableOpacity style={styles.bottomButton}>
             <Text style={styles.bottomButtonIcon}>□</Text>
           </TouchableOpacity>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.bottomButton}
             onPress={() => {
               // Refresh data when refresh button is pressed
