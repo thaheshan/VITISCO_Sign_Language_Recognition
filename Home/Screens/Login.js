@@ -161,20 +161,13 @@ const LoginScreen = ({navigation}) =>  {
         })
         .catch(error => {
           console.log("API Connection failed with error:", error.message);
-          
-          // More detailed error logging
-          if (error.response) {
-            console.log("Server responded with error:", error.response.status, error.response.data);
-          } else if (error.request) {
-            console.log("No response received, network issue likely");
-          } else {
-            console.log("Error setting up request:", error.message);
-          }
-          
+          // Error logging...
           setApiError("Could not connect to server. Please try again later.");
         });
     }
   }, [currentScreen]);
+
+  
 
 
   

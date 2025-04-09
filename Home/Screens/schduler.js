@@ -32,7 +32,7 @@ Notifications.setNotificationHandler({
 });
 
 // API base URL - replace with your actual backend URL
-const API_BASE_URL = 'http://192.168.1.82:5000';
+const API_BASE_URL = 'http://192.168.58.40:5000';
 
 // Create axios instance with default config
 const api = axios.create({
@@ -43,10 +43,6 @@ const api = axios.create({
   }
 });
 
-
-
-
-
 const App = () => {
   // State variables
   const [tasks, setTasks] = useState([]);
@@ -55,7 +51,6 @@ const App = () => {
   const [taskModalVisible, setTaskModalVisible] = useState(false);
   const [customTaskModalVisible, setCustomTaskModalVisible] = useState(false);
   const [editTaskModalVisible, setEditTaskModalVisible] = useState(false);
-  const [suggestedTasksOpen, setSuggestedTasksOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [userProfile, setUserProfile] = useState(null);
@@ -66,7 +61,7 @@ const App = () => {
   
   // Language learning specific tasks
   const [suggestedTasks, setSuggestedTasks] = useState([]);
-  
+  const [suggestedTasksOpen, setSuggestedTasksOpen] = useState(false);
   const [selectedSuggestedTask, setSelectedSuggestedTask] = useState(null);
   const [taskTitle, setTaskTitle] = useState('');
   const [taskDescription, setTaskDescription] = useState('');
@@ -107,7 +102,6 @@ const App = () => {
           importance: Notifications.AndroidImportance.MAX,
           vibrationPattern: [0, 250, 250, 250],
           lightColor: '#8676D1',
-          
         });
       }
       
@@ -193,7 +187,6 @@ const App = () => {
       // Only schedule if it's in the future
       if (notificationDate > new Date()) {
         const notificationId = await Notifications.scheduleNotificationAsync({
-
           content: {
             title: `Reminder: ${task.title}`,
             body: task.description || 'Time for your language learning task!',
@@ -211,10 +204,6 @@ const App = () => {
       return null;
     }
   };
-
- 
-
-
 
   // Fetch user profile data
   const fetchUserProfile = async () => {
@@ -418,6 +407,7 @@ const App = () => {
         // Close modals
         setTaskModalVisible(false);
         setCustomTaskModalVisible(false);
+        setSuggestedTasksOpen(false);
         
         // Show confirmation
         Alert.alert('Success', 'Task added successfully and reminder set!');
@@ -711,6 +701,25 @@ const App = () => {
     setDeleteConfirmModalVisible(true);
   };
 
+  // Open suggested task selection modal
+  const openSuggestedTaskModal = () => {
+    fetchSuggestedTasks();
+    setTaskModalVisible(false);
+    setTimeout(() => {
+      setSuggestedTasksOpen(true);
+    }, 300);
+  };
+
+  // Handle selection of a suggested task
+  const handleSuggestedTaskSelect = (item) => {
+    setSelectedSuggestedTask(item.value);
+    setTaskTitle(item.label);
+    setSuggestedTasksOpen(false);
+    setTimeout(() => {
+      setCustomTaskModalVisible(true);
+    }, 300);
+  };
+
   // Main render
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -825,9 +834,9 @@ const App = () => {
                           onPress={() => openEditTaskModal(task)}
                         >
                           <Icon name="create-outline" size={16} color="#fff" />
+                         
                           <Text style={styles.actionButtonText}>Edit</Text>
                         </TouchableOpacity>
-                        
                         <TouchableOpacity 
                           style={styles.deleteButton}
                           onPress={() => confirmDeleteTask(task.id)}
@@ -840,29 +849,86 @@ const App = () => {
                   ))}
                 </View>
               ) : (
-                <View style={styles.scheduleItem}>
-                  <Text style={styles.noTasksText}>No tasks scheduled for this date</Text>
+                <View style={styles.emptyState}>
+                  <Icon name="calendar-outline" size={50} color="#ccc" />
+                  <Text style={styles.emptyStateText}>No tasks scheduled for this date</Text>
                   <TouchableOpacity 
                     style={styles.addTaskButton}
                     onPress={() => setTaskModalVisible(true)}
                   >
-                    <Icon name="add-circle-outline" size={20} color="#fff" />
-                    <Text style={styles.addTaskButtonText}>Add Task</Text>
+                    <Text style={styles.addTaskButtonText}>Add a Task</Text>
                   </TouchableOpacity>
                 </View>
               )
             ) : (
-              <View style={styles.scheduleItem}>
-                <Text style={styles.scheduleDate}>Select a date to view tasks</Text>
-              </View>
+              tasks.length > 0 ? (
+                <View style={styles.scheduleItem}>
+                  <Text style={styles.scheduleDate}>Upcoming Tasks</Text>
+                  {tasks
+                    .sort((a, b) => new Date(a.date) - new Date(b.date))
+                    .slice(0, 5)
+                    .map(task => (
+                      <View key={task.id} style={styles.scheduleTask}>
+                        <View style={styles.scheduleTaskHeader}>
+                          <View style={styles.scheduleTaskLeft}>
+                            <Text style={styles.scheduleDate}>
+                              {new Date(task.date).toLocaleDateString()} at {task.time}
+                            </Text>
+                            <Text style={styles.scheduleTaskTitle}>{task.title}</Text>
+                          </View>
+                          <View style={styles.taskActionRow}>
+                            <TouchableOpacity 
+                              style={[styles.statusBadge, {backgroundColor: getProgressColor(task.progress)}]}
+                              onPress={() => updateTaskProgress(task.id)}
+                            >
+                              <Text style={styles.statusText}>{task.progress}</Text>
+                            </TouchableOpacity>
+                          </View>
+                        </View>
+                        <Text style={styles.taskDescription}>
+                          {task.description || 'Complete this language learning task to improve your skills'}
+                        </Text>
+                        
+                        {/* Task Action Buttons */}
+                        <View style={styles.taskActionButtons}>
+                          <TouchableOpacity 
+                            style={styles.editButton}
+                            onPress={() => openEditTaskModal(task)}
+                          >
+                            <Icon name="create-outline" size={16} color="#fff" />
+                            <Text style={styles.actionButtonText}>Edit</Text>
+                          </TouchableOpacity>
+                          <TouchableOpacity 
+                            style={styles.deleteButton}
+                            onPress={() => confirmDeleteTask(task.id)}
+                          >
+                            <Icon name="trash-outline" size={16} color="#fff" />
+                            <Text style={styles.actionButtonText}>Delete</Text>
+                          </TouchableOpacity>
+                        </View>
+                      </View>
+                    ))}
+                </View>
+              ) : (
+                <View style={styles.emptyState}>
+                  <Icon name="calendar-outline" size={50} color="#ccc" />
+                  <Text style={styles.emptyStateText}>No tasks scheduled yet</Text>
+                  <TouchableOpacity 
+                    style={styles.addTaskButton}
+                    onPress={() => setTaskModalVisible(true)}
+                  >
+                    <Text style={styles.addTaskButtonText}>Add a Task</Text>
+                  </TouchableOpacity>
+                </View>
+              )
             )}
           </View>
         </ScrollView>
       )}
       
-      {/* Floating Action Button */}
+      {/* Add Task Button */}
       <TouchableOpacity 
-        style={styles.fab}
+        style={styles.floatingButton} 
         onPress={() => setTaskModalVisible(true)}
       >
         <Icon name="add" size={30} color="#fff" />
@@ -870,21 +936,15 @@ const App = () => {
       
       {/* Calendar Modal */}
       <Modal
+        visible={calendarVisible}
         animationType="slide"
         transparent={true}
-        visible={calendarVisible}
-        onRequestClose={() => setCalendarVisible(false)}
       >
-        <View style={styles.modalOverlay}>
+        <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Select Date</Text>
-              <TouchableOpacity onPress={() => setCalendarVisible(false)}>
-                <Icon name="close" size={24} color="#333" />
-              </TouchableOpacity>
-            </View>
+            <Text style={styles.modalTitle}>Select Date</Text>
             <Calendar
-              onDayPress={day => {
+              onDayPress={(day) => {
                 setSelectedDate(day.dateString);
                 setCalendarVisible(false);
               }}
@@ -893,49 +953,90 @@ const App = () => {
                 todayTextColor: '#8a6eff',
                 selectedDayBackgroundColor: '#8a6eff',
                 dotColor: '#8a6eff',
+                arrowColor: '#8a6eff',
               }}
             />
+            <TouchableOpacity 
+              style={styles.closeButton}
+              onPress={() => setCalendarVisible(false)}
+            >
+              <Text style={styles.closeButtonText}>Close</Text>
+            </TouchableOpacity>
           </View>
         </View>
       </Modal>
       
-      {/* Task Options Modal */}
+      {/* Task Type Selection Modal */}
       <Modal
+        visible={taskModalVisible}
         animationType="slide"
         transparent={true}
-        visible={taskModalVisible}
-        onRequestClose={() => setTaskModalVisible(false)}
       >
-        <View style={styles.modalOverlay}>
+        <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Add New Task</Text>
-              <TouchableOpacity onPress={() => setTaskModalVisible(false)}>
-                <Icon name="close" size={24} color="#333" />
-              </TouchableOpacity>
-            </View>
+            <Text style={styles.modalTitle}>Add New Task</Text>
+            <Text style={styles.modalSubtitle}>Choose task type</Text>
             
             <TouchableOpacity 
-              style={styles.taskOptionButton}
-              onPress={() => {
-                setTaskModalVisible(false);
-                setCustomTaskModalVisible(true);
-              }}
+              style={styles.taskTypeButton}
+              onPress={openSuggestedTaskModal}
             >
-              <Icon name="create-outline" size={24} color="#8a6eff" />
-              <Text style={styles.taskOptionText}>Create Custom Task</Text>
+              <Icon name="bulb-outline" size={24} color="#8a6eff" />
+              <Text style={styles.taskTypeButtonText}>Suggested Learning Task</Text>
             </TouchableOpacity>
             
             <TouchableOpacity 
-              style={styles.taskOptionButton}
+              style={styles.taskTypeButton}
               onPress={() => {
-                fetchSuggestedTasks();
-                setSuggestedTasksOpen(true);
                 setTaskModalVisible(false);
+                setTimeout(() => setCustomTaskModalVisible(true), 300);
               }}
             >
-              <Icon name="list-outline" size={24} color="#8a6eff" />
-              <Text style={styles.taskOptionText}>Choose Suggested Task</Text>
+              <Icon name="create-outline" size={24} color="#8a6eff" />
+              <Text style={styles.taskTypeButtonText}>Custom Task</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              style={styles.closeButton}
+              onPress={() => setTaskModalVisible(false)}
+            >
+              <Text style={styles.closeButtonText}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+      
+      {/* Suggested Task Selection Modal */}
+      <Modal
+        visible={suggestedTasksOpen}
+        animationType="slide"
+        transparent={true}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Suggested Tasks</Text>
+            <Text style={styles.modalSubtitle}>Select a language learning task</Text>
+            
+            <ScrollView style={styles.suggestedTasksList}>
+              {suggestedTasks.map((item) => (
+                <TouchableOpacity
+                  key={item.value}
+                  style={styles.suggestedTaskItem}
+                  onPress={() => handleSuggestedTaskSelect(item)}
+                >
+                  <View style={styles.suggestedTaskIcon}>
+                    {item.icon()}
+                  </View>
+                  <Text style={styles.suggestedTaskText}>{item.label}</Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+            
+            <TouchableOpacity 
+              style={styles.closeButton}
+              onPress={() => setSuggestedTasksOpen(false)}
+            >
+              <Text style={styles.closeButtonText}>Cancel</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -943,120 +1044,121 @@ const App = () => {
       
       {/* Custom Task Modal */}
       <Modal
+        visible={customTaskModalVisible}
         animationType="slide"
         transparent={true}
-        visible={customTaskModalVisible}
-        onRequestClose={() => setCustomTaskModalVisible(false)}
       >
-        <View style={styles.modalOverlay}>
+        <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Create New Task</Text>
-              <TouchableOpacity onPress={() => setCustomTaskModalVisible(false)}>
-                <Icon name="close" size={24} color="#333" />
-              </TouchableOpacity>
-            </View>
+            <Text style={styles.modalTitle}>
+              {selectedSuggestedTask ? 'Configure Task' : 'Custom Task'}
+            </Text>
             
-            <ScrollView style={styles.modalBody}>
-              <Text style={styles.inputLabel}>Task Title</Text>
+            {!selectedSuggestedTask && (
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Task Title</Text>
+                <TextInput
+                  style={styles.input}
+                  value={taskTitle}
+                  onChangeText={setTaskTitle}
+                  placeholder="Enter task title"
+                />
+              </View>
+            )}
+            
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Description (optional)</Text>
               <TextInput
-                style={styles.input}
-                value={taskTitle}
-                onChangeText={setTaskTitle}
-                placeholder="Enter task title"
-              />
-              
-              <Text style={styles.inputLabel}>Task Description</Text>
-              <TextInput
-                style={styles.textArea}
+                style={[styles.input, {height: 80}]}
                 value={taskDescription}
                 onChangeText={setTaskDescription}
                 placeholder="Enter task description"
-                multiline={true}
-                numberOfLines={4}
+                multiline
               />
-              
-              <Text style={styles.inputLabel}>Task Time</Text>
+            </View>
+            
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Date</Text>
               <TouchableOpacity 
-                style={styles.timeInput}
-                onPress={() => setShowTimePicker(true)}
+                style={styles.dateInput}
+                onPress={() => setCalendarVisible(true)}
               >
-                <Text>{taskTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</Text>
-                <Icon name="time-outline" size={20} color="#8a6eff" />
-              </TouchableOpacity>
-              
-              {showTimePicker && (
-                <DateTimePicker
-                  value={taskTime}
-                  mode="time"
-                  display="default"
-                  onChange={(event, selectedTime) => {
-                    setShowTimePicker(false);
-                    if (selectedTime) {
-                      setTaskTime(selectedTime);
-                    }
-                  }}
-                />
-              )}
-              
-              <Text style={styles.inputLabel}>Reminder (minutes before)</Text>
-              <TextInput
-                style={styles.input}
-                value={reminderTime.toString()}
-                onChangeText={(text) => setReminderTime(parseInt(text) || 15)}
-                keyboardType="number-pad"
-                placeholder="15"
-              />
-              
-              <TouchableOpacity 
-                style={styles.primaryButton}
-                onPress={() => addTask(false)}
-                disabled={!taskTitle}
-              >
-                <Text style={styles.primaryButtonText}>Save Task</Text>
-              </TouchableOpacity>
-            </ScrollView>
-          </View>
-        </View>
-      </Modal>
-      
-      {/* Suggested Tasks Modal */}
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={suggestedTasksOpen}
-        onRequestClose={() => setSuggestedTasksOpen(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Suggested Tasks</Text>
-              <TouchableOpacity onPress={() => setSuggestedTasksOpen(false)}>
-                <Icon name="close" size={24} color="#333" />
+                <Text>
+                  {selectedDate ? new Date(selectedDate).toLocaleDateString() : 'Select Date'}
+                </Text>
               </TouchableOpacity>
             </View>
             
-            <View style={styles.modalBody}>
-              <Text style={styles.inputLabel}>Select a task from our recommendations:</Text>
-              <DropDownPicker
-                open={suggestedTasksOpen}
-                value={selectedSuggestedTask}
-                items={suggestedTasks}
-                setOpen={setSuggestedTasksOpen}
-                setValue={setSelectedSuggestedTask}
-                placeholder="Select a task"
-                style={styles.dropdown}
-                dropDownContainerStyle={styles.dropdownContainer}
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Time</Text>
+              <TouchableOpacity 
+                style={styles.dateInput}
+                onPress={() => setShowTimePicker(true)}
+              >
+                <Text>
+                  {taskTime.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                </Text>
+              </TouchableOpacity>
+            </View>
+            
+            {showTimePicker && (
+              <DateTimePicker
+                value={taskTime}
+                mode="time"
+                is24Hour={false}
+                display="default"
+                onChange={(event, selectedTime) => {
+                  setShowTimePicker(false);
+                  if (selectedTime) setTaskTime(selectedTime);
+                }}
               />
+            )}
+            
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Reminder (minutes before)</Text>
+              <View style={styles.reminderOptions}>
+                {[5, 15, 30, 60].map(time => (
+                  <TouchableOpacity
+                    key={time}
+                    style={[
+                      styles.reminderOption,
+                      reminderTime === time && styles.reminderOptionSelected
+                    ]}
+                    onPress={() => setReminderTime(time)}
+                  >
+                    <Text 
+                      style={[
+                        styles.reminderOptionText,
+                        reminderTime === time && styles.reminderOptionTextSelected
+                      ]}
+                    >
+                      {time}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+            
+            <View style={styles.buttonRow}>
+              <TouchableOpacity 
+                style={styles.cancelButton}
+                onPress={() => {
+                  setCustomTaskModalVisible(false);
+                  resetFormFields();
+                }}
+              >
+                <Text style={styles.cancelButtonText}>Cancel</Text>
+              </TouchableOpacity>
               
-              {selectedSuggestedTask && (
-                <TouchableOpacity 
-                  style={[styles.primaryButton, {marginTop: 20}]}
-                  onPress={() => addTask(true)}
-                >
-                  <Text style={styles.primaryButtonText}>Add Selected Task</Text>
-                </TouchableOpacity>
-              )}
+              <TouchableOpacity 
+                style={styles.saveButton}
+                onPress={() => addTask(!!selectedSuggestedTask)}
+                disabled={!taskTitle}
+              >
+                <Text style={styles.saveButtonText}>
+                  {loading ? 'Saving...' : 'Save Task'}
+                </Text>
+              </TouchableOpacity>
             </View>
           </View>
         </View>
@@ -1064,21 +1166,15 @@ const App = () => {
       
       {/* Edit Task Modal */}
       <Modal
+        visible={editTaskModalVisible}
         animationType="slide"
         transparent={true}
-        visible={editTaskModalVisible}
-        onRequestClose={() => setEditTaskModalVisible(false)}
       >
-        <View style={styles.modalOverlay}>
+        <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Edit Task</Text>
-              <TouchableOpacity onPress={() => setEditTaskModalVisible(false)}>
-                <Icon name="close" size={24} color="#333" />
-              </TouchableOpacity>
-            </View>
+            <Text style={styles.modalTitle}>Edit Task</Text>
             
-            <ScrollView style={styles.modalBody}>
+            <View style={styles.inputGroup}>
               <Text style={styles.inputLabel}>Task Title</Text>
               <TextInput
                 style={styles.input}
@@ -1086,84 +1182,134 @@ const App = () => {
                 onChangeText={setTaskTitle}
                 placeholder="Enter task title"
               />
-              
-              <Text style={styles.inputLabel}>Task Description</Text>
+            </View>
+            
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Description (optional)</Text>
               <TextInput
-                style={styles.textArea}
+                style={[styles.input, {height: 80}]}
                 value={taskDescription}
                 onChangeText={setTaskDescription}
                 placeholder="Enter task description"
-                multiline={true}
-                numberOfLines={4}
+                multiline
               />
-              
-              <Text style={styles.inputLabel}>Task Time</Text>
+            </View>
+            
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Date</Text>
               <TouchableOpacity 
-                style={styles.timeInput}
+                style={styles.dateInput}
+                onPress={() => setCalendarVisible(true)}
+              >
+                <Text>
+                  {selectedDate ? new Date(selectedDate).toLocaleDateString() : 'Select Date'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+            
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Time</Text>
+              <TouchableOpacity 
+                style={styles.dateInput}
                 onPress={() => setShowTimePicker(true)}
               >
-                <Text>{taskTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</Text>
-                <Icon name="time-outline" size={20} color="#8a6eff" />
+                <Text>
+                  {taskTime.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                </Text>
+              </TouchableOpacity>
+            </View>
+            
+            {showTimePicker && (
+              <DateTimePicker
+                value={taskTime}
+                mode="time"
+                is24Hour={false}
+                display="default"
+                onChange={(event, selectedTime) => {
+                  setShowTimePicker(false);
+                  if (selectedTime) setTaskTime(selectedTime);
+                }}
+              />
+            )}
+            
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Reminder (minutes before)</Text>
+              <View style={styles.reminderOptions}>
+                {[5, 15, 30, 60].map(time => (
+                  <TouchableOpacity
+                    key={time}
+                    style={[
+                      styles.reminderOption,
+                      reminderTime === time && styles.reminderOptionSelected
+                    ]}
+                    onPress={() => setReminderTime(time)}
+                  >
+                    <Text 
+                      style={[
+                        styles.reminderOptionText,
+                        reminderTime === time && styles.reminderOptionTextSelected
+                      ]}
+                    >
+                      {time}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+            
+            <View style={styles.buttonRow}>
+              <TouchableOpacity 
+                style={styles.cancelButton}
+                onPress={() => {
+                  setEditTaskModalVisible(false);
+                  setEditingTask(null);
+                  resetFormFields();
+                }}
+              >
+                <Text style={styles.cancelButtonText}>Cancel</Text>
               </TouchableOpacity>
               
-              {showTimePicker && (
-                <DateTimePicker
-                  value={taskTime}
-                  mode="time"
-                  display="default"
-                  onChange={(event, selectedTime) => {
-                    setShowTimePicker(false);
-                    if (selectedTime) {
-                      setTaskTime(selectedTime);
-                    }
-                  }}
-                />
-              )}
-              
-              <Text style={styles.inputLabel}>Reminder (minutes before)</Text>
-              <TextInput
-                style={styles.input}
-                value={reminderTime.toString()}
-                onChangeText={(text) => setReminderTime(parseInt(text) || 15)}
-                keyboardType="number-pad"
-                placeholder="15"
-              />
-              
               <TouchableOpacity 
-                style={styles.primaryButton}
+                style={styles.saveButton}
                 onPress={updateTask}
                 disabled={!taskTitle}
               >
-                <Text style={styles.primaryButtonText}>Update Task</Text>
+                <Text style={styles.saveButtonText}>
+                  {loading ? 'Updating...' : 'Update Task'}
+                </Text>
               </TouchableOpacity>
-            </ScrollView>
+            </View>
           </View>
         </View>
       </Modal>
       
       {/* Delete Confirmation Modal */}
       <Modal
+        visible={deleteConfirmModalVisible}
         animationType="fade"
         transparent={true}
-        visible={deleteConfirmModalVisible}
-        onRequestClose={() => setDeleteConfirmModalVisible(false)}
       >
-        <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, styles.confirmModalContent]}>
-            <Text style={styles.confirmTitle}>Delete Task?</Text>
-            <Text style={styles.confirmText}>Are you sure you want to delete this task? This action cannot be undone.</Text>
+        <View style={styles.modalContainer}>
+          <View style={styles.confirmModalContent}>
+            <Text style={styles.confirmTitle}>Confirm Delete</Text>
+            <Text style={styles.confirmText}>
+              Are you sure you want to delete this task?
+            </Text>
             
-            <View style={styles.confirmButtons}>
+            <View style={styles.buttonRow}>
               <TouchableOpacity 
                 style={styles.cancelButton}
-                onPress={() => setDeleteConfirmModalVisible(false)}
+                onPress={() => {
+                  setDeleteConfirmModalVisible(false);
+                  setTaskToDelete(null);
+                }}
               >
                 <Text style={styles.cancelButtonText}>Cancel</Text>
               </TouchableOpacity>
               
               <TouchableOpacity 
                 style={styles.deleteConfirmButton}
-                onPress={() => deleteTask(taskToDelete)}
+                onPress={() => taskToDelete && deleteTask(taskToDelete)}
               >
                 <Text style={styles.deleteConfirmButtonText}>Delete</Text>
               </TouchableOpacity>
@@ -1678,6 +1824,390 @@ const styles = StyleSheet.create({
   datePickerButtonText: {
     fontSize: 16,
     color: '#333',
+  },
+
+
+  flex: {
+    flex: 1,
+  },
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#f4f1ff',
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 15,
+    backgroundColor: '#8a6eff',
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#fff',
+  },
+  userButton: {
+    padding: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: 25,
+  },
+  userButtonText: {
+    color: '#fff',
+    fontWeight: '500',
+  },
+  syncIndicator: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 5,
+    backgroundColor: '#f0f0f0',
+  },
+  syncText: {
+    marginLeft: 8,
+    color: '#8a6eff',
+  },
+  errorContainer: {
+    backgroundColor: '#ffe6e6',
+    padding: 10,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  errorText: {
+    color: '#d32f2f',
+    flex: 1,
+  },
+  retryText: {
+    color: '#8a6eff',
+    fontWeight: 'bold',
+    marginLeft: 10,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    marginTop: 10,
+    color: '#8a6eff',
+  },
+  calendarSection: {
+    padding: 15,
+  },
+  calendarButton: {
+    backgroundColor: '#fff',
+    padding: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 1,
+  },
+  calendarButtonText: {
+    color: '#8a6eff',
+    fontWeight: '500',
+  },
+  currentDateText: {
+    marginTop: 10,
+    color: '#666',
+    textAlign: 'center',
+  },
+  scheduleList: {
+    padding: 15,
+  },
+  scheduleItem: {
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    padding: 15,
+    marginBottom: 15,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 1,
+  },
+  scheduleDate: {
+    color: '#666',
+    marginBottom: 10,
+  },
+  scheduleTask: {
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+    paddingBottom: 15,
+    marginBottom: 15,
+  },
+  scheduleTask: {
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+    paddingBottom: 15,
+    marginBottom: 15,
+  },
+  scheduleTaskHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+  },
+  scheduleTaskLeft: {
+    flex: 1,
+  },
+  scheduleTime: {
+    color: '#8a6eff',
+    fontWeight: '500',
+  },
+  scheduleTaskTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginTop: 5,
+  },
+  taskDescription: {
+    color: '#666',
+    marginTop: 5,
+    marginBottom: 10,
+  },
+  taskActionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  statusBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 15,
+    marginLeft: 10,
+  },
+  statusText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '500',
+  },
+  taskActionButtons: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    marginTop: 10,
+  },
+  editButton: {
+    backgroundColor: '#8a6eff',
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 5,
+    marginRight: 10,
+  },
+  deleteButton: {
+    backgroundColor: '#ff6b6b',
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 5,
+  },
+  actionButtonText: {
+    color: '#fff',
+    fontWeight: '500',
+    marginLeft: 5,
+  },
+  emptyState: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 30,
+    backgroundColor: '#fff',
+    borderRadius: 10,
+  },
+  emptyStateText: {
+    marginTop: 15,
+    marginBottom: 20,
+    color: '#666',
+    textAlign: 'center',
+  },
+  addTaskButton: {
+    backgroundColor: '#8a6eff',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 25,
+  },
+  addTaskButtonText: {
+    color: '#fff',
+    fontWeight: '500',
+  },
+  floatingButton: {
+    position: 'absolute',
+    right: 20,
+    bottom: 20,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: '#8a6eff',
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalContent: {
+    backgroundColor: '#fff',
+    borderRadius: 15,
+    padding: 20,
+    width: '90%',
+    maxHeight: '80%',
+  },
+  confirmModalContent: {
+    backgroundColor: '#fff',
+    borderRadius: 15,
+    padding: 20,
+    width: '80%',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 15,
+    textAlign: 'center',
+  },
+  modalSubtitle: {
+    color: '#666',
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  taskTypeButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f4f1ff',
+    padding: 15,
+    borderRadius: 10,
+    marginBottom: 15,
+  },
+  taskTypeButtonText: {
+    marginLeft: 15,
+    color: '#333',
+    fontWeight: '500',
+  },
+  suggestedTasksList: {
+    maxHeight: 300,
+  },
+  suggestedTaskItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+  },
+  suggestedTaskIcon: {
+    width: 40,
+    alignItems: 'center',
+  },
+  suggestedTaskText: {
+    marginLeft: 10,
+    color: '#333',
+  },
+  inputGroup: {
+    marginBottom: 15,
+  },
+  inputLabel: {
+    color: '#666',
+    marginBottom: 5,
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    padding: 10,
+  },
+  dateInput: {
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    padding: 12,
+  },
+  reminderOptions: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  reminderOption: {
+    flex: 1,
+    padding: 10,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#ddd',
+    marginHorizontal: 3,
+    borderRadius: 5,
+  },
+  reminderOptionSelected: {
+    backgroundColor: '#8a6eff',
+    borderColor: '#8a6eff',
+  },
+  reminderOptionText: {
+    color: '#666',
+  },
+  reminderOptionTextSelected: {
+    color: '#fff',
+  },
+  buttonRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 20,
+  },
+  closeButton: {
+    alignItems: 'center',
+    marginTop: 15,
+  },
+  closeButtonText: {
+    color: '#8a6eff',
+    fontWeight: '500',
+  },
+  cancelButton: {
+    flex: 1,
+    padding: 12,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    marginRight: 10,
+  },
+  cancelButtonText: {
+    color: '#666',
+  },
+  saveButton: {
+    flex: 1,
+    padding: 12,
+    alignItems: 'center',
+    backgroundColor: '#8a6eff',
+    borderRadius: 8,
+  },
+  saveButtonText: {
+    color: '#fff',
+    fontWeight: '500',
+  },
+  deleteConfirmButton: {
+    flex: 1,
+    padding: 12,
+    alignItems: 'center',
+    backgroundColor: '#ff6b6b',
+    borderRadius: 8,
+  },
+  deleteConfirmButtonText: {
+    color: '#fff',
+    fontWeight: '500',
+  },
+  confirmTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 10,
+    textAlign: 'center',
+  },
+  confirmText: {
+    color: '#666',
+    marginBottom: 20,
+    textAlign: 'center',
   },
 });
 

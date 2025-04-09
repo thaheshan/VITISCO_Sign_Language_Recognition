@@ -1,0 +1,18 @@
+runtime: nodejs20
+service: backend-82
+
+env_variables:
+  DB_HOST: "34.67.39.101"
+  DB_USER: "admin123"
+  DB_PASSWORD: "vitisco123"
+  DB_NAME: "vitisco"
+
+instance_class: F4
+
+handlers:
+  - url: /static
+    static_dir: static/
+  - url: /.*
+    script: auto
+
+env: standard

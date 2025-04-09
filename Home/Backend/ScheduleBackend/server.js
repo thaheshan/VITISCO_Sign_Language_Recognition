@@ -16,6 +16,7 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(morgan('dev')); // Logging
 
+// MySQL Connection Pool - Fixed to use environment variables properly
 // MySQL Connection Pool
 const pool = mysql.createPool({
   host: process.env.DB_HOST || '34.67.39.101',
@@ -27,10 +28,12 @@ const pool = mysql.createPool({
   queueLimit: 0
 });
 
+
+
 // Utility function to get the API URL
 const getApiUrl = () => {
   // For Expo Go, use your computer's local network IP
-  return 'http://192.168.58.40:5000';
+  return process.env.API_URL || 'http://192.168.58.40:5000';
   
   // Alternative approach using Expo's manifest.debuggerHost (if available)
   // This works in some Expo environments but not all
@@ -48,7 +51,7 @@ const getApiUrl = () => {
 // Make API URL available to routes
 app.locals.apiUrl = getApiUrl();
 
-// Test database connection
+// Test database connection with better error handling
 async function testConnection() {
   try {
     const connection = await pool.getConnection();
@@ -56,6 +59,8 @@ async function testConnection() {
     connection.release();
   } catch (error) {
     console.error('Database connection failed:', error);
+    console.error('Please check your .env file for correct database credentials');
+    console.error('Required environment variables: DB_HOST, DB_USER, DB_PASSWORD, DB_NAME');
     process.exit(1);
   }
 }

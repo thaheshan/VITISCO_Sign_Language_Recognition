@@ -374,7 +374,9 @@ const ProfileScreen = ({navigation, route}) => {
 
         {/* Logout Button */}
         <TouchableOpacity style={styles.logoutButton}>
-          <Text style={styles.logoutButtonText}>LOGOUT</Text>
+          <Text style={styles.logoutButtonText}
+          
+          onPress={() => navigation && navigation.navigate('Login', {}, { animation: 'slide_from_right' })}>LOGOUT</Text>
         </TouchableOpacity>
       </ScrollView>
 

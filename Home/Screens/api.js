@@ -3,20 +3,13 @@ import axios from "axios";
 // Use constant for development or environment variable for production
 const API = {
   // URL with fallback for development
-<<<<<<< Updated upstream
-  URL: process.env.EXPO_PUBLIC_API_URL || 'http://192.168.58.40:5000',
-  ENDPOINTS: {
-    DETECT_GESTURE: '/api/detect-gesture',
-    TEXT_TO_SPEECH: '/api/text-to-speech'
-  }
-=======
   URL: process.env.EXPO_PUBLIC_API_URL || "http://192.168.1.82:3000",
   ENDPOINTS: {
     HEALTH: "./health", // Changed from './health.js' to '/health'
     DETECT_GESTURE: "/api/detect-gesture",
     TEXT_TO_SPEECH: "/api/text-to-speech",
   },
->>>>>>> Stashed changes
+
 };
 
 // Create and configure Axios instance
@@ -33,14 +26,10 @@ const SignLanguageAPI = {
   // Test API connection
   testConnection: async () => {
     try {
-<<<<<<< Updated upstream
-      console.log('Testing connection to:', API.URL);
-      // Simple GET request to test connectivity
-      return await apiClient.get('/');
-=======
+
       console.log("Testing connection to:", API.URL + API.ENDPOINTS.HEALTH);
       return await apiClient.get(API.ENDPOINTS.HEALTH);
->>>>>>> Stashed changes
+
     } catch (error) {
       console.error("Error testing connection:", error);
       throw error;
@@ -98,8 +87,5 @@ const SignLanguageAPI = {
   },
 };
 
-<<<<<<< Updated upstream
 export default SignLanguageAPI;
-=======
-export default SignLanguageAPI;
->>>>>>> Stashed changes
+
