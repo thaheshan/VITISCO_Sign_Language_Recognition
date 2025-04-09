@@ -16,12 +16,7 @@ import {
 import axios from 'axios'; // Import axios for API calls
 
 const { width, height } = Dimensions.get('window');
-// const API_URL = 'http://10.0.2.2:3000'; // Backend URL (typically localhost for emulator)
 
-/**
- * Main QuizApp Component
- * Handles UI state management and user interactions
- */
 const QuizApp = () => {
   // App state management
   const [showStartScreen, setShowStartScreen] = useState(true);
@@ -64,42 +59,12 @@ const QuizApp = () => {
     }
   }, [selectedLanguage]);
 
-  /**
-   * Fetch questions from backend API
-   * Currently mocked with local data if API fails
-   */
   const fetchQuestions = async (language) => {
     setLoading(true);
     setError(null);
   
     try {
-      // BACKEND CODE - Commented out
-      /*
-      console.log(`Fetching questions from: ${API_URL}/api/questions/${language}`);
-      
-      const response = await axios.get(`${API_URL}/api/questions/${language}`, {
-        timeout: 10000, // Set timeout to 10 seconds
-      });
-  
-      console.log("API Response:", response.data);
-      
-      if (!response.data || response.data.length === 0) {
-        throw new Error("No questions received from API");
-      }
-
-      // Add correctAnswer property to each question if not already present
-      const processedQuestions = response.data.map(question => {
-        if (!question.hasOwnProperty('correctAnswer')) {
-          // If no correct answer specified, set first option as correct (this is just a placeholder)
-          return { ...question, correctAnswer: 0 };
-        }
-        return question;
-      });
-  
-      setQuestions(processedQuestions);
-      */
-
-      // FRONTEND CODE - Use mock data for now
+      // FRONTEND CODE 
       if (language === 'english') {
         const processedQuestions = englishQuestions.map(question => {
           if (!question.hasOwnProperty('correctAnswer')) {
@@ -119,16 +84,6 @@ const QuizApp = () => {
       }
       
     } catch (err) {
-      // BACKEND ERROR HANDLING - Commented out
-      /*
-      if (err.code === "ECONNABORTED") {
-        console.error("Request timed out.");
-        setError("The server is taking too long to respond. Please try again.");
-      } else {
-        console.error("Error fetching questions:", err?.response?.data || err.message);
-        setError("Failed to load questions. Please try again later.");
-      }
-      */
       
       setError("Failed to load questions. Using local data instead.");
       
@@ -156,23 +111,9 @@ const QuizApp = () => {
   };
   
   /**
-   * Save quiz results to backend (commented out)
+   * Save quiz results 
    */
   const saveQuizResults = async (results) => {
-    // BACKEND CODE - Commented out
-    /*
-    try {
-      await axios.post(`${API_URL}/api/results`, {
-        language: selectedLanguage,
-        answers: results,
-        timestamp: new Date().toISOString()
-      });
-      console.log("Quiz results saved successfully");
-    } catch (err) {
-      console.error("Error saving quiz results:", err);
-      // Continue without blocking the user experience
-    }
-    */
     
     // FRONTEND ONLY - Log results to console
     console.log("Quiz results:", {
@@ -182,7 +123,7 @@ const QuizApp = () => {
     });
   };
 
-  // Quiz questions data for english letters (local data)
+  // Quiz questions data for english letters 
   const englishQuestions = [
     {
       id: 1,
@@ -745,9 +686,6 @@ const QuizApp = () => {
       gridView: true,
       correctAnswer: 0, // அ is correct
     },
-
-    
-    // Additional Tamil questions would go here in production code
   ];
 
   /**
@@ -1204,6 +1142,7 @@ const QuizApp = () => {
     </SafeAreaView>
   );
 };
+
 
 const styles = StyleSheet.create({
   // Loading and Error Screen Styles
