@@ -289,6 +289,7 @@ const VirtualRoom = () => {
           <TextInput
             style={styles.input}
             placeholder="Enter Room Code"
+            placeholderTextColor="#B2B5E7"
             value={userInput.roomCode}
             onChangeText={(text) => setUserInput((prev) => ({ ...prev, roomCode: text }))}
           />
@@ -322,7 +323,7 @@ const VirtualRoom = () => {
               }))
             }
           >
-            <Ionicons name="arrow-back" size={20} color="#333" />
+            <Ionicons name="arrow-back" size={20} color="#FFFFFF" />
           </TouchableOpacity>
           <Text style={styles.sectionTitle}>Waiting Room</Text>
         </View>
@@ -332,7 +333,7 @@ const VirtualRoom = () => {
             style={styles.copyButton}
             onPress={() => (gameState.roomCode ? copyToClipboard(gameState.roomCode) : null)}
           >
-            <Ionicons name="copy-outline" size={16} color="#333" />
+            <Ionicons name="copy-outline" size={16} color="#FFFFFF" />
           </TouchableOpacity>
         </View>
       </View>
@@ -342,7 +343,7 @@ const VirtualRoom = () => {
         <View style={styles.playersList}>
           {gameState.players.map((player, index) => (
             <View key={index} style={styles.playerItem}>
-              <Ionicons name="people-outline" size={16} color="#333" />
+              <Ionicons name="people-outline" size={16} color="#352561" />
               <Text style={styles.playerName}>{player.name}</Text>
             </View>
           ))}
@@ -374,7 +375,7 @@ const VirtualRoom = () => {
           Question {gameState.questionNumber}/{gameState.totalQuestions}
         </Text>
         <View style={styles.timerContainer}>
-          <Ionicons name="timer-outline" size={16} color="#333" />
+          <Ionicons name="timer-outline" size={16} color="#FFFFFF" />
           <Text style={styles.regularText}>{gameState.timeLeft}s</Text>
         </View>
       </View>
@@ -432,7 +433,7 @@ const VirtualRoom = () => {
 
   const renderResults = () => (
     <View style={styles.resultsContainer}>
-      <Ionicons name="trophy" size={64} color="#FFD700" style={styles.trophyIcon} />
+      <Ionicons name="trophy" size={64} color="#FFC107" style={styles.trophyIcon} />
       <Text style={styles.resultsTitle}>Game Complete!</Text>
 
       <ScrollView style={styles.resultsScrollView}>
@@ -441,7 +442,7 @@ const VirtualRoom = () => {
           .map(([player, score], index) => (
             <View key={player} style={[styles.resultItem, index === 0 && styles.winnerItem]}>
               <View style={styles.resultNameContainer}>
-                {index === 0 && <Ionicons name="trophy" size={16} color="#FFD700" />}
+                {index === 0 && <Ionicons name="trophy" size={16} color="#FFC107" />}
                 <Text style={styles.resultName}>{player}</Text>
               </View>
               <Text style={styles.resultScore}>{score}</Text>
@@ -473,6 +474,7 @@ const VirtualRoom = () => {
           value={userInput.message}
           onChangeText={(text) => setUserInput((prev) => ({ ...prev, message: text }))}
           placeholder="Type a message..."
+          placeholderTextColor="#B2B5E7"
           onSubmitEditing={sendMessage}
         />
         <TouchableOpacity style={styles.sendButton} onPress={sendMessage}>
@@ -509,21 +511,21 @@ const VirtualRoom = () => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "#f5f5f5",
+    backgroundColor: "#B2B5E7",
   },
   scrollContainer: {
     flexGrow: 1,
-    padding: 10,
+    padding: 16,
   },
   card: {
-    backgroundColor: "#fff",
-    borderRadius: 12,
+    backgroundColor: "#B2B5E7",
+    borderRadius: 24,
     padding: 20,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+    elevation: 5,
   },
   container: {
     width: "100%",
@@ -534,40 +536,46 @@ const styles = StyleSheet.create({
     transform: [{ scale: 1 }],
   },
   logo: {
-    height: 300,
+    height: 250,
     width: "100%",
   },
   headerContainer: {
     alignItems: "center",
-    marginBottom: 20,
+    marginBottom: 24,
   },
   headerText: {
     fontSize: 24,
     fontWeight: "700",
     marginBottom: 8,
+    color: "#FFFFFF",
   },
   subheaderText: {
     fontSize: 16,
-    color: "#666",
+    color: "rgba(255, 255, 255, 0.7)",
     marginBottom: 16,
   },
   buttonContainer: {
     width: "100%",
   },
   primaryButton: {
-    backgroundColor: "#3B82F6",
+    backgroundColor: "#6B5ECD",
     paddingVertical: 12,
     paddingHorizontal: 16,
-    borderRadius: 8,
+    borderRadius: 24,
     marginBottom: 16,
     alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 5,
+    elevation: 3,
   },
   disabledButton: {
-    backgroundColor: "#BDBDBD",
+    backgroundColor: "rgba(107, 94, 205, 0.5)",
     opacity: 0.6,
   },
   buttonText: {
-    color: "#fff",
+    color: "#FFFFFF",
     fontWeight: "600",
     fontSize: 16,
   },
@@ -577,30 +585,32 @@ const styles = StyleSheet.create({
   },
   input: {
     borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 8,
+    borderColor: "rgba(255, 255, 255, 0.3)",
+    borderRadius: 20,
     padding: 12,
     marginBottom: 8,
     fontSize: 16,
+    color: "#000",
+    backgroundColor: "rgba(255, 255, 255, 0.1)",
   },
   orContainer: {
     alignItems: "center",
     marginVertical: 8,
   },
   orText: {
-    color: "#666",
+    color: "rgba(255, 255, 255, 0.7)",
     fontSize: 14,
   },
   outlineButton: {
     borderWidth: 1,
-    borderColor: "#3B82F6",
+    borderColor: "#B2B5E7",
     paddingVertical: 12,
     paddingHorizontal: 16,
-    borderRadius: 8,
+    borderRadius: 24,
     alignItems: "center",
   },
   outlineButtonText: {
-    color: "#3B82F6",
+    color: "#FFFFFF",
     fontWeight: "600",
     fontSize: 16,
   },
@@ -610,15 +620,15 @@ const styles = StyleSheet.create({
     right: 20,
     zIndex: 100,
     padding: 16,
-    borderRadius: 8,
+    borderRadius: 16,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 5,
+    elevation: 5,
     width: "90%",
   },
   successNotification: {
@@ -637,43 +647,52 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 16,
+    marginBottom: 20,
   },
   sectionTitle: {
     fontSize: 20,
     fontWeight: "700",
     marginBottom: 8,
+    color: "#FFFFFF",
   },
   roomCodeContainer: {
     flexDirection: "row",
     alignItems: "center",
+    backgroundColor: "rgba(255, 255, 255, 0.1)",
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 16,
   },
   roomCodeText: {
-    fontSize: 10,
-    fontWeight: "200",
+    fontSize: 12,
+    fontWeight: "600",
     marginRight: 8,
+    color: "#FFFFFF",
   },
   backButtonContainer: {
     flexDirection: "row",
-    alignItems: "flex-end",
+    alignItems: "center",
   },
   backButton: {
     padding: 8,
     marginRight: 8,
+    backgroundColor: "rgba(255, 255, 255, 0.1)",
+    borderRadius: 20,
   },
   copyButton: {
     padding: 4,
   },
   playersContainer: {
-    backgroundColor: "#F9FAFB",
-    borderRadius: 8,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
     padding: 16,
-    marginBottom: 16,
+    marginBottom: 20,
   },
   mediumTitle: {
     fontSize: 16,
     fontWeight: "600",
-    marginBottom: 8,
+    marginBottom: 12,
+    color: "#352561",
   },
   playersList: {
     marginTop: 8,
@@ -681,26 +700,36 @@ const styles = StyleSheet.create({
   playerItem: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 8,
+    marginBottom: 10,
+    backgroundColor: "rgba(107, 94, 205, 0.1)",
+    padding: 10,
+    borderRadius: 12,
   },
   playerName: {
     marginLeft: 8,
     fontSize: 14,
+    color: "#352561",
+    fontWeight: "500",
   },
   timerContainer: {
     flexDirection: "row",
     alignItems: "center",
+    backgroundColor: "rgba(255, 255, 255, 0.1)",
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 16,
   },
   regularText: {
     fontSize: 14,
     fontWeight: "500",
+    color: "#FFFFFF",
   },
   videoContainer: {
     width: "100%",
     aspectRatio: 16 / 9,
-    backgroundColor: "#f1f1f1",
-    borderRadius: 8,
-    marginBottom: 16,
+    backgroundColor: "rgba(255, 255, 255, 0.1)",
+    borderRadius: 16,
+    marginBottom: 20,
     overflow: "hidden",
   },
   video: {
@@ -708,63 +737,70 @@ const styles = StyleSheet.create({
     height: "100%",
   },
   questionContainer: {
-    marginBottom: 16,
+    marginBottom: 20,
   },
   questionText: {
     fontSize: 18,
     fontWeight: "600",
     marginBottom: 16,
+    color: "#FFFFFF",
   },
   optionsContainer: {
-    marginBottom: 16,
+    marginBottom: 20,
   },
   optionButton: {
     borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 8,
-    alignItems: "flex-start",
+    borderColor: "rgba(255, 255, 255, 0.3)",
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 10,
+    backgroundColor: "rgba(255, 255, 255, 0.1)",
   },
   selectedOption: {
-    backgroundColor: "#EBF5FF",
-    borderColor: "#3B82F6",
+    backgroundColor: "#6B5ECD",
+    borderColor: "#B2B5E7",
   },
   optionText: {
     fontSize: 16,
+    color: "#FFFFFF",
   },
   selectedOptionText: {
-    color: "#3B82F6",
-    fontWeight: "500",
+    color: "#FFFFFF",
+    fontWeight: "600",
   },
   scoresSection: {
     borderTopWidth: 1,
-    borderTopColor: "#eee",
-    paddingTop: 16,
+    borderTopColor: "rgba(255, 255, 255, 0.2)",
+    paddingTop: 20,
   },
   scoresList: {
-    marginTop: 8,
+    marginTop: 12,
   },
   scoreRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     marginBottom: 8,
+    backgroundColor: "rgba(255, 255, 255, 0.1)",
+    padding: 12,
+    borderRadius: 12,
   },
   scoreText: {
-    fontWeight: "600",
-    fontSize: 14,
+    fontWeight: "700",
+    fontSize: 16,
+    color: "#B2B5E7",
   },
   resultsContainer: {
     alignItems: "center",
-    paddingVertical: 16,
+    paddingVertical: 20,
   },
   trophyIcon: {
-    marginBottom: 16,
+    marginBottom: 20,
   },
   resultsTitle: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: "700",
     marginBottom: 24,
+    color: "#FFFFFF",
   },
   resultsScrollView: {
     width: "100%",
@@ -772,16 +808,18 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   resultItem: {
-    backgroundColor: "#F9FAFB",
-    borderRadius: 8,
+    backgroundColor: "rgba(255, 255, 255, 0.1)",
+    borderRadius: 16,
     padding: 16,
-    marginBottom: 8,
+    marginBottom: 10,
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
   },
   winnerItem: {
-    backgroundColor: "#FFF9DB",
+    backgroundColor: "rgba(255, 193, 7, 0.2)",
+    borderWidth: 1,
+    borderColor: "#FFC107",
   },
   resultNameContainer: {
     flexDirection: "row",
@@ -791,39 +829,43 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "500",
     marginLeft: 8,
+    color: "#FFFFFF",
   },
   resultScore: {
     fontSize: 22,
     fontWeight: "700",
+    color: "#B2B5E7",
   },
   chatContainer: {
     marginTop: 24,
   },
   chatDivider: {
     borderTopWidth: 1,
-    borderTopColor: "#eee",
-    marginBottom: 16,
+    borderTopColor: "rgba(255, 255, 255, 0.2)",
+    marginBottom: 20,
   },
   messagesScrollView: {
     maxHeight: 200,
     marginBottom: 16,
   },
   messageContainer: {
-    marginBottom: 8,
+    marginBottom: 12,
   },
   messageSender: {
     fontSize: 12,
     fontWeight: "500",
     marginBottom: 4,
+    color: "#B2B5E7",
   },
   messageContent: {
-    backgroundColor: "#F1F5F9",
-    borderRadius: 12,
-    padding: 8,
+    backgroundColor: "#352561",
+    borderRadius: 16,
+    padding: 12,
     maxWidth: "80%",
   },
   messageText: {
     fontSize: 14,
+    color: "#FFFFFF",
   },
   chatInputContainer: {
     flexDirection: "row",
@@ -832,30 +874,39 @@ const styles = StyleSheet.create({
   chatInput: {
     flex: 1,
     borderWidth: 1,
-    borderColor: "#ccc",
+    borderColor: "rgba(255, 255, 255, 0.3)",
     borderRadius: 20,
-    padding: 10,
+    padding: 12,
     marginRight: 8,
     fontSize: 14,
+    color: "#FFFFFF",
+    backgroundColor: "rgba(255, 255, 255, 0.1)",
   },
   sendButton: {
-    backgroundColor: "#3B82F6",
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    backgroundColor: "#6B5ECD",
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     alignItems: "center",
     justifyContent: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+    elevation: 2,
   },
   waitingMessage: {
     padding: 16,
-    backgroundColor: "#F9FAFB",
-    borderRadius: 8,
+    backgroundColor: "rgba(255, 255, 255, 0.1)",
+    borderRadius: 16,
     alignItems: "center",
   },
   waitingText: {
-    color: "#666",
+    color: "rgba(255, 255, 255, 0.7)",
     fontStyle: "italic",
   },
 })
 
 export default VirtualRoom
+
+

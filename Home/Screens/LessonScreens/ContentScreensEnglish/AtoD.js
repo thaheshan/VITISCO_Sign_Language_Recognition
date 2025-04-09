@@ -663,7 +663,7 @@ export default function AlphabetLessonScreen({ navigate , ...props}) {
               style={styles.navButton}
               onPress={navigateNext}
             >
-              <Text style={styles.navButtonText}>Continue</Text>
+              <Text style={styles.navButtonText}    >Continue</Text>
             </TouchableOpacity>
           </>
         )}

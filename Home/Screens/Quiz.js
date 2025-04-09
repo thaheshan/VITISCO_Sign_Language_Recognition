@@ -795,7 +795,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#6A5ACD',
+    backgroundColor: '#B2B5E7',
   },
   loadingScreenText: {
     color: 'white',
@@ -806,7 +806,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#6A5ACD',
+    backgroundColor: '#B2B5E7',
     padding: 20,
   },
   errorScreenText: {
@@ -839,9 +839,9 @@ const styles = StyleSheet.create({
   // Language Selection Screen Styles
   languageScreenContainer: {
     flex: 1,
-    backgroundColor: '#6A5ACD',
+    backgroundColor: '#B2B5E7',
     padding: 20,
-    marginTop: 0,
+    marginTop: 20,
 
   },
   languageSelectionText: {
@@ -849,7 +849,9 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     textAlign: 'center',
-    marginBottom: 10,},
+    marginBottom: 0,
+  },
+
   languageSelectionSubtext: {
     color: 'white',
     fontSize: 16,
@@ -857,6 +859,7 @@ const styles = StyleSheet.create({
     marginTop: 10,
     opacity: 0.8,
   },
+
   languageButtonsContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -882,7 +885,7 @@ const styles = StyleSheet.create({
   // Welcome Screen Styles
   welcomeScreenContainer: {
     flex: 1,
-    backgroundColor: '#6A5ACD',
+    backgroundColor: '#B2B5E7',
     padding: 20,
   },
   welcomeLogoContainer: {

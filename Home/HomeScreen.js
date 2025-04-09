@@ -906,6 +906,7 @@ const styles = StyleSheet.create({
     borderBottomColor: '#FFFFFF',
     transform: [{ rotate: '180deg' }],
   },
+  
 // Coming Soon popup styles
 comingSoonContainer: {
   flex: 1,
@@ -1001,7 +1002,7 @@ progressPercent: {
   color: '#FFFFFF',
   fontSize: 12,
   opacity: 0.8,
-},
+}
 });
 
 export default HomeScreen;

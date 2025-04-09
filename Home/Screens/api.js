@@ -3,9 +3,8 @@ import axios from 'axios';
 // Use constant for development or environment variable for production
 const API = {
   // URL with fallback for development
-  URL: process.env.EXPO_PUBLIC_API_URL || 'http://192.168.1.82:3000',
+  URL: process.env.EXPO_PUBLIC_API_URL || 'http://192.168.58.40:5000',
   ENDPOINTS: {
-    HEALTH: './health',  // Changed from './health.js' to '/health'
     DETECT_GESTURE: '/api/detect-gesture',
     TEXT_TO_SPEECH: '/api/text-to-speech'
   }
@@ -25,8 +24,9 @@ const SignLanguageAPI = {
   // Test API connection
   testConnection: async () => {
     try {
-      console.log('Testing connection to:', API.URL + API.ENDPOINTS.HEALTH);
-      return await apiClient.get(API.ENDPOINTS.HEALTH);
+      console.log('Testing connection to:', API.URL);
+      // Simple GET request to test connectivity
+      return await apiClient.get('/');
     } catch (error) {
       console.error('Error testing connection:', error);
       throw error;
@@ -70,4 +70,3 @@ const SignLanguageAPI = {
 };
 
 export default SignLanguageAPI;
-

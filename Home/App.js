@@ -17,6 +17,8 @@ import NotificationScreen from "./Screens/Feedback.js";
 import LoginScreen from "./Screens/Login.js";
 import SchedulerScreen from  "./Screens/schduler.js";
 
+import LearningPathwayScreens from "./Screens/LessonScreens/LearningPathwayEnglishScreen.js";
+
 
 const Stack = createNativeStackNavigator();
 
@@ -62,6 +64,7 @@ const App = () => {
          <Stack.Screen name="TextToSpeech" component={TextToSpeechScreen} /> 
         <Stack.Screen name="Notifications" component={NotificationScreen}  options={{ headerShown: false }} />
         <Stack.Screen name="Scheduler" component={SchedulerScreen} />
+        <Stack.Screen name="LearnPathway" component={LearningPathwayScreens} />
       </Stack.Navigator>
     </NavigationContainer>
   );

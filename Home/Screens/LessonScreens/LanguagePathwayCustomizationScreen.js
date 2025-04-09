@@ -93,7 +93,9 @@ export default function LanguagePathwayCustomizationScreen2({ navigate }) {
   const toggleTopic = (id) => {
     const topic = topics.find(topic => topic.id === id);
     
-    if (topic.isPremium && topic.name !== 'English Alphabet') {
+
+    if (topic.isPremium && topic.name !== 'Sinhala Alphabet') {
+
       setPopupMessage(`"${topic.name}" is available in the premium version!`);
       setShowPremiumPopup(true);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);

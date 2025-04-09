@@ -107,6 +107,7 @@ const App = () => {
           importance: Notifications.AndroidImportance.MAX,
           vibrationPattern: [0, 250, 250, 250],
           lightColor: '#8676D1',
+          
         });
       }
       

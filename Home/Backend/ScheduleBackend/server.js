@@ -27,6 +27,27 @@ const pool = mysql.createPool({
   queueLimit: 0
 });
 
+// Utility function to get the API URL
+const getApiUrl = () => {
+  // For Expo Go, use your computer's local network IP
+  return 'http://192.168.58.40:5000';
+  
+  // Alternative approach using Expo's manifest.debuggerHost (if available)
+  // This works in some Expo environments but not all
+  /*
+  const debuggerHost = Constants.manifest?.debuggerHost;
+  if (debuggerHost) {
+    // Extract the IP address from the debuggerHost 
+    const hostIP = debuggerHost.split(':')[0];
+    return `http://${hostIP}:5000`;
+  }
+  return 'http://YOUR_FALLBACK_IP:5000';
+  */
+};
+
+// Make API URL available to routes
+app.locals.apiUrl = getApiUrl();
+
 // Test database connection
 async function testConnection() {
   try {
@@ -176,6 +197,11 @@ function isValidTime(timeString) {
   return regex.test(timeString);
 }
 
+// Add endpoint to get API URL
+app.get('/api-url', (req, res) => {
+  res.status(200).json({ apiUrl: app.locals.apiUrl });
+});
+
 // =============================================================================
 // USER ROUTES
 // =============================================================================
@@ -226,6 +252,9 @@ app.get('/user/profile', async (req, res) => {
     
     // Add recommendations to the response
     profile.recommendations = recommendations;
+    
+    // Add API base URL to response
+    profile.apiUrl = app.locals.apiUrl;
     
     res.status(200).json(profile);
   } catch (error) {
@@ -278,7 +307,8 @@ app.put('/user/profile', async (req, res) => {
     
     res.status(200).json({ 
       message: 'Profile updated successfully',
-      overall_progress
+      overall_progress,
+      apiUrl: app.locals.apiUrl
     });
   } catch (error) {
     console.error('Error updating user profile:', error);
@@ -309,7 +339,11 @@ app.get('/tasks', async (req, res) => {
       ORDER BY date ASC, time ASC
     `, [DEFAULT_USER_ID]);
     
-    res.status(200).json(tasks);
+    // Add API URL to response metadata
+    res.status(200).json({
+      apiUrl: app.locals.apiUrl,
+      tasks: tasks
+    });
   } catch (error) {
     console.error('Error fetching tasks:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
@@ -341,7 +375,11 @@ app.get('/tasks/date/:date', async (req, res) => {
       ORDER BY time ASC
     `, [DEFAULT_USER_ID, date]);
     
-    res.status(200).json(tasks);
+    // Add API URL to response metadata
+    res.status(200).json({
+      apiUrl: app.locals.apiUrl,
+      tasks: tasks
+    });
   } catch (error) {
     console.error('Error fetching tasks for date:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
@@ -372,7 +410,11 @@ app.get('/tasks/:id', async (req, res) => {
       return res.status(404).json({ message: 'Task not found' });
     }
     
-    res.status(200).json(tasks[0]);
+    // Add API URL to response
+    const task = tasks[0];
+    task.apiUrl = app.locals.apiUrl;
+    
+    res.status(200).json(task);
   } catch (error) {
     console.error('Error fetching task:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
@@ -442,7 +484,11 @@ app.post('/tasks', async (req, res) => {
       WHERE id = ?
     `, [taskId]);
     
-    res.status(201).json(tasks[0]);
+    // Add API URL to response
+    const task = tasks[0];
+    task.apiUrl = app.locals.apiUrl;
+    
+    res.status(201).json(task);
   } catch (error) {
     console.error('Error creating task:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
@@ -533,7 +579,11 @@ app.put('/tasks/:id', async (req, res) => {
       WHERE id = ?
     `, [id]);
     
-    res.status(200).json(tasks[0]);
+    // Add API URL to response
+    const task = tasks[0];
+    task.apiUrl = app.locals.apiUrl;
+    
+    res.status(200).json(task);
   } catch (error) {
     console.error('Error updating task:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
@@ -554,7 +604,10 @@ app.delete('/tasks/:id', async (req, res) => {
       return res.status(404).json({ message: 'Task not found or you do not have permission to delete it' });
     }
     
-    res.status(200).json({ message: 'Task deleted successfully' });
+    res.status(200).json({ 
+      message: 'Task deleted successfully',
+      apiUrl: app.locals.apiUrl
+    });
   } catch (error) {
     console.error('Error deleting task:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
@@ -574,7 +627,11 @@ app.get('/suggested-tasks', async (req, res) => {
       ORDER BY type, title
     `);
     
-    res.status(200).json(tasks);
+    // Add API URL to response metadata
+    res.status(200).json({
+      apiUrl: app.locals.apiUrl,
+      suggestedTasks: tasks
+    });
   } catch (error) {
     console.error('Error fetching suggested tasks:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
@@ -593,7 +650,11 @@ app.get('/suggested-tasks/type/:type', async (req, res) => {
       ORDER BY title
     `, [type]);
     
-    res.status(200).json(tasks);
+    // Add API URL to response metadata
+    res.status(200).json({
+      apiUrl: app.locals.apiUrl,
+      suggestedTasks: tasks
+    });
   } catch (error) {
     console.error('Error fetching suggested tasks by type:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
@@ -616,7 +677,11 @@ app.get('/suggested-tasks/difficulty/:difficulty', async (req, res) => {
       ORDER BY type, title
     `, [difficulty]);
     
-    res.status(200).json(tasks);
+    // Add API URL to response metadata
+    res.status(200).json({
+      apiUrl: app.locals.apiUrl,
+      suggestedTasks: tasks
+    });
   } catch (error) {
     console.error('Error fetching suggested tasks by difficulty:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
@@ -654,6 +719,9 @@ app.get('/stats/completion', async (req, res) => {
       completionStats.not_started_rate = 0;
     }
     
+    // Add API URL to response
+    completionStats.apiUrl = app.locals.apiUrl;
+    
     res.status(200).json(completionStats);
   } catch (error) {
     console.error('Error fetching completion stats:', error);
@@ -676,7 +744,11 @@ app.get('/stats/task-types', async (req, res) => {
       ORDER BY count DESC
     `, [DEFAULT_USER_ID]);
     
-    res.status(200).json(stats);
+    // Add API URL to response metadata
+    res.status(200).json({
+      apiUrl: app.locals.apiUrl,
+      taskTypes: stats
+    });
   } catch (error) {
     console.error('Error fetching task type stats:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
@@ -686,8 +758,8 @@ app.get('/stats/task-types', async (req, res) => {
 // Start server
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
+  console.log(`API URL: ${app.locals.apiUrl}`);
 });
 
 module.exports = app;
-
 

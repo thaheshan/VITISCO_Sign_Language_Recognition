@@ -47,6 +47,32 @@ app.use(express.json({ limit: '50mb' }));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use('/audio', express.static(path.join(__dirname, 'audio')));
 
+// Updated getApiUrl function
+const getApiUrl = () => {
+  // First try to get the URL from environment variables
+  if (process.env.API_URL) {
+    return process.env.API_URL;
+  }
+  
+  // If running in a specific environment that provides a hostname
+  const hostname = process.env.HOSTNAME || process.env.HOST;
+  if (hostname) {
+    return `http://${hostname}:${process.env.PORT || 5000}`;
+  }
+  
+  // Detect if running in development or production
+  const isDev = process.env.NODE_ENV !== 'production';
+  
+  if (isDev) {
+    // For local development, can use localhost
+    return 'http://192.168.58.40:5000';
+  } else {
+    // For production, can use the server's public IP or domain
+    // This should be configured in the environment variables
+    return process.env.PUBLIC_URL || 'https://api.yourdomain.com';
+  }
+};
+
 // MySQL Connection Pool
 const pool = mysql.createPool({
   host: process.env.DB_HOST || '34.67.39.101',
@@ -248,6 +274,13 @@ app.post('/api/text-to-speech', async (req, res) => {
   }
 });
 
+// Create an endpoint to get the API URL for clients
+app.get('/api/url', (req, res) => {
+  res.json({
+    apiUrl: getApiUrl()
+  });
+});
+
 // Enhanced Health Check Endpoint
 app.get('/api/health', async (req, res) => {
   try {
@@ -286,4 +319,5 @@ const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
   initializeDatabase();
+  console.log(`API URL: ${getApiUrl()}`);
 });

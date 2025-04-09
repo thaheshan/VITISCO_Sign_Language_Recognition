@@ -516,7 +516,7 @@ const NotificationScreen = ({navigation , route}) => {
         <StatusBar barStyle="dark-content" backgroundColor="#d9d4f4" />
         <View style={styles.header}>
           <Text style={styles.headerTitle}>Notifications</Text>
-   
+
         </View>
 
         <View style={styles.tabsContainer}>
