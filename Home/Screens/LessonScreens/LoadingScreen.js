@@ -77,7 +77,7 @@ export default function LoadingScreen({ navigate }) {
             <Text style={styles.progressPercent}>{progress}%</Text>
           </View>
           <Text style={styles.loadingText}>
-            Hi Thaheshan,{'\n'}
+            Hi VIT5643,{'\n'}
             Our Assistants Are Preparing{'\n'}
             a lesson plan for your learning
           </Text>

@@ -32,10 +32,28 @@ const HomeScreen = () => {
   const [showInstructions, setShowInstructions] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
   
+  // Coming Soon popup state
+  const [showComingSoon, setShowComingSoon] = useState(false);
+  const comingSoonAnimation = useRef(new Animated.Value(0)).current;
+  
   // Check if user is new on component mount
   useEffect(() => {
     checkIfFirstTimeUser();
   }, []);
+  
+  // Effect to animate the coming soon popup when it opens
+  useEffect(() => {
+    if (showComingSoon) {
+      Animated.spring(comingSoonAnimation, {
+        toValue: 1,
+        friction: 8,
+        tension: 40,
+        useNativeDriver: true,
+      }).start();
+    } else {
+      comingSoonAnimation.setValue(0);
+    }
+  }, [showComingSoon]);
   
   const checkIfFirstTimeUser = async () => {
     try {
@@ -84,6 +102,22 @@ const HomeScreen = () => {
     setMenuOpen(!menuOpen);
   };
   
+  // Show coming soon popup
+  const handleSpeechTherapyPress = () => {
+    setShowComingSoon(true);
+  };
+  
+  // Close coming soon popup
+  const closeComingSoon = () => {
+    Animated.timing(comingSoonAnimation, {
+      toValue: 0,
+      duration: 200,
+      useNativeDriver: true,
+    }).start(() => {
+      setShowComingSoon(false);
+    });
+  };
+  
   // Interpolate rotation for + to x animation
   const rotateInterpolation = addButtonRotation.interpolate({
     inputRange: [0, 1],
@@ -94,6 +128,17 @@ const HomeScreen = () => {
   const menuHeightInterpolation = menuHeight.interpolate({
     inputRange: [0, 1],
     outputRange: [0, 100]
+  });
+  
+  // Coming soon popup animations
+  const popupScale = comingSoonAnimation.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0.5, 1]
+  });
+  
+  const popupOpacity = comingSoonAnimation.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, 1]
   });
 
   // Instructions data
@@ -134,7 +179,6 @@ const HomeScreen = () => {
       position: { bottom: 150, left: 20 },
       pointer: { bottom: 85, left: Dimensions.get('window').width / 2 }
     },
-    
     {
       title: "Navigation Bar",
       content: "Use these icons to navigate between Home, Progress Analysis, Notifications, and Profile screens.",
@@ -273,7 +317,7 @@ const HomeScreen = () => {
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Ongoing Lessons</Text>
             <TouchableOpacity>
-              <Text style={styles.seeAll}>See all</Text>
+              <Text style={styles.seeAll} onPress={() => navigation.navigate('LearnPathway', {}, { animation: 'slide_from_right' })}>See all</Text>
             </TouchableOpacity>
           </View>
 
@@ -291,10 +335,10 @@ const HomeScreen = () => {
                 <View style={[styles.avatar, { backgroundColor: '#FF9800' }]} />
                 <View style={[styles.avatar, { backgroundColor: '#FF5722' }]} />
               </View>
-              <Text style={styles.dueDate}>Due on : 21 March</Text>
+              <Text style={styles.dueDate}>Due on : 21 April</Text>
             </View>
             <View style={styles.progressCircle}>
-              <Text style={styles.progressText}>75%</Text>
+              <Text style={styles.progressText}>0%</Text>
             </View>
           </TouchableOpacity>
 
@@ -312,10 +356,10 @@ const HomeScreen = () => {
                 <View style={[styles.avatar, { backgroundColor: '#FF9800' }]} />
                 <View style={[styles.avatar, { backgroundColor: '#FF5722' }]} />
               </View>
-              <Text style={styles.dueDate}>Due on : 04 April</Text>
+              <Text style={styles.dueDate}>Due on : 13 April</Text>
             </View>
             <View style={styles.progressCircle}>
-              <Text style={styles.progressText}>50%</Text>
+              <Text style={styles.progressText}>0%</Text>
             </View>
           </TouchableOpacity>
 
@@ -333,31 +377,31 @@ const HomeScreen = () => {
                 <View style={[styles.avatar, { backgroundColor: '#FF9800' }]} />
                 <View style={[styles.avatar, { backgroundColor: '#FF5722' }]} />
               </View>
-              <Text style={styles.dueDate}>Due on : 06 June</Text>
+              <Text style={styles.dueDate}>Due on : 2 May</Text>
             </View>
             <View style={styles.progressCircle}>
-              <Text style={styles.progressText}>60%</Text>
+              <Text style={styles.progressText}>0%</Text>
             </View>
           </TouchableOpacity>
 
-                    {/* Virtual Room Card */}
-                    <TouchableOpacity 
+          {/* Speech Therapy Card - Now triggers the Coming Soon popup */}
+          <TouchableOpacity 
             style={styles.lessonCard} 
-            onPress={() => navigation.navigate('VirtualRoom', {}, { animation: 'slide_from_right' })}
+            onPress={handleSpeechTherapyPress}
             activeOpacity={0.9}
           >
             <View>
-              <Text style={styles.cardTitle}>Speech Theraphy</Text>
+              <Text style={styles.cardTitle}>Speech Therapy</Text>
               <Text style={styles.activeText}>Active</Text>
               <View style={styles.avatarRow}>
                 <View style={[styles.avatar, { backgroundColor: '#FFC107' }]} />
                 <View style={[styles.avatar, { backgroundColor: '#FF9800' }]} />
                 <View style={[styles.avatar, { backgroundColor: '#FF5722' }]} />
               </View>
-              <Text style={styles.dueDate}>Due on : 06 June</Text>
+              <Text style={styles.dueDate}>Coming Soon</Text>
             </View>
             <View style={styles.progressCircle}>
-              <Text style={styles.progressText}>60%</Text>
+              <Text style={styles.progressText}>0%</Text>
             </View>
           </TouchableOpacity>
         </View>
@@ -460,6 +504,69 @@ const HomeScreen = () => {
           >
             <Text style={styles.skipText}>Skip Tutorial</Text>
           </TouchableOpacity>
+        </View>
+      </Modal>
+
+      {/* Coming Soon Modal Popup */}
+      <Modal
+        transparent={true}
+        visible={showComingSoon}
+        animationType="fade"
+        onRequestClose={closeComingSoon}
+      >
+        <View style={styles.comingSoonContainer}>
+          <Animated.View 
+            style={[
+              styles.comingSoonContent,
+              { 
+                transform: [{ scale: popupScale }],
+                opacity: popupOpacity 
+              }
+            ]}
+          >
+            {/* Close button */}
+            <TouchableOpacity 
+              style={styles.closeButton}
+              onPress={closeComingSoon}
+            >
+              <Ionicons name="close" size={24} color="#FFFFFF" />
+            </TouchableOpacity>
+            
+            {/* Icon */}
+            <View style={styles.comingSoonIconContainer}>
+              <Ionicons name="mic-outline" size={64} color="#FFFFFF" />
+            </View>
+            
+            {/* Title */}
+            <Text style={styles.comingSoonTitle}>Speech Therapy</Text>
+            
+            {/* Coming soon text */}
+            <Text style={styles.comingSoonText}>
+              Exciting new features are on the way!
+            </Text>
+            
+            {/* Info text */}
+            <Text style={styles.comingSoonInfo}>
+              Our team is working hard to bring you advanced speech therapy tools. 
+              Stay tuned for updates!
+            </Text>
+            
+            {/* Details button */}
+            <TouchableOpacity 
+              style={styles.notifyButton}
+              onPress={closeComingSoon}
+            >
+              <Text style={styles.notifyButtonText}>Notify Me</Text>
+            </TouchableOpacity>
+            
+            {/* Progress indicator */}
+            <View style={styles.comingSoonProgress}>
+              <View style={styles.progressBar}>
+                <View style={styles.progressFill} />
+              </View>
+              <Text style={styles.progressPercent}>80% Complete</Text>
+            </View>
+          </Animated.View>
         </View>
       </Modal>
     </SafeAreaView>
@@ -799,6 +906,102 @@ const styles = StyleSheet.create({
     borderBottomColor: '#FFFFFF',
     transform: [{ rotate: '180deg' }],
   },
+// Coming Soon popup styles
+comingSoonContainer: {
+  flex: 1,
+  backgroundColor: 'rgba(0, 0, 0, 0.7)',
+  justifyContent: 'center',
+  alignItems: 'center',
+},
+comingSoonContent: {
+  backgroundColor: '#4E3D81',
+  borderRadius: 20,
+  padding: 24,
+  width: '85%',
+  maxWidth: 340,
+  alignItems: 'center',
+  shadowColor: '#000',
+  shadowOffset: { width: 0, height: 6 },
+  shadowOpacity: 0.4,
+  shadowRadius: 8,
+  elevation: 8,
+},
+closeButton: {
+  position: 'absolute',
+  top: 12,
+  right: 12,
+  width: 32,
+  height: 32,
+  borderRadius: 16,
+  backgroundColor: 'rgba(255, 255, 255, 0.2)',
+  alignItems: 'center',
+  justifyContent: 'center',
+},
+comingSoonIconContainer: {
+  width: 100,
+  height: 100,
+  borderRadius: 50,
+  backgroundColor: '#6B5ECD',
+  alignItems: 'center',
+  justifyContent: 'center',
+  marginVertical: 16,
+},
+comingSoonTitle: {
+  fontSize: 24,
+  fontWeight: 'bold',
+  color: '#FFFFFF',
+  marginBottom: 8,
+},
+comingSoonText: {
+  fontSize: 18,
+  color: '#FFFFFF',
+  marginBottom: 16,
+  textAlign: 'center',
+  fontWeight: '600',
+},
+comingSoonInfo: {
+  fontSize: 14,
+  color: '#FFFFFF',
+  opacity: 0.8,
+  textAlign: 'center',
+  marginBottom: 24,
+  lineHeight: 20,
+},
+notifyButton: {
+  backgroundColor: '#B2B5E7',
+  paddingVertical: 12,
+  paddingHorizontal: 32,
+  borderRadius: 25,
+  marginBottom: 20,
+},
+notifyButtonText: {
+  color: '#352561',
+  fontSize: 16,
+  fontWeight: 'bold',
+},
+comingSoonProgress: {
+  width: '100%',
+  alignItems: 'center',
+},
+progressBar: {
+  width: '100%',
+  height: 8,
+  backgroundColor: 'rgba(255, 255, 255, 0.2)',
+  borderRadius: 4,
+  marginBottom: 8,
+  overflow: 'hidden',
+},
+progressFill: {
+  width: '80%',
+  height: '100%',
+  backgroundColor: '#FFC107',
+  borderRadius: 4,
+},
+progressPercent: {
+  color: '#FFFFFF',
+  fontSize: 12,
+  opacity: 0.8,
+},
 });
 
 export default HomeScreen;

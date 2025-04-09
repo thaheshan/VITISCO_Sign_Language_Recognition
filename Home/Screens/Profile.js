@@ -25,11 +25,11 @@ const ProfileScreen = ({navigation, route}) => {
   const rotateAnim = useRef(new Animated.Value(0)).current;
 
   
-      // Animation values
-      const addButtonRotation = useRef(new Animated.Value(0)).current;
-      const menuHeight = useRef(new Animated.Value(0)).current;
+  // Animation values
+  const addButtonRotation = useRef(new Animated.Value(0)).current;
+  const menuHeight = useRef(new Animated.Value(0)).current;
 
- // Toggle menu animation
+  // Toggle menu animation
   const toggleMenu = () => {
     const toValue = menuOpen ? 0 : 1;
     
@@ -56,11 +56,11 @@ const ProfileScreen = ({navigation, route}) => {
   });
 
   
-    // Interpolate height for menu animation
-    const menuHeightInterpolation = menuHeight.interpolate({
-      inputRange: [0, 1],
-      outputRange: [0, 100]
-    });
+  // Interpolate height for menu animation
+  const menuHeightInterpolation = menuHeight.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, 100]
+  });
 
 
 
@@ -133,7 +133,7 @@ const ProfileScreen = ({navigation, route}) => {
 
   // User profile data
   const userData = {
-    userId: "ZA7194",
+    userId: "VIT5643",
     name: "Zuhar Ahamed",
     handle: "@zheong123",
     level: 5,
@@ -161,9 +161,7 @@ const ProfileScreen = ({navigation, route}) => {
       {/* Header - Updated to match the screenshot */}
       <View style={styles.header}>
         <View style={styles.headerContent}>
-          <TouchableOpacity style={styles.backButton}>
-            <Ionicons name="chevron-back" size={24} color="white" />
-          </TouchableOpacity>
+    
           <View style={styles.headerCenter}>
             <Text style={styles.headerTitle}>Profile</Text>
           </View>
@@ -177,17 +175,26 @@ const ProfileScreen = ({navigation, route}) => {
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        {/* Profile Info */}
+        {/* Profile Info - Modified to make image left-aligned and profile details right-aligned */}
         <View style={styles.profileContainer}>
-          <Avatar.Image source={require("./assets/Zuhar.jpg")} size={80} />
-          <Text style={styles.username}>{userData.name}</Text>
-          <Text style={styles.handle}>{userData.handle}</Text>
-
-          {/* User ID */}
-          <Text style={styles.userId}>ID: {userData.userId}</Text>
-
-          <View style={styles.levelContainer}>
-            <Text style={styles.levelText}>LEVEL {userData.level}</Text>
+          <View style={styles.profileContentRow}>
+            {/* Square Profile Image - Left aligned */}
+            <View style={styles.squareImageContainer}>
+              <Image 
+                source={require("./assets/Zuhar.jpg")} 
+                style={styles.squareProfileImage} 
+              />
+            </View>
+            
+            {/* Profile Details - Right aligned */}
+            <View style={styles.profileDetailsContainer}>
+              <Text style={styles.username}>{userData.name}</Text>
+              <Text style={styles.handle}>{userData.handle}</Text>
+              <Text style={styles.userId}>ID: {userData.userId}</Text>
+              <View style={styles.levelContainer}>
+                <Text style={styles.levelText}>LEVEL {userData.level}</Text>
+              </View>
+            </View>
           </View>
         </View>
 
@@ -371,18 +378,15 @@ const ProfileScreen = ({navigation, route}) => {
         </TouchableOpacity>
       </ScrollView>
 
-
-                    {/* Popup Menu */}
-                    <Animated.View style={[styles.popupMenu, { height: menuHeightInterpolation }]}>
-                      <TouchableOpacity style={styles.menuItem}>
-                        <Text style={styles.menuText} onPress={() => navigation.navigate('Translator', {}, { animation: 'slide_from_right' })}>Translator</Text>
-                      </TouchableOpacity>
-                      <TouchableOpacity style={styles.menuItem}>
-                        <Text style={styles.menuText} onPress={() => navigation.navigate('Scheduler', {}, { animation: 'slide_from_right' })}>ADD SCHEDULE</Text>
-                      </TouchableOpacity>
-                    </Animated.View>
-
-
+      {/* Popup Menu */}
+      <Animated.View style={[styles.popupMenu, { height: menuHeightInterpolation }]}>
+        <TouchableOpacity style={styles.menuItem}>
+          <Text style={styles.menuText} onPress={() => navigation.navigate('Translator', {}, { animation: 'slide_from_right' })}>Translator</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.menuItem}>
+          <Text style={styles.menuText} onPress={() => navigation.navigate('Scheduler', {}, { animation: 'slide_from_right' })}>ADD SCHEDULE</Text>
+        </TouchableOpacity>
+      </Animated.View>
 
       {/* Bottom Navigation - Fixed */}
       <View style={styles.bottomNav}>
@@ -420,8 +424,6 @@ const ProfileScreen = ({navigation, route}) => {
   );
 };
 
-
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -453,8 +455,9 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     color: "white",
-    fontSize: 18,
+    fontSize: 22,
     fontWeight: "500",
+    padding: 6,
   },
   notificationContainer: {
     flexDirection: "row",
@@ -468,21 +471,42 @@ const styles = StyleSheet.create({
   notificationIcon: {
     fontSize: 16,
   },
+  // Updated profile container to use row layout
   profileContainer: {
-    alignItems: "center",
     paddingVertical: 20,
+    paddingHorizontal: 20,
+  },
+  profileContentRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  // New square image container
+  squareImageContainer: {
+    width: 160,
+    height: 160,
+    marginRight: 20,
+  },
+  squareProfileImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 8, // Small radius for slightly rounded corners
+  },
+  // Profile details container
+  profileDetailsContainer: {
+    flex: 1,
+    alignItems: 'baseline', // Left align the text within the container
   },
   username: {
     color: "#333",
     fontSize: 24,
     fontWeight: "bold",
-    marginTop: 10,
   },
   handle: {
     color: "#777777",
     fontSize: 14,
     lineHeight: 14,
     fontWeight: "500",
+    marginTop: 2,
   },
   userId: {
     color: "#777777",
@@ -740,8 +764,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-
-
   bottomNav: {
     flexDirection: 'row',
     justifyContent: 'space-around',
@@ -835,9 +857,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'flex-end',
   },
-
-
-
   popupMenu: {
     position: 'absolute',
     bottom: 90,
@@ -855,16 +874,12 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(255, 255, 255, 0.1)',
   },
-  
   menuText: {
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
   },
-
-  
 });
 
 export default ProfileScreen;
-
 

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import {
   View,
@@ -13,7 +14,7 @@ import * as Haptics from 'expo-haptics';
 
 const { width, height } = Dimensions.get('window');
 
-export default function LanguagePathwayCustomizationScreen({ navigate }) {
+export default function LanguagePathwayCustomizationScreen2({ navigate }) {
   const [selectedTopics, setSelectedTopics] = useState([]);
   const [level, setLevel] = useState('Beginner');
   const [showPremiumPopup, setShowPremiumPopup] = useState(false);
@@ -57,13 +58,13 @@ export default function LanguagePathwayCustomizationScreen({ navigate }) {
           Animated.timing(glowAnimation, {
             toValue: 1,
             duration: 1500,
-            easing: Easing.inOut(Easing.sine),
+            easing: Easing.inOut(Easing.sin),
             useNativeDriver: true
           }),
           Animated.timing(glowAnimation, {
             toValue: 0,
             duration: 1500,
-            easing: Easing.inOut(Easing.sine),
+            easing: Easing.inOut(Easing.sin),
             useNativeDriver: true
           })
         ])
@@ -92,7 +93,7 @@ export default function LanguagePathwayCustomizationScreen({ navigate }) {
   const toggleTopic = (id) => {
     const topic = topics.find(topic => topic.id === id);
     
-    if (topic.isPremium && topic.name !== ' Sinhala Alphabet') {
+    if (topic.isPremium && topic.name !== 'English Alphabet') {
       setPopupMessage(`"${topic.name}" is available in the premium version!`);
       setShowPremiumPopup(true);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
@@ -127,7 +128,6 @@ export default function LanguagePathwayCustomizationScreen({ navigate }) {
         <View style={styles.levelOptions}>
           {['Beginner', 'Intermediate', 'Advanced'].map((lvl) => (
             <TouchableOpacity 
-            
               key={lvl}
               style={[
                 styles.levelOption,
@@ -161,7 +161,7 @@ export default function LanguagePathwayCustomizationScreen({ navigate }) {
               style={[
                 styles.topicItem,
                 selectedTopics.includes(topic.id) && styles.selectedTopic,
-                topic.isPremium && topic.name !== 'Sinhala Alphabet' && styles.premiumTopic
+                topic.isPremium && topic.name !== 'English Alphabet' && styles.premiumTopic
               ]}
               onPress={() => toggleTopic(topic.id)}
             >
@@ -172,7 +172,7 @@ export default function LanguagePathwayCustomizationScreen({ navigate }) {
               ]}>
                 {topic.name}
               </Text>
-              {topic.isPremium && topic.name !== 'Sinhala Alphabet' && (
+              {topic.isPremium && topic.name !== 'English Alphabet' && (
                 <View style={styles.topicPremiumBadge}>
                   <Text style={styles.premiumBadgeText}>PRO</Text>
                 </View>
@@ -257,6 +257,9 @@ export default function LanguagePathwayCustomizationScreen({ navigate }) {
   );
 }
 
+
+
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -336,15 +339,11 @@ const styles = StyleSheet.create({
     width: '100%',
     marginBottom: 20,
   },
-
-
   topicsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
   },
-
-
   topicItem: {
     width: width / 2.4,
     padding: 15,
@@ -355,8 +354,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     position: 'relative',
   },
-
-
   selectedTopic: {
     borderColor: '#5d5b8d',
     backgroundColor: 'rgba(93, 91, 141, 0.1)',

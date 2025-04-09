@@ -19,9 +19,15 @@ import {
 } from "react-native-gesture-handler";
 import { api } from "../Backend/FeedbackBE/api"; // Import the API client
 
+
+
+import { Ionicons, Feather } from "@expo/vector-icons";
+
+import Icon from "react-native-vector-icons/MaterialCommunityIcons";
+
 const { width, height } = Dimensions.get("window");
 
-const NotificationScreen = () => {
+const NotificationScreen = ({navigation , route}) => {
   // Main state variables
   const [activeTab, setActiveTab] = useState("Notifications");
   const [modalVisible, setModalVisible] = useState(false);
@@ -42,6 +48,50 @@ const NotificationScreen = () => {
   const swipeOffset = useRef(new Animated.Value(0)).current;
   const modalScale = useRef(new Animated.Value(0.8)).current;
   const modalOpacity = useRef(new Animated.Value(0)).current;
+
+
+  const [menuOpen, setMenuOpen] = useState(false);
+    const rotateAnim = useRef(new Animated.Value(0)).current;
+  
+    
+        // Animation values
+        const addButtonRotation = useRef(new Animated.Value(0)).current;
+        const menuHeight = useRef(new Animated.Value(0)).current;
+  
+   // Toggle menu animation
+    const toggleMenu = () => {
+      const toValue = menuOpen ? 0 : 1;
+      
+      Animated.parallel([
+        Animated.timing(addButtonRotation, {
+          toValue,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+        Animated.timing(menuHeight, {
+          toValue,
+          duration: 300,
+          useNativeDriver: false,
+        })
+      ]).start();
+      
+      setMenuOpen(!menuOpen);
+    };
+    
+    // Interpolate rotation for + to x animation
+    const rotateInterpolation = addButtonRotation.interpolate({
+      inputRange: [0, 1],
+      outputRange: ['0deg', '45deg']
+    });
+  
+    
+      // Interpolate height for menu animation
+      const menuHeightInterpolation = menuHeight.interpolate({
+        inputRange: [0, 1],
+        outputRange: [0, 100]
+      });
+  
+  
 
   // Tab indices for easier reference
   const tabIndices = {
@@ -466,9 +516,7 @@ const NotificationScreen = () => {
         <StatusBar barStyle="dark-content" backgroundColor="#d9d4f4" />
         <View style={styles.header}>
           <Text style={styles.headerTitle}>Notifications</Text>
-          <TouchableOpacity style={styles.userButton}>
-            <Text style={styles.userButtonText}>USER ID</Text>
-          </TouchableOpacity>
+   
         </View>
 
         <View style={styles.tabsContainer}>
@@ -546,32 +594,53 @@ const NotificationScreen = () => {
           </Animated.View>
         </PanGestureHandler>
 
-        <View style={styles.bottomBar}>
-          <TouchableOpacity style={styles.bottomButton}>
-            <Text style={styles.bottomButtonIcon}>□</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.bottomButton}
-            onPress={() => {
-              // Refresh data when refresh button is pressed
-              fetchNotifications();
-              fetchFeedbacks();
-              fetchSuggestions();
-            }}
-          >
-            <Text style={styles.bottomButtonIcon}>↻</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.addButton}>
-            <Text style={styles.addButtonText}>+</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.bottomButton}>
-            <Text style={styles.bottomButtonIcon}>🔔</Text>
-            <View style={styles.activeDot} />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.bottomButton}>
-            <Text style={styles.bottomButtonIcon}>👤</Text>
-          </TouchableOpacity>
-        </View>
+                    {/* Popup Menu */}
+                    <Animated.View style={[styles.popupMenu, { height: menuHeightInterpolation }]}>
+                      <TouchableOpacity style={styles.menuItem}>
+                        <Text style={styles.menuText} onPress={() => navigation.navigate('Translator', {}, { animation: 'slide_from_right' })}>Translator</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity style={styles.menuItem}>
+                        <Text style={styles.menuText} onPress={() => navigation.navigate('Scheduler', {}, { animation: 'slide_from_right' })}>ADD SCHEDULE</Text>
+                      </TouchableOpacity>
+                    </Animated.View>
+
+
+
+      {/* Bottom Navigation - Fixed */}
+      <View style={styles.bottomNav}>
+        <TouchableOpacity style={styles.navItem} 
+          onPress={() => navigation && navigation.navigate("Home", {}, { animation: 'slide_from_right' })}>
+          <Ionicons name="grid-outline" size={24} color="#352561" />
+        </TouchableOpacity>
+        <TouchableOpacity 
+          style={styles.navItem} 
+          onPress={() => navigation && navigation.navigate("ProgressAnalysis", {}, { animation: 'slide_from_right' })}
+        >
+          <Feather name="pie-chart" size={26} color="#9E9AA7" />
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.addButton} onPress={toggleMenu}>
+          <Animated.View style={{ transform: [{ rotate: rotateInterpolation }] }}>
+            <Ionicons name="add" size={32} color="#FFF" />
+          </Animated.View>
+        </TouchableOpacity>
+        <TouchableOpacity 
+          style={styles.navItem} 
+          onPress={() => navigation && navigation.navigate('Notifications', {}, { animation: 'slide_from_right' })}
+        >
+          <View style={styles.activeNavIndicator} />
+
+          <Ionicons name="notifications-outline" size={24} color="#9E9AA7" />
+         
+        </TouchableOpacity>
+        <TouchableOpacity 
+          style={styles.navItem} 
+          onPress={() => navigation && navigation.navigate('Profile', {}, { animation: 'slide_from_right' })}
+        >
+          <Ionicons name="person-outline" size={24} color="#9E9AA7" />
+        </TouchableOpacity>
+      </View>
+
+
 
         {renderLessonModal()}
       </SafeAreaView>
@@ -924,6 +993,129 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
   },
+
+
+  bottomNav: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    padding: 16,
+    borderTopLeftRadius: 30,
+    borderTopRightRadius: 30,
+  },
+  navItem: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: 40,
+  },
+  activeNavIndicator: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: '#352561',
+    position: 'absolute',
+    bottom: -6,
+  },
+  addButton: {
+    backgroundColor: '#6B5ECD',
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 20,
+    bottom: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+    elevation: 5,
+    zIndex: 1000,
+  },
+  bottomPadding: {
+    height: 80,
+  },
+  
+  // Instruction overlay styles
+  instructionsContainer: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+  },
+  instructionCard: {
+    position: 'absolute',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 16,
+    width: '80%',
+    maxWidth: 300,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+    elevation: 5,
+  },
+  instructionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#352561',
+    marginBottom: 8,
+  },
+  instructionText: {
+    fontSize: 15,
+    color: '#333',
+    marginBottom: 16,
+    lineHeight: 22,
+  },
+  progressIndicator: {
+    flexDirection: 'row',
+    marginBottom: 12,
+  },
+  progressDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#B2B5E7',
+    marginRight: 4,
+  },
+  activeDot: {
+    backgroundColor: '#6B5ECD',
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+  },
+  instructionButtons: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+  },
+
+
+
+  popupMenu: {
+    position: 'absolute',
+    bottom: 90,
+    left: 0,
+    right: 0,
+    backgroundColor: 'rgba(107, 94, 205, 0.95)',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    overflow: 'hidden',
+    zIndex: 999,
+  },
+  menuItem: {
+    paddingVertical: 14,
+    alignItems: 'center',
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  
+  menuText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+
+
 });
 
 export default NotificationScreen;

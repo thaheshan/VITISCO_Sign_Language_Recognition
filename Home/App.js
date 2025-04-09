@@ -49,18 +49,18 @@ const App = () => {
 
   return (
     <NavigationContainer>
-      <Stack.Navigator initialRouteName={ "Home" }>
+      <Stack.Navigator initialRouteName={ "Login" }>
         <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
         <Stack.Screen name="Home" component={HomeScreen} options={{ headerShown: false }} />
         <Stack.Screen name="Lesson" component={LessonScreen} options={{ title: "" }} /> 
         <Stack.Screen name="Quiz" component={QuizScreen} options={{ title: "" }} />
         <Stack.Screen name="VirtualRoom" component={VirtualRoomScreen} options={{ title: "" }} />
-        <Stack.Screen name="ProgressAnalysis" component={ProgressAnalysisScreen} options={{ title: "" }} />
-        <Stack.Screen name="Profile" component={ProfileScreen} />
+        <Stack.Screen name="ProgressAnalysis" component={ProgressAnalysisScreen}  options={{ headerShown: false }}  />
+        <Stack.Screen name="Profile" component={ProfileScreen}  options={{ headerShown: false }}/>
         <Stack.Screen name="Settings" component={SettingsScreen} />
         <Stack.Screen name="Translator" component={TranslatorScreen} />  
          <Stack.Screen name="TextToSpeech" component={TextToSpeechScreen} /> 
-        <Stack.Screen name="Notifications" component={NotificationScreen} />
+        <Stack.Screen name="Notifications" component={NotificationScreen}  options={{ headerShown: false }} />
         <Stack.Screen name="Scheduler" component={SchedulerScreen} />
       </Stack.Navigator>
     </NavigationContainer>
