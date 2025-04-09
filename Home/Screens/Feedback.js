@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   View,
   Text,
@@ -10,63 +10,37 @@ import {
   StatusBar,
   SafeAreaView,
   ScrollView,
+  ActivityIndicator,
 } from "react-native";
-import { Ionicons, Feather } from "@expo/vector-icons"; // Added proper import for icons
 import {
   PanGestureHandler,
   State,
   GestureHandlerRootView,
 } from "react-native-gesture-handler";
+import { api } from "./api"; // Import the API client
 
 const { width, height } = Dimensions.get("window");
 
-const NotificationScreen = ({ navigation }) => { // Added navigation prop
+const NotificationScreen = () => {
   // Main state variables
   const [activeTab, setActiveTab] = useState("Notifications");
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedLesson, setSelectedLesson] = useState(null);
   const [timeFilter, setTimeFilter] = useState("all"); // 'all', 'today', 'yesterday'
-  const [menuOpen, setMenuOpen] = useState(false); // Added state for menu toggle
+  
+  // Data states
+  const [notifications, setNotifications] = useState([]);
+  const [feedbacks, setFeedbacks] = useState([]);
+  const [suggestions, setSuggestions] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [selectedNotificationDetails, setSelectedNotificationDetails] = useState(null);
 
   // Animation values
   const tabPosition = useRef(new Animated.Value(0)).current;
   const swipeOffset = useRef(new Animated.Value(0)).current;
   const modalScale = useRef(new Animated.Value(0.8)).current;
   const modalOpacity = useRef(new Animated.Value(0)).current;
-  const rotateAnim = useRef(new Animated.Value(0)).current; // Added rotation animation
-
-
-    // Animation values
-    const addButtonRotation = useRef(new Animated.Value(0)).current;
-    const menuHeight = useRef(new Animated.Value(0)).current;
-
-  // Toggle menu animation
-  const toggleMenu = () => {
-    const toValue = menuOpen ? 0 : 1;
-    
-    Animated.parallel([
-      Animated.timing(addButtonRotation, {
-        toValue,
-        duration: 300,
-        useNativeDriver: true,
-      }),
-      Animated.timing(menuHeight, {
-        toValue,
-        duration: 300,
-        useNativeDriver: false,
-      })
-    ]).start();
-    
-    setMenuOpen(!menuOpen);
-  };
-  
-  // Interpolate rotation for + to x animation
-  const rotateInterpolation = addButtonRotation.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['0deg', '45deg']
-  });
-
-
 
   // Tab indices for easier reference
   const tabIndices = {
@@ -75,47 +49,45 @@ const NotificationScreen = ({ navigation }) => { // Added navigation prop
     Suggestions: 2,
   };
 
-  // Sample data for lessons
-  const lessons = [
-    {
-      id: 1,
-      title: "Lessons",
-      completion: 75,
-      date: "21 March",
-      nextDate: "Next week",
-      category: "today",
-    },
-    {
-      id: 2,
-      title: "Lessons",
-      completion: 75,
-      date: "21 March",
-      nextDate: "Next week",
-      category: "today",
-    },
-    {
-      id: 3,
-      title: "Lessons",
-      completion: 75,
-      date: "21 March",
-      nextDate: "Next week",
-      category: "yesterday",
-    },
-    {
-      id: 4,
-      title: "Lessons",
-      completion: 75,
-      date: "21 March",
-      nextDate: "Next week",
-      category: "yesterday",
-    },
-  ];
+  // Fetch data when component mounts or when timeFilter changes
+  useEffect(() => {
+    fetchNotifications();
+    fetchFeedbacks();
+    fetchSuggestions();
+  }, [timeFilter]);
 
-  // Filtered lessons based on selected time filter
-  const filteredLessons =
-    timeFilter === "all"
-      ? lessons
-      : lessons.filter((lesson) => lesson.category === timeFilter);
+  // Functions to fetch data from API
+  const fetchNotifications = async () => {
+    setLoading(true);
+    try {
+      const response = await api.getNotifications(timeFilter);
+      setNotifications(response.data);
+      setError(null);
+    } catch (err) {
+      console.error("Error fetching notifications:", err);
+      setError("Failed to load notifications. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchFeedbacks = async () => {
+    try {
+      const response = await api.getFeedbacks();
+      setFeedbacks(response.data);
+    } catch (err) {
+      console.error("Error fetching feedbacks:", err);
+    }
+  };
+
+  const fetchSuggestions = async () => {
+    try {
+      const response = await api.getSuggestions();
+      setSuggestions(response.data);
+    } catch (err) {
+      console.error("Error fetching suggestions:", err);
+    }
+  };
 
   // Function to switch between tabs
   const switchTab = (tab) => {
@@ -131,20 +103,20 @@ const NotificationScreen = ({ navigation }) => { // Added navigation prop
     setActiveTab(tab);
   };
 
-
-    
-
-
-    // Interpolate height for menu animation
-    const menuHeightInterpolation = menuHeight.interpolate({
-      inputRange: [0, 1],
-      outputRange: [0, 100]
-    });
-
-
   // Functions for modal handling
-  const openLessonModal = (lesson) => {
-    setSelectedLesson(lesson);
+  const openLessonModal = async (item) => {
+    setSelectedLesson(item);
+    
+    // If we're opening a notification, fetch its detailed data
+    if (activeTab === "Notifications" && item.id) {
+      try {
+        const response = await api.getNotificationById(item.id);
+        setSelectedNotificationDetails(response.data);
+      } catch (err) {
+        console.error("Error fetching notification details:", err);
+      }
+    }
+    
     setModalVisible(true);
 
     Animated.parallel([
@@ -178,6 +150,7 @@ const NotificationScreen = ({ navigation }) => { // Added navigation prop
     ]).start(() => {
       setModalVisible(false);
       setSelectedLesson(null);
+      setSelectedNotificationDetails(null);
     });
   };
 
@@ -237,55 +210,146 @@ const NotificationScreen = ({ navigation }) => { // Added navigation prop
   // Tab content components
   const renderNotificationsTab = () => (
     <ScrollView style={styles.tabContent} showsVerticalScrollIndicator={false}>
-      {filteredLessons.map((lesson) => (
-        <TouchableOpacity
-          key={lesson.id}
-          style={styles.lessonCard}
-          activeOpacity={0.7}
-          onPress={() => openLessonModal(lesson)}
-        >
-          <View style={styles.lessonContent}>
-            <Text style={styles.lessonTitle}>{lesson.title}</Text>
-            <Text style={styles.lessonDescription}>
-              You Completed {lesson.completion}% from the expected lesson on
-              thus day and your learning progress was so good.
-            </Text>
-            <Text style={styles.lessonDate}>on : {lesson.nextDate}</Text>
-          </View>
-        </TouchableOpacity>
-      ))}
+      {loading ? (
+        <View style={styles.loaderContainer}>
+          <ActivityIndicator size="large" color="#5142ab" />
+        </View>
+      ) : error ? (
+        <Text style={styles.errorText}>{error}</Text>
+      ) : notifications.length === 0 ? (
+        <Text style={styles.emptyMessage}>No notifications available.</Text>
+      ) : (
+        notifications.map((notification) => (
+          <TouchableOpacity
+            key={notification.id}
+            style={styles.lessonCard}
+            activeOpacity={0.7}
+            onPress={() => openLessonModal(notification)}
+          >
+            <View style={styles.lessonContent}>
+              <Text style={styles.lessonTitle}>{notification.title}</Text>
+              <Text style={styles.lessonDescription}>
+                {notification.description || 
+                `You Completed ${notification.completion}% from the expected lesson on this day and your learning progress was so good.`}
+              </Text>
+              <Text style={styles.lessonDate}>on: {notification.nextDate}</Text>
+            </View>
+          </TouchableOpacity>
+        ))
+      )}
     </ScrollView>
   );
 
   const renderFeedbacksTab = () => (
     <ScrollView style={styles.tabContent} showsVerticalScrollIndicator={false}>
-      {lessons.map((lesson) => (
-        <TouchableOpacity
-          key={lesson.id}
-          style={styles.lessonCard}
-          activeOpacity={0.7}
-          onPress={() => openLessonModal(lesson)}
-        >
-          <View style={styles.lessonContent}>
-            <Text style={styles.lessonTitle}>{lesson.title}</Text>
-            <Text style={styles.lessonDescription}>
-              You Completed {lesson.completion}% from the expected lesson on
-              thus day and your learning progress was so good.
-            </Text>
-            <Text style={styles.lessonDate}>on : {lesson.date}</Text>
-          </View>
-          <ProgressCircle percentage={lesson.completion} />
-        </TouchableOpacity>
-      ))}
+      {feedbacks.length === 0 ? (
+        <Text style={styles.emptyMessage}>No feedbacks available.</Text>
+      ) : (
+        feedbacks.map((feedback) => (
+          <TouchableOpacity
+            key={feedback.id}
+            style={styles.lessonCard}
+            activeOpacity={0.7}
+            onPress={() => openLessonModal(feedback)}
+          >
+            <View style={styles.lessonContent}>
+              <Text style={styles.lessonTitle}>{feedback.title}</Text>
+              <Text style={styles.lessonDescription}>
+                {feedback.description || 
+                `You Completed ${feedback.completion}% from the expected lesson on this day and your learning progress was so good.`}
+              </Text>
+              <Text style={styles.lessonDate}>on: {feedback.date}</Text>
+            </View>
+            <ProgressCircle percentage={feedback.completion} />
+          </TouchableOpacity>
+        ))
+      )}
     </ScrollView>
   );
 
   const renderSuggestionsTab = () => (
     <ScrollView style={styles.tabContent} showsVerticalScrollIndicator={false}>
-      <Text style={styles.emptyMessage}>
-        No suggestions available at the moment.
-      </Text>
+      {suggestions.length === 0 ? (
+        <Text style={styles.emptyMessage}>
+          No suggestions available at the moment.
+        </Text>
+      ) : (
+        suggestions.map((suggestion) => (
+          <TouchableOpacity
+            key={suggestion.id}
+            style={styles.lessonCard}
+            activeOpacity={0.7}
+            onPress={() => openLessonModal(suggestion)}
+          >
+            <View style={styles.lessonContent}>
+              <Text style={styles.lessonTitle}>{suggestion.title}</Text>
+              <Text style={styles.lessonDescription}>
+                {suggestion.description}
+              </Text>
+            </View>
+          </TouchableOpacity>
+        ))
+      )}
     </ScrollView>
+  );
+  
+  // Function to handle time filter changes
+  const handleTimeFilterChange = (filter) => {
+    setTimeFilter(filter);
+  };
+
+  // Time filter buttons component
+  const renderTimeFilterButtons = () => (
+    <View style={styles.timeFilterContainer}>
+      <TouchableOpacity
+        style={[
+          styles.filterButton,
+          timeFilter === "all" && styles.activeFilterButton,
+        ]}
+        onPress={() => handleTimeFilterChange("all")}
+      >
+        <Text
+          style={[
+            styles.filterButtonText,
+            timeFilter === "all" && styles.activeFilterButtonText,
+          ]}
+        >
+          All
+        </Text>
+      </TouchableOpacity>
+      <TouchableOpacity
+        style={[
+          styles.filterButton,
+          timeFilter === "today" && styles.activeFilterButton,
+        ]}
+        onPress={() => handleTimeFilterChange("today")}
+      >
+        <Text
+          style={[
+            styles.filterButtonText,
+            timeFilter === "today" && styles.activeFilterButtonText,
+          ]}
+        >
+          Today
+        </Text>
+      </TouchableOpacity>
+      <TouchableOpacity
+        style={[
+          styles.filterButton,
+          timeFilter === "yesterday" && styles.activeFilterButton,
+        ]}
+        onPress={() => handleTimeFilterChange("yesterday")}
+      >
+        <Text
+          style={[
+            styles.filterButtonText,
+            timeFilter === "yesterday" && styles.activeFilterButtonText,
+          ]}
+        >
+          Yesterday
+        </Text>
+      </TouchableOpacity>
+    </View>
   );
 
   // Modal component
@@ -347,18 +411,22 @@ const NotificationScreen = ({ navigation }) => { // Added navigation prop
                   </View>
 
                   <Text style={styles.modalDescription}>
-                    You completed {selectedLesson.completion}% from the expected
-                    lesson on thus day. Your learning progress was so good!
+                    {selectedLesson.description || 
+                     `You completed ${selectedLesson.completion}% from the expected lesson on this day. Your learning progress was so good!`}
                   </Text>
 
                   <View style={styles.statsContainer}>
                     <View style={styles.statItem}>
                       <Text style={styles.statLabel}>Time Spent</Text>
-                      <Text style={styles.statValue}>45 minutes</Text>
+                      <Text style={styles.statValue}>
+                        {selectedNotificationDetails?.timeSpent || "45 minutes"}
+                      </Text>
                     </View>
                     <View style={styles.statItem}>
                       <Text style={styles.statLabel}>Completed Tasks</Text>
-                      <Text style={styles.statValue}>8/10</Text>
+                      <Text style={styles.statValue}>
+                        {selectedNotificationDetails?.completedTasks || "8/10"}
+                      </Text>
                     </View>
                   </View>
 
@@ -459,6 +527,8 @@ const NotificationScreen = ({ navigation }) => { // Added navigation prop
           </TouchableOpacity>
         </View>
 
+        {activeTab === "Notifications" && renderTimeFilterButtons()}
+
         <PanGestureHandler
           onGestureEvent={onGestureEvent}
           onHandlerStateChange={onHandlerStateChange}
@@ -475,48 +545,30 @@ const NotificationScreen = ({ navigation }) => { // Added navigation prop
           </Animated.View>
         </PanGestureHandler>
 
-
-        
-              {/* Popup Menu */}
-              <Animated.View style={[styles.popupMenu, { height: menuHeightInterpolation }]}>
-                <TouchableOpacity style={styles.menuItem}>
-                  <Text style={styles.menuText} onPress={() => navigation.navigate('Translator', {}, { animation: 'slide_from_right' })}>Translator</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.menuItem}>
-                  <Text style={styles.menuText} onPress={() => navigation.navigate('Scheduler', {}, { animation: 'slide_from_right' })}>ADD SCHEDULE</Text>
-                </TouchableOpacity>
-              </Animated.View>
-
-        {/* Bottom Navigation - Fixed */}
-        <View style={styles.bottomNav}>
-          <TouchableOpacity style={styles.navItem} 
-          onPress={() => navigation && navigation.navigate("Home", {}, { animation: 'slide_from_right' })}>
-            <Ionicons name="grid-outline" size={24} color="#352561" />
-            
+        <View style={styles.bottomBar}>
+          <TouchableOpacity style={styles.bottomButton}>
+            <Text style={styles.bottomButtonIcon}>□</Text>
           </TouchableOpacity>
           <TouchableOpacity 
-            style={styles.navItem} 
-            onPress={() => navigation && navigation.navigate("ProgressAnalysis", {}, { animation: 'slide_from_right' })}
+            style={styles.bottomButton}
+            onPress={() => {
+              // Refresh data when refresh button is pressed
+              fetchNotifications();
+              fetchFeedbacks();
+              fetchSuggestions();
+            }}
           >
-            <Feather name="pie-chart" size={26} color="#9E9AA7" />
+            <Text style={styles.bottomButtonIcon}>↻</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.addButton} onPress={toggleMenu}>
-            <Animated.View style={{ transform: [{ rotate: rotateInterpolation }] }}>
-              <Ionicons name="add" size={32} color="#FFF" />
-            </Animated.View>
+          <TouchableOpacity style={styles.addButton}>
+            <Text style={styles.addButtonText}>+</Text>
           </TouchableOpacity>
-          <TouchableOpacity 
-            style={styles.navItem} 
-            onPress={() => navigation && navigation.navigate('Notifications', {}, { animation: 'slide_from_right' })}
-          >
-            <Ionicons name="notifications-outline" size={24} color="#9E9AA7" />
-            <View style={styles.activeNavIndicator} />
+          <TouchableOpacity style={styles.bottomButton}>
+            <Text style={styles.bottomButtonIcon}>🔔</Text>
+            <View style={styles.activeDot} />
           </TouchableOpacity>
-          <TouchableOpacity 
-            style={styles.navItem} 
-            onPress={() => navigation && navigation.navigate('Profile', {}, { animation: 'slide_from_right' })}
-          >
-            <Ionicons name="person-outline" size={24} color="#9E9AA7" />
+          <TouchableOpacity style={styles.bottomButton}>
+            <Text style={styles.bottomButtonIcon}>👤</Text>
           </TouchableOpacity>
         </View>
 
@@ -525,8 +577,6 @@ const NotificationScreen = ({ navigation }) => { // Added navigation prop
     </GestureHandlerRootView>
   );
 };
-
-
 
 const styles = StyleSheet.create({
   container: {
@@ -606,6 +656,46 @@ const styles = StyleSheet.create({
   tabContent: {
     flex: 1,
     padding: 16,
+  },
+  loaderContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingVertical: 30,
+  },
+  errorText: {
+    color: "red",
+    textAlign: "center",
+    marginTop: 20,
+    fontSize: 16,
+  },
+  timeFilterContainer: {
+    flexDirection: "row",
+    justifyContent: "center",
+    paddingVertical: 8,
+    backgroundColor: "#d9d4f4",
+  },
+  filterButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 6,
+    marginHorizontal: 5,
+    borderRadius: 20,
+    backgroundColor: "rgba(255, 255, 255, 0.5)",
+  },
+  activeFilterButton: {
+    backgroundColor: "#fff",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 1.5,
+    elevation: 1,
+  },
+  filterButtonText: {
+    color: "#5142ab",
+    fontWeight: "500",
+  },
+  activeFilterButtonText: {
+    fontWeight: "bold",
   },
   lessonCard: {
     backgroundColor: "#ffffff",
@@ -832,126 +922,6 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 16,
     fontWeight: "600",
-  },
-  bottomNav: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    padding: 16,
-    borderTopLeftRadius: 30,
-    borderTopRightRadius: 30,
-  },
-  navItem: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    height: 40,
-  },
-  activeNavIndicator: {
-    width: 4,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: '#352561',
-    position: 'absolute',
-    bottom: -6,
-  },
-  addButton: {
-    backgroundColor: '#6B5ECD',
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 20,
-    bottom: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 5,
-    elevation: 5,
-    zIndex: 1000,
-  },
-  bottomPadding: {
-    height: 80,
-  },
-  
-  // Instruction overlay styles
-  instructionsContainer: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-  },
-  instructionCard: {
-    position: 'absolute',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 16,
-    width: '80%',
-    maxWidth: 300,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 5,
-    elevation: 5,
-  },
-  instructionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#352561',
-    marginBottom: 8,
-  },
-  instructionText: {
-    fontSize: 15,
-    color: '#333',
-    marginBottom: 16,
-    lineHeight: 22,
-  },
-  progressIndicator: {
-    flexDirection: 'row',
-    marginBottom: 12,
-  },
-  progressDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#B2B5E7',
-    marginRight: 4,
-  },
-  activeDot: {
-    backgroundColor: '#6B5ECD',
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-  },
-  instructionButtons: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-  },
-
-
-
-
-  popupMenu: {
-    position: 'absolute',
-    bottom: 90,
-    left: 0,
-    right: 0,
-    backgroundColor: 'rgba(107, 94, 205, 0.95)',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    overflow: 'hidden',
-    zIndex: 999,
-  },
-  menuItem: {
-    paddingVertical: 14,
-    alignItems: 'center',
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
-  },
-  
-  menuText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
   },
 });
 
