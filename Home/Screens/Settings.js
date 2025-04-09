@@ -814,6 +814,7 @@ const PrivacyPolicyModal = () => (
       </View>
       
       {/* Main Container */}
+      <ScrollView contentContainerStyle={{paddingBottom: 20}}>
       <View style={[styles.sectionContainer, {backgroundColor: currentColors.cardBackground}]}>
         {/* Profile Section */}
         {renderProfileSection()}
@@ -879,7 +880,8 @@ const PrivacyPolicyModal = () => (
           {renderSettingsItem('Privacy policy', () => setIsPrivacyPolicyVisible(true), '>')}
           {renderSettingsItem('Terms and conditions', () => setIsTermsVisible(true), '>')}
         </View>
-      </View>
+      </View>  
+      </ScrollView>
 
       {/* Edit Profile Modal */}
       <EditProfileModal />
