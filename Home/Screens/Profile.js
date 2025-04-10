@@ -9,25 +9,34 @@ import {
   StatusBar,
   ScrollView,
   Animated,
+  Modal,
+  Alert,
+  Platform,
 } from "react-native";
-import { Ionicons, Feather } from "@expo/vector-icons";
-
+import { Ionicons, Feather, MaterialIcons } from "@expo/vector-icons";
+import * as ImagePicker from 'expo-image-picker';
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import { Avatar, Title, Caption, TouchableRipple } from "react-native-paper";
-// import { userAPI } from ".";
-
 import * as Haptics from 'expo-haptics';
 
 const ProfileScreen = ({navigation, route}) => {
   const [profileData, setProfileData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [profileImage, setProfileImage] = useState(require("./assets/Zuhar.jpg"));
+  const [showRankingModal, setShowRankingModal] = useState(false);
+  const [showReferralModal, setShowReferralModal] = useState(false);
+  const [showSocialMediaModal, setShowSocialMediaModal] = useState(false);
   const rotateAnim = useRef(new Animated.Value(0)).current;
-
   
   // Animation values
   const addButtonRotation = useRef(new Animated.Value(0)).current;
   const menuHeight = useRef(new Animated.Value(0)).current;
+
+  // XP Progress calculation (1850 out of 2500)
+  const currentXP = 1850;
+  const totalXP = 2500;
+  const xpProgress = (currentXP / totalXP) * 100;
 
   // Toggle menu animation
   const toggleMenu = () => {
@@ -47,6 +56,7 @@ const ProfileScreen = ({navigation, route}) => {
     ]).start();
     
     setMenuOpen(!menuOpen);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
   };
   
   // Interpolate rotation for + to x animation
@@ -54,7 +64,6 @@ const ProfileScreen = ({navigation, route}) => {
     inputRange: [0, 1],
     outputRange: ['0deg', '45deg']
   });
-
   
   // Interpolate height for menu animation
   const menuHeightInterpolation = menuHeight.interpolate({
@@ -62,17 +71,23 @@ const ProfileScreen = ({navigation, route}) => {
     outputRange: [0, 100]
   });
 
-
+  // Sample rankings data
+  const rankingsData = [
+    { rank: 1, name: "Sarah Johnson", xp: 3450, avatar: "🧑‍🦰" },
+    { rank: 2, name: "Michael Chen", xp: 3120, avatar: "👨‍🦱" },
+    { rank: 3, name: "Zuhar Ahamed", xp: 2500, avatar: "👨" },
+    { rank: 4, name: "Emma Williams", xp: 2350, avatar: "👩" },
+    { rank: 5, name: "David Kim", xp: 2280, avatar: "👨‍🦲" },
+    { rank: 6, name: "Sophia Garcia", xp: 2100, avatar: "👩‍🦱" },
+    { rank: 7, name: "Aiden Taylor", xp: 1950, avatar: "🧔" },
+    { rank: 8, name: "Olivia Martinez", xp: 1820, avatar: "👱‍♀️" },
+    { rank: 9, name: "Ethan Wilson", xp: 1760, avatar: "👦" },
+    { rank: 10, name: "Ava Anderson", xp: 1650, avatar: "👧" },
+  ];
 
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        // Commented out because userAPI is not defined
-        // const response = await userAPI.getProfile();
-        // if (response.success) {
-        //   setProfileData(response.data);
-        // }
-        
         // Simulate successful data fetch for demo
         setProfileData(userData);
       } catch (error) {
@@ -84,6 +99,32 @@ const ProfileScreen = ({navigation, route}) => {
 
     fetchUserData();
   }, []);
+
+  // Image picker functionality
+  const pickImage = async () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    
+    // Request permissions first
+    if (Platform.OS !== 'web') {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permission Denied', 'We need camera roll permissions to change your profile picture.');
+        return;
+      }
+    }
+
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 1,
+    });
+
+    if (!result.canceled) {
+      setProfileImage({ uri: result.assets[0].uri });
+    }
+  };
+
   // Sample data structures for your local images
   const badgeImages = [
     {
@@ -149,19 +190,186 @@ const ProfileScreen = ({navigation, route}) => {
     notifications: 21,
   };
 
-  const handleSettings = () => {
+  const handleLogout = () => {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    navigation.navigate('Settings');
+    Alert.alert(
+      "Logout",
+      "Are you sure you want to logout?",
+      [
+        {
+          text: "Cancel",
+          style: "cancel"
+        },
+        { 
+          text: "Logout", 
+          onPress: () => console.log("Logged out") 
+        }
+      ]
+    );
   };
+
+  // Ranking Modal
+  const RankingModal = () => (
+    <Modal
+      animationType="slide"
+      transparent={true}
+      visible={showRankingModal}
+      onRequestClose={() => setShowRankingModal(false)}
+    >
+      <View style={styles.modalOverlay}>
+        <View style={styles.modalContent}>
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>Global Ranking</Text>
+            <TouchableOpacity 
+              style={styles.closeButton} 
+              onPress={() => setShowRankingModal(false)}
+            >
+              <Ionicons name="close" size={24} color="#333" />
+            </TouchableOpacity>
+          </View>
+
+          <ScrollView style={styles.rankingsList}>
+            {rankingsData.map((user, index) => (
+              <View key={index} style={[
+                styles.rankingItem, 
+                user.name === userData.name ? styles.highlightedRank : null
+              ]}>
+                <View style={styles.rankPosition}>
+                  <Text style={styles.rankNumber}>{user.rank}</Text>
+                </View>
+                <Text style={styles.rankAvatar}>{user.avatar}</Text>
+                <View style={styles.rankInfo}>
+                  <Text style={styles.rankName}>{user.name}</Text>
+                  <View style={styles.xpContainer}>
+                    <Ionicons name="star" size={14} color="#FFD700" />
+                    <Text style={styles.rankXp}>{user.xp} XP</Text>
+                  </View>
+                </View>
+              </View>
+            ))}
+          </ScrollView>
+        </View>
+      </View>
+    </Modal>
+  );
+
+  // Social Media Modal
+  const SocialMediaModal = () => (
+    <Modal
+      animationType="slide"
+      transparent={true}
+      visible={showSocialMediaModal}
+      onRequestClose={() => setShowSocialMediaModal(false)}
+    >
+      <View style={styles.modalOverlay}>
+        <View style={[styles.modalContent, { height: 400 }]}>
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>Connect Social Media</Text>
+            <TouchableOpacity 
+              style={styles.closeButton} 
+              onPress={() => setShowSocialMediaModal(false)}
+            >
+              <Ionicons name="close" size={24} color="#333" />
+            </TouchableOpacity>
+          </View>
+
+          <ScrollView style={styles.socialMediaList}>
+            <TouchableOpacity style={styles.socialButton}>
+              <View style={[styles.socialIcon, { backgroundColor: '#3b5998' }]}>
+                <Ionicons name="logo-facebook" size={24} color="#fff" />
+              </View>
+              <Text style={styles.socialText}>Connect Facebook</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity style={styles.socialButton}>
+              <View style={[styles.socialIcon, { backgroundColor: '#00acee' }]}>
+                <Ionicons name="logo-twitter" size={24} color="#fff" />
+              </View>
+              <Text style={styles.socialText}>Connect Twitter</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity style={styles.socialButton}>
+              <View style={[styles.socialIcon, { backgroundColor: '#0e76a8' }]}>
+                <Ionicons name="logo-linkedin" size={24} color="#fff" />
+              </View>
+              <Text style={styles.socialText}>Connect LinkedIn</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity style={styles.socialButton}>
+              <View style={[styles.socialIcon, { backgroundColor: '#E1306C' }]}>
+                <Ionicons name="logo-instagram" size={24} color="#fff" />
+              </View>
+              <Text style={styles.socialText}>Connect Instagram</Text>
+            </TouchableOpacity>
+          </ScrollView>
+        </View>
+      </View>
+    </Modal>
+  );
+
+  // Referral Modal
+  const ReferralModal = () => (
+    <Modal
+      animationType="slide"
+      transparent={true}
+      visible={showReferralModal}
+      onRequestClose={() => setShowReferralModal(false)}
+    >
+      <View style={styles.modalOverlay}>
+        <View style={[styles.modalContent, { height: 350 }]}>
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>Your Referral Code</Text>
+            <TouchableOpacity 
+              style={styles.closeButton} 
+              onPress={() => setShowReferralModal(false)}
+            >
+              <Ionicons name="close" size={24} color="#333" />
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.referralContent}>
+            <View style={styles.referralCodeContainer}>
+              <Text style={styles.referralCode}>ZUHAR500</Text>
+              <TouchableOpacity style={styles.copyButton}>
+                <Ionicons name="copy-outline" size={20} color="#5d5b8d" />
+                <Text style={styles.copyText}>Copy</Text>
+              </TouchableOpacity>
+            </View>
+            
+            <Text style={styles.referralDescription}>
+              Share this code with your friends and earn 500 points when they sign up!
+            </Text>
+            
+            <View style={styles.shareContainer}>
+              <Text style={styles.shareTitle}>Share via</Text>
+              <View style={styles.shareButtons}>
+                <TouchableOpacity style={styles.shareButton}>
+                  <Ionicons name="logo-whatsapp" size={24} color="#25D366" />
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.shareButton}>
+                  <Ionicons name="mail-outline" size={24} color="#5d5b8d" />
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.shareButton}>
+                  <Ionicons name="logo-facebook" size={24} color="#3b5998" />
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.shareButton}>
+                  <Ionicons name="link-outline" size={24} color="#5d5b8d" />
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </View>
+      </View>
+    </Modal>
+  );
 
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" />
 
-      {/* Header - Updated to match the screenshot */}
+      {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerContent}>
-    
           <View style={styles.headerCenter}>
             <Text style={styles.headerTitle}>Profile</Text>
           </View>
@@ -175,18 +383,24 @@ const ProfileScreen = ({navigation, route}) => {
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        {/* Profile Info - Modified to make image left-aligned and profile details right-aligned */}
+        {/* Profile Info - Modified to make image clickable */}
         <View style={styles.profileContainer}>
           <View style={styles.profileContentRow}>
-            {/* Square Profile Image - Left aligned */}
-            <View style={styles.squareImageContainer}>
+            {/* Clickable Square Profile Image */}
+            <TouchableOpacity 
+              style={styles.squareImageContainer}
+              onPress={pickImage}
+            >
               <Image 
-                source={require("./assets/Zuhar.jpg")} 
+                source={profileImage} 
                 style={styles.squareProfileImage} 
               />
-            </View>
+              <View style={styles.editImageOverlay}>
+                <Ionicons name="camera" size={20} color="#FFF" />
+              </View>
+            </TouchableOpacity>
             
-            {/* Profile Details - Right aligned */}
+            {/* Profile Details */}
             <View style={styles.profileDetailsContainer}>
               <Text style={styles.username}>{userData.name}</Text>
               <Text style={styles.handle}>{userData.handle}</Text>
@@ -305,18 +519,27 @@ const ProfileScreen = ({navigation, route}) => {
           </View>
         </View>
 
-        {/* XP Points Section - New section added below badges */}
+        {/* XP Points Section with Progress Bar */}
         <View style={styles.bottomContainer}>
-          <View style={styles.infoBox2}>
+          <TouchableOpacity style={styles.infoBox2}>
             <View style={styles.xpIcon}>
               <Ionicons name="star" size={18} color="#FFF" />
             </View>
             <View style={styles.infoTextContainer}>
-              <Text style={styles.infoTitle}>2,500</Text>
+              <View style={styles.xpHeader}>
+                <Text style={styles.infoTitle}>{currentXP}</Text>
+                <Text style={styles.xpTotal}>/ {totalXP}</Text>
+              </View>
               <Text style={styles.infoSubtitle}>XP Points</Text>
+              {/* Progress Bar */}
+              <View style={styles.progressBarContainer}>
+                <View style={styles.progressBackground}>
+                  <View style={[styles.progressFill, { width: `${xpProgress}%` }]} />
+                </View>
+              </View>
             </View>
             <Ionicons name="chevron-forward" size={16} color="#FFD700" />
-          </View>
+          </TouchableOpacity>
         </View>
 
         {/* Bottom Info */}
@@ -344,53 +567,74 @@ const ProfileScreen = ({navigation, route}) => {
 
         {/* Account Menu */}
         <View style={styles.menuContainer}>
-          <TouchableOpacity style={styles.menuItem}>
-            <Text style={styles.menuItemText}>Account Information</Text>
+          <TouchableOpacity 
+            style={styles.menuItem}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              setShowRankingModal(true);
+            }}
+          >
+            <Text style={styles.menuItemText}>Ranking</Text>
             <Ionicons name="chevron-forward" size={20} color="#555" />
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.menuItem}>
+          <TouchableOpacity 
+            style={styles.menuItem}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              setShowSocialMediaModal(true);
+            }}
+          >
             <Text style={styles.menuItemText}>Add Social Media</Text>
             <Ionicons name="chevron-forward" size={20} color="#555" />
           </TouchableOpacity>
 
           <View style={styles.divider} />
 
-          <TouchableOpacity style={styles.menuItem}>
+          <TouchableOpacity 
+            style={styles.menuItem}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              setShowReferralModal(true);
+            }}
+          >
             <Text style={styles.menuItemText}>Referral Code</Text>
             <Ionicons name="chevron-forward" size={20} color="#555" />
           </TouchableOpacity>
 
           <View style={styles.divider} />
 
-          <TouchableOpacity
-            style={styles.menuItem}
-            onPress={handleSettings}
-          >
-            <Text style={styles.menuItemText}>Settings</Text>
+          <TouchableOpacity style={styles.menuItem}
+          
+          onPress={() => navigation.navigate("Settings", {}, { animation: 'slide_from_right' })}>
+            <Text style={styles.menuItemText}
+            
+            
+            >Settings</Text>
             <Ionicons name="chevron-forward" size={20} color="#555" />
           </TouchableOpacity>
         </View>
 
         {/* Logout Button */}
-        <TouchableOpacity style={styles.logoutButton}>
-          <Text style={styles.logoutButtonText}
-          
-          onPress={() => navigation && navigation.navigate('Login', {}, { animation: 'slide_from_right' })}>LOGOUT</Text>
+        <TouchableOpacity 
+          style={styles.logoutButton}
+          onPress={handleLogout}
+        >
+          <Text style={styles.logoutButtonText}>LOGOUT</Text>
         </TouchableOpacity>
       </ScrollView>
 
       {/* Popup Menu */}
       <Animated.View style={[styles.popupMenu, { height: menuHeightInterpolation }]}>
         <TouchableOpacity style={styles.menuItem}>
-          <Text style={styles.menuText} onPress={() => navigation.navigate('Translator', {}, { animation: 'slide_from_right' })}>Translator</Text>
+          <Text style={styles.menuText}>Translator</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.menuItem}>
-          <Text style={styles.menuText} onPress={() => navigation.navigate('Scheduler', {}, { animation: 'slide_from_right' })}>ADD SCHEDULE</Text>
+          <Text style={styles.menuText}>ADD SCHEDULE</Text>
         </TouchableOpacity>
       </Animated.View>
 
-      {/* Bottom Navigation - Fixed */}
+   {/* Bottom Navigation - Fixed */}
       <View style={styles.bottomNav}>
         <TouchableOpacity style={styles.navItem} 
           onPress={() => navigation && navigation.navigate("Home", {}, { animation: 'slide_from_right' })}>
@@ -411,6 +655,7 @@ const ProfileScreen = ({navigation, route}) => {
           style={styles.navItem} 
           onPress={() => navigation && navigation.navigate('Notifications', {}, { animation: 'slide_from_right' })}
         >
+
           <Ionicons name="notifications-outline" size={24} color="#9E9AA7" />
          
         </TouchableOpacity>
@@ -418,10 +663,18 @@ const ProfileScreen = ({navigation, route}) => {
           style={styles.navItem} 
           onPress={() => navigation && navigation.navigate('Profile', {}, { animation: 'slide_from_right' })}
         >
-          <Ionicons name="person-outline" size={24} color="#9E9AA7" />
           <View style={styles.activeNavIndicator} />
+
+          <Ionicons name="person-outline" size={24} color="#9E9AA7" />
         </TouchableOpacity>
       </View>
+
+
+
+      {/* Modals */}
+      <RankingModal />
+      <SocialMediaModal />
+      <ReferralModal />
     </SafeAreaView>
   );
 };
@@ -434,7 +687,6 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingBottom: 20,
   },
-  // Updated header styles to match the screenshot
   header: {
     backgroundColor: "#5d5b8d",
     paddingTop: 10,
@@ -473,7 +725,6 @@ const styles = StyleSheet.create({
   notificationIcon: {
     fontSize: 16,
   },
-  // Updated profile container to use row layout
   profileContainer: {
     paddingVertical: 20,
     paddingHorizontal: 20,
@@ -482,21 +733,31 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
-  // New square image container
   squareImageContainer: {
     width: 160,
     height: 160,
     marginRight: 20,
+    position: 'relative',
   },
   squareProfileImage: {
     width: '100%',
     height: '100%',
-    borderRadius: 8, // Small radius for slightly rounded corners
+    borderRadius: 8,
   },
-  // Profile details container
+  editImageOverlay: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    backgroundColor: 'rgba(93, 91, 141, 0.8)',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   profileDetailsContainer: {
     flex: 1,
-    alignItems: 'baseline', // Left align the text within the container
+    alignItems: 'baseline',
   },
   username: {
     color: "#333",
@@ -541,29 +802,6 @@ const styles = StyleSheet.create({
     color: "#777777",
     marginLeft: 20,
     fontSize: 14,
-  },
-  infoBoxWrapper: {
-    borderBottomColor: "#dddddd",
-    borderBottomWidth: 1,
-    borderTopColor: "#dddddd",
-    borderTopWidth: 1,
-    flexDirection: "row",
-    height: 100,
-    backgroundColor: "rgba(255, 255, 255, 0.3)",
-  },
-  infoBox: {
-    width: "50%",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  statsNumber: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "#333",
-  },
-  statsCaption: {
-    fontSize: 14,
-    color: "#666",
   },
   vouchersContainer: {
     flexDirection: "row",
@@ -880,6 +1118,389 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
+  },
+
+  container: {
+    flex: 1,
+    backgroundColor: "#c5c6e8",
+  },
+  scrollContent: {
+    paddingBottom: 20,
+  },
+  header: {
+    backgroundColor: "#5d5b8d",
+    paddingTop: 10,
+    paddingBottom: 15,
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
+  },
+  headerContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 16,
+  },
+  headerCenter: {
+    flex: 1,
+    alignItems: "center",
+  },
+  backButton: {
+    padding: 4,
+  },
+  headerTitle: {
+    color: "white",
+    fontSize: 22,
+    fontWeight: "500",
+    padding: 6,
+  },
+  notificationContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  notificationCount: {
+    color: "white",
+    fontSize: 16,
+    marginRight: 4,
+  },
+  notificationIcon: {
+    fontSize: 16,
+  },
+  profileContainer: {
+    paddingVertical: 20,
+    paddingHorizontal: 20,
+  },
+  profileContentRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  squareImageContainer: {
+    width: 160,
+    height: 160,
+    marginRight: 20,
+    position: 'relative',
+  },
+  squareProfileImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 8,
+  },
+  editImageOverlay: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    backgroundColor: 'rgba(93, 91, 141, 0.8)',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  profileDetailsContainer: {
+    flex: 1,
+    alignItems: 'baseline',
+  },
+  username: {
+    color: "#333",
+    fontSize: 24,
+    fontWeight: "bold",
+  },
+  handle: {
+    color: "#777777",
+    fontSize: 14,
+    lineHeight: 14,
+    fontWeight: "500",
+    marginTop: 2,
+  },
+  userId: {
+    color: "#777777",
+    fontSize: 14,
+    marginTop: 5,
+    fontWeight: "500",
+  },
+  levelContainer: {
+    marginTop: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 12,
+    backgroundColor: "#5d5b8d",
+  },
+  levelText: {
+    color: "white",
+    fontWeight: "600",
+    fontSize: 14,
+  },
+  userInfoSection: {
+    paddingHorizontal: 30,
+    marginBottom: 25,
+  },
+  row: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingTop: 10,
+  },
+  infoText: {
+    color: "#777777",
+    marginLeft: 20,
+    fontSize: 14,
+  },
+  vouchersContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    paddingHorizontal: 16,
+    marginTop: 16,
+  },
+  voucherCard: {
+    width: "48%",
+    backgroundColor: "white",
+    borderRadius: 12,
+    overflow: "hidden",
+    elevation: 2,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.22,
+    shadowRadius: 2.22,
+  },
+  voucherHeader: {
+    padding: 12,
+  },
+  purpleHeader: {
+    backgroundColor: "#C73BCC",
+  },
+  blueHeader: {
+    backgroundColor: "#3B77CC",
+  },
+  voucherHeaderTitle: {
+    color: "white",
+    fontWeight: "bold",
+    fontSize: 14,
+  },
+  voucherHeaderSubtitle: {
+    color: "white",
+    fontSize: 12,
+    marginTop: 2,
+  },
+  voucherBody: {
+    padding: 12,
+  },
+  voucherTitle: {
+    color: "#333",
+    fontSize: 14,
+    fontWeight: "500",
+  },
+  voucherPoints: {
+    color: "#FF9900",
+    fontSize: 13,
+    marginTop: 4,
+    marginBottom: 8,
+  },
+  redeemButton: {
+    borderWidth: 1,
+    borderColor: "#7C76A3",
+    borderRadius: 16,
+    paddingVertical: 6,
+    alignItems: "center",
+    marginTop: 4,
+  },
+  redeemButtonText: {
+    color: "#7C76A3",
+    fontWeight: "500",
+  },
+
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    width: '85%',
+    maxHeight: '70%',
+    backgroundColor: 'white',
+    borderRadius: 16,
+    paddingVertical: 16,
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  closeButton: {
+    padding: 4,
+  },
+  rankingsList: {
+    marginTop: 8,
+    paddingHorizontal: 16,
+  },
+  rankingItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+  },
+  highlightedRank: {
+    backgroundColor: 'rgba(93, 91, 141, 0.1)',
+  },
+  rankPosition: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: '#5d5b8d',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  rankNumber: {
+    color: 'white',
+    fontWeight: 'bold',
+  },
+  rankAvatar: {
+    fontSize: 24,
+    marginRight: 12,
+  },
+  rankInfo: {
+    flex: 1,
+  },
+  rankName: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#333',
+  },
+  xpContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 4,
+  },
+  rankXp: {
+    color: '#666',
+    marginLeft: 4,
+    fontSize: 14,
+  },
+  socialMediaList: {
+    marginTop: 8,
+    paddingHorizontal: 16,
+  },
+  socialButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+  },
+  socialIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 16,
+  },
+  socialText: {
+    fontSize: 16,
+    color: '#333',
+  },
+  referralContent: {
+    padding: 16,
+  },
+  referralCodeContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#f8f8f8',
+    borderRadius: 8,
+    padding: 16,
+    marginBottom: 16,
+  },
+  referralCode: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#5d5b8d',
+    letterSpacing: 1,
+  },
+  copyButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#ffffff',
+    borderRadius: 15,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+  },
+  copyText: {
+    color: '#5d5b8d',
+    fontWeight: '500',
+    marginLeft: 4,
+  },
+  referralDescription: {
+    fontSize: 14,
+    color: '#666',
+    lineHeight: 20,
+    textAlign: 'center',
+    marginBottom: 24,
+  },
+  shareContainer: {
+    alignItems: 'center',
+  },
+  shareTitle: {
+    fontSize: 16,
+    color: '#333',
+    fontWeight: '500',
+    marginBottom: 16,
+  },
+  shareButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    width: '100%',
+  },
+  shareButton: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#f8f8f8',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+  },
+  progressBarContainer: {
+    marginTop: 6,
+  },
+  progressBackground: {
+    height: 6,
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    borderRadius: 3,
+  },
+  progressFill: {
+    height: '100%',
+    backgroundColor: '#FFD700',
+    borderRadius: 3,
+  },
+  xpHeader: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+  },
+  xpTotal: {
+    color: 'rgba(255, 255, 255, 0.7)',
+    fontSize: 12,
+    marginLeft: 4,
   },
 });
 
