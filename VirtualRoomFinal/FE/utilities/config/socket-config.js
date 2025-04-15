@@ -6,7 +6,7 @@ const getSocketConnection = (serverUrl = null) => {
   // Default server URL based on platform
   // For Android emulator, 10.0.2.2 points to the host machine's localhost
   // For iOS simulator, localhost works
-  const defaultUrl = Platform.OS === "android" ? "http://10.0.2.2:3001" : "http://localhost:3001"
+  const defaultUrl = Platform.OS === "android" ? "http://192.168.58.40:3001" : "http://localhost:3001"
 
   const url = serverUrl || defaultUrl
 

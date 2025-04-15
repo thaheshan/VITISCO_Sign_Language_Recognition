@@ -174,6 +174,28 @@ async function insertSampleData() {
   }
 }
 
+// Root route for basic API information
+app.get("/", (req, res) => {
+  res.send(`
+    <h1>NotificationScreen API</h1>
+    <p>Available endpoints:</p>
+    <ul>
+      <li>GET /api/notifications - Get all notifications</li>
+      <li>GET /api/feedbacks - Get all feedbacks</li>
+      <li>GET /api/suggestions - Get all suggestions</li>
+      <li>GET /api/notifications/:id - Get notification by ID</li>
+      <li>POST /api/notifications - Create new notification</li>
+      <li>POST /api/feedbacks - Create new feedback</li>
+      <li>POST /api/suggestions - Create new suggestion</li>
+    </ul>
+  `);
+});
+
+// Health check endpoint for monitoring
+app.get("/health", (req, res) => {
+  res.status(200).json({ status: "ok" });
+});
+
 // Routes
 // GET all notifications with optional time filter
 app.get("/api/notifications", async (req, res) => {
@@ -389,3 +411,4 @@ process.on("uncaughtException", (error) => {
 process.on("unhandledRejection", (reason, promise) => {
   console.error("Unhandled Rejection at:", promise, "reason:", reason);
 });
+

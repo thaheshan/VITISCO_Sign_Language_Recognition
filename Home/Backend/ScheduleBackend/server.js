@@ -16,7 +16,6 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(morgan('dev')); // Logging
 
-// MySQL Connection Pool - Fixed to use environment variables properly
 // MySQL Connection Pool
 const pool = mysql.createPool({
   host: process.env.DB_HOST || '34.67.39.101',
@@ -29,25 +28,25 @@ const pool = mysql.createPool({
 });
 
 
+const CLOUD_API_URL = "https://backend-59-dot-future-champion-452808-r4.uw.r.appspot.com/";
 
-// Utility function to get the API URL
+
 const getApiUrl = () => {
-  // For Expo Go, use your computer's local network IP
-  return process.env.API_URL || 'http://192.168.58.40:5000';
+  // For Expo Go, use your computer's local network IP as a fallback
+  const LOCAL_API_URL = "http://192.168.58.40:5000/api";
   
   // Alternative approach using Expo's manifest.debuggerHost (if available)
   // This works in some Expo environments but not all
   /*
-  const debuggerHost = Constants.manifest?.debuggerHost;
-  if (debuggerHost) {
+  if (Constants.manifest?.debuggerHost) {
     // Extract the IP address from the debuggerHost 
-    const hostIP = debuggerHost.split(':')[0];
-    return `http://${hostIP}:5000`;
+    const hostIP = Constants.manifest.debuggerHost.split(':')[0];
+    return `http://${hostIP}:5000/api`;
   }
-  return 'http://YOUR_FALLBACK_IP:5000';
   */
+  
+  return { cloud: CLOUD_API_URL, local: LOCAL_API_URL };
 };
-
 // Make API URL available to routes
 app.locals.apiUrl = getApiUrl();
 
@@ -86,7 +85,7 @@ async function initializeDatabase() {
       )
     `);
     
-    // Create user_profiles table
+    // Create user_profiles table - Fixed the missing default values for target_language and native_language
     await connection.query(`
       CREATE TABLE IF NOT EXISTS user_profiles (
         id INT AUTO_INCREMENT PRIMARY KEY,
@@ -97,23 +96,23 @@ async function initializeDatabase() {
         speaking_progress INT DEFAULT 0,
         reading_progress INT DEFAULT 0,
         overall_progress INT DEFAULT 0,
-        target_language VARCHAR(50),
-        native_language VARCHAR(50),
+        target_language VARCHAR(50) DEFAULT 'English',
+        native_language VARCHAR(50) DEFAULT 'English',
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
       )
     `);
     
-    // Create tasks table
+    // Create tasks table - Fixed the task table schema, renamed date and time fields to avoid reserved word conflicts
     await connection.query(`
       CREATE TABLE IF NOT EXISTS tasks (
         id INT AUTO_INCREMENT PRIMARY KEY,
         user_id INT NOT NULL,
         title VARCHAR(255) NOT NULL,
         description TEXT,
-        date DATE NOT NULL,
-        time TIME NOT NULL,
+        task_date DATE NOT NULL,
+        task_time TIME NOT NULL,
         reminder_minutes INT DEFAULT 15,
         progress ENUM('Not Started', 'In Progress', 'Completed') DEFAULT 'Not Started',
         notification_id VARCHAR(255),
@@ -166,7 +165,7 @@ async function initializeDatabase() {
       await connection.query(`
         INSERT INTO user_profiles 
         (user_id, vocabulary_progress, grammar_progress, listening_progress, speaking_progress, reading_progress, overall_progress, target_language, native_language) 
-        VALUES (?, 65, 78, 42, 51, 70, 61, 'Spanish', 'English')
+        VALUES (?, 0, 0, 0, 0, 0, 0, 'Spanish', 'English')
       `, [userId]);
     }
     
@@ -333,15 +332,15 @@ app.get('/tasks', async (req, res) => {
         id,
         title,
         description,
-        DATE_FORMAT(date, '%Y-%m-%d') as date,
-        TIME_FORMAT(time, '%H:%i') as time,
+        DATE_FORMAT(task_date, '%Y-%m-%d') as date,
+        TIME_FORMAT(task_time, '%H:%i') as time,
         reminder_minutes,
         progress,
         notification_id,
         suggested_task_id
       FROM tasks
       WHERE user_id = ?
-      ORDER BY date ASC, time ASC
+      ORDER BY task_date ASC, task_time ASC
     `, [DEFAULT_USER_ID]);
     
     // Add API URL to response metadata
@@ -369,15 +368,15 @@ app.get('/tasks/date/:date', async (req, res) => {
         id,
         title,
         description,
-        DATE_FORMAT(date, '%Y-%m-%d') as date,
-        TIME_FORMAT(time, '%H:%i') as time,
+        DATE_FORMAT(task_date, '%Y-%m-%d') as date,
+        TIME_FORMAT(task_time, '%H:%i') as time,
         reminder_minutes,
         progress,
         notification_id,
         suggested_task_id
       FROM tasks
-      WHERE user_id = ? AND date = ?
-      ORDER BY time ASC
+      WHERE user_id = ? AND task_date = ?
+      ORDER BY task_time ASC
     `, [DEFAULT_USER_ID, date]);
     
     // Add API URL to response metadata
@@ -401,8 +400,8 @@ app.get('/tasks/:id', async (req, res) => {
         id,
         title,
         description,
-        DATE_FORMAT(date, '%Y-%m-%d') as date,
-        TIME_FORMAT(time, '%H:%i') as time,
+        DATE_FORMAT(task_date, '%Y-%m-%d') as date,
+        TIME_FORMAT(task_time, '%H:%i') as time,
         reminder_minutes,
         progress,
         notification_id,
@@ -457,7 +456,7 @@ app.post('/tasks', async (req, res) => {
     
     const [result] = await pool.query(`
       INSERT INTO tasks 
-      (user_id, title, description, date, time, reminder_minutes, progress, notification_id, suggested_task_id)
+      (user_id, title, description, task_date, task_time, reminder_minutes, progress, notification_id, suggested_task_id)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     `, [
       DEFAULT_USER_ID,
@@ -479,8 +478,8 @@ app.post('/tasks', async (req, res) => {
         id,
         title,
         description,
-        DATE_FORMAT(date, '%Y-%m-%d') as date,
-        TIME_FORMAT(time, '%H:%i') as time,
+        DATE_FORMAT(task_date, '%Y-%m-%d') as date,
+        TIME_FORMAT(task_time, '%H:%i') as time,
         reminder_minutes,
         progress,
         notification_id,
@@ -532,7 +531,7 @@ app.put('/tasks/:id', async (req, res) => {
       if (!isValidDate(date)) {
         return res.status(400).json({ message: 'Invalid date format. Please use YYYY-MM-DD' });
       }
-      updateQuery += ', date = ?';
+      updateQuery += ', task_date = ?';
       params.push(date);
     }
     
@@ -540,7 +539,7 @@ app.put('/tasks/:id', async (req, res) => {
       if (!isValidTime(time)) {
         return res.status(400).json({ message: 'Invalid time format. Please use HH:MM' });
       }
-      updateQuery += ', time = ?';
+      updateQuery += ', task_time = ?';
       params.push(time);
     }
     
@@ -574,8 +573,8 @@ app.put('/tasks/:id', async (req, res) => {
         id,
         title,
         description,
-        DATE_FORMAT(date, '%Y-%m-%d') as date,
-        TIME_FORMAT(time, '%H:%i') as time,
+        DATE_FORMAT(task_date, '%Y-%m-%d') as date,
+        TIME_FORMAT(task_time, '%H:%i') as time,
         reminder_minutes,
         progress,
         notification_id,
@@ -767,4 +766,5 @@ app.listen(PORT, () => {
 });
 
 module.exports = app;
+
 

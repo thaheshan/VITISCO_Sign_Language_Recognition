@@ -1,0 +1,26 @@
+steps:
+- name: 'gcr.io/cloud-builders/npm'
+  dir: 'backend'
+  args: ['install']
+
+- name: 'gcr.io/cloud-builders/npm'
+  dir: 'backend'
+  args: ['test']
+
+- name: 'gcr.io/cloud-builders/gcloud'
+  args: ['app', 'deploy']
+  dir: 'backend'
+
+- name: 'gcr.io/cloud-builders/npm'
+  dir: 'frontend'
+  args: ['install']
+
+- name: 'gcr.io/cloud-builders/npm'
+  dir: 'frontend'
+  args: ['run', 'build']
+
+# Firebase App Distribution (optional)
+# - name: 'gcr.io/firebase-ci/firebase'
+#   args: ['appdistribution:distribute', 'build/app.apk', '--app', '<firebase-app-id>', '--groups', 'testers']
+
+timeout: 1200s
