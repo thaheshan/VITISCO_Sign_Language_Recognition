@@ -113,7 +113,6 @@ axios.get(`${API_BASE_URL}/api/message`)
     } else {
       console.log("Error setting up request:", error.message);
     }
-    setApiError("Could not connect to server. Please try again later.");
   });
   
   
