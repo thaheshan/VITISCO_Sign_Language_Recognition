@@ -53,7 +53,7 @@ export default function  GetStartedScreen2({ navigate }) {
        </Animated.Text>
        
        <Image
-         source={require('../../assets/icon.png')}
+         source={require('../../assets/starts.png')}
          style={styles.characterImage}
          resizeMode="contain"
        />
