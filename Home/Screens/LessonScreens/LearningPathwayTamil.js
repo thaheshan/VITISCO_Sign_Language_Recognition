@@ -328,8 +328,8 @@ export default function LearningPathwayScreen({ route, navigate }) {
     return (
       <Animated.View style={{
         position: 'absolute',
-        left: x - 15,
-        top: y - 80,
+        left: x - 75,
+        top: y - 10,
         transform: [
           { 
             rotateZ: flagWaveAnim.interpolate({
@@ -681,13 +681,7 @@ export default function LearningPathwayScreen({ route, navigate }) {
             }
           ]}
         >
-          <BlurView intensity={80} style={learningPathwayStyles.pathwayCloudCover}>
-            <MaterialIcons name="explore" size={50} color="rgba(56, 55, 115, 0.5)" />
-            <Text style={learningPathwayStyles.pathwayMysteryText}>The journey continues...</Text>
-            <Text style={learningPathwayStyles.pathwayMysterySubtext}>
-              More challenges await in future updates
-            </Text>
-          </BlurView>
+       
         </Animated.View>
       </ScrollView>
       
