@@ -1,4 +1,4 @@
-// App.js - Task Manager for Language Learning App with improved features
+// App.js - Task Manager for Language Learning App with improved notifications
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   View, 
@@ -12,7 +12,8 @@ import {
   SafeAreaView,
   ActivityIndicator,
   Alert,
-  Platform
+  Platform,
+  Switch
 } from 'react-native';
 import { Calendar } from 'react-native-calendars';
 import DropDownPicker from 'react-native-dropdown-picker';
@@ -69,10 +70,22 @@ const App = () => {
   const [reminderTime, setReminderTime] = useState(15); // minutes before
   const [showTimePicker, setShowTimePicker] = useState(false);
   
+  // Enhanced notification settings
+  const [enableNotifications, setEnableNotifications] = useState(true);
+  const [customReminderTime, setCustomReminderTime] = useState('');
+  const [showCustomReminderInput, setShowCustomReminderInput] = useState(false);
+  const [multipleReminders, setMultipleReminders] = useState(false);
+  const [secondReminderTime, setSecondReminderTime] = useState(60); // minutes before
+  const [notificationSettings, setNotificationSettings] = useState({
+    sound: true,
+    vibration: true,
+  });
+  const [notificationsSettingsModal, setNotificationsSettingsModal] = useState(false);
+  
   // Setup marked dates for calendar
   const [markedDates, setMarkedDates] = useState({});
 
-  // Reference for notification listener
+  // Reference for notification listeners
   const notificationListener = useRef();
   const responseListener = useRef();
 
@@ -102,6 +115,8 @@ const App = () => {
           importance: Notifications.AndroidImportance.MAX,
           vibrationPattern: [0, 250, 250, 250],
           lightColor: '#8676D1',
+          sound: notificationSettings.sound ? true : false,
+          enableVibrate: notificationSettings.vibration,
         });
       }
       
@@ -109,6 +124,42 @@ const App = () => {
     } catch (error) {
       console.error('Error requesting notification permissions:', error);
       return false;
+    }
+  };
+
+  // Save notification settings to AsyncStorage
+  const saveNotificationSettings = async () => {
+    try {
+      await AsyncStorage.setItem('notificationSettings', JSON.stringify({
+        enabled: enableNotifications,
+        defaultReminderTime: reminderTime,
+        sound: notificationSettings.sound,
+        vibration: notificationSettings.vibration,
+        multipleReminders: multipleReminders,
+        secondReminderTime: secondReminderTime
+      }));
+    } catch (err) {
+      console.error('Error saving notification settings:', err);
+    }
+  };
+
+  // Load notification settings from AsyncStorage
+  const loadNotificationSettings = async () => {
+    try {
+      const settings = await AsyncStorage.getItem('notificationSettings');
+      if (settings) {
+        const parsedSettings = JSON.parse(settings);
+        setEnableNotifications(parsedSettings.enabled);
+        setReminderTime(parsedSettings.defaultReminderTime || 15);
+        setNotificationSettings({
+          sound: parsedSettings.sound !== undefined ? parsedSettings.sound : true,
+          vibration: parsedSettings.vibration !== undefined ? parsedSettings.vibration : true,
+        });
+        setMultipleReminders(parsedSettings.multipleReminders || false);
+        setSecondReminderTime(parsedSettings.secondReminderTime || 60);
+      }
+    } catch (err) {
+      console.error('Error loading notification settings:', err);
     }
   };
 
@@ -122,14 +173,35 @@ const App = () => {
         const response = await api.get('/tasks');
         const fetchedTasks = response.data;
         
-        // Schedule notifications for all tasks
-        for (const task of fetchedTasks) {
-          if (!task.notificationId && new Date(task.date) >= new Date()) {
-            const notificationId = await scheduleTaskNotification(task);
-            if (notificationId) {
-              task.notificationId = notificationId;
-              // Update task on server with notification ID
-              await api.put(`/tasks/${task.id}`, { notificationId });
+        // Schedule notifications for all tasks if enabled
+        if (enableNotifications) {
+          for (const task of fetchedTasks) {
+            if (new Date(task.date) >= new Date()) {
+              // Cancel existing notifications first
+              if (task.notificationId) {
+                await Notifications.cancelScheduledNotificationAsync(task.notificationId);
+              }
+              if (task.secondNotificationId) {
+                await Notifications.cancelScheduledNotificationAsync(task.secondNotificationId);
+              }
+              
+              // Schedule new notifications
+              const notificationIds = await scheduleTaskNotifications(task);
+              
+              // Update task with new notification IDs
+              if (notificationIds.primary) {
+                task.notificationId = notificationIds.primary;
+                if (task.id) { // Skip for temporary offline tasks
+                  await api.put(`/tasks/${task.id}`, { 
+                    notificationId: notificationIds.primary,
+                    secondNotificationId: notificationIds.secondary || null 
+                  });
+                }
+              }
+              
+              if (notificationIds.secondary) {
+                task.secondNotificationId = notificationIds.secondary;
+              }
             }
           }
         }
@@ -160,16 +232,13 @@ const App = () => {
     }
   };
 
-  // Schedule notification for a task
-  const scheduleTaskNotification = async (task) => {
+  // Schedule notifications for a task
+  const scheduleTaskNotifications = async (task) => {
+    if (!enableNotifications) return { primary: null, secondary: null };
+    
     try {
       const hasPermission = await registerForPushNotifications();
-      if (!hasPermission) return null;
-      
-      // Cancel any existing notification for this task
-      if (task.notificationId) {
-        await Notifications.cancelScheduledNotificationAsync(task.notificationId);
-      }
+      if (!hasPermission) return { primary: null, secondary: null };
       
       // Parse task date and time
       const taskDate = new Date(task.date);
@@ -181,27 +250,66 @@ const App = () => {
         0
       );
       
-      // Subtract reminder minutes
-      const notificationDate = new Date(taskDate.getTime() - (task.reminderMinutes * 60000));
+      // Calculate reminder times
+      const reminderMinutes = task.reminderMinutes || reminderTime;
+      const primaryReminderDate = new Date(taskDate.getTime() - (reminderMinutes * 60000));
       
-      // Only schedule if it's in the future
-      if (notificationDate > new Date()) {
-        const notificationId = await Notifications.scheduleNotificationAsync({
+      const result = { primary: null, secondary: null };
+      
+      // Schedule primary notification if it's in the future
+      if (primaryReminderDate > new Date()) {
+        result.primary = await Notifications.scheduleNotificationAsync({
           content: {
             title: `Reminder: ${task.title}`,
             body: task.description || 'Time for your language learning task!',
             data: { taskId: task.id },
+            sound: notificationSettings.sound,
+            vibrate: notificationSettings.vibration ? [0, 250, 250, 250] : null,
           },
-          trigger: notificationDate,
+          trigger: primaryReminderDate,
         });
-        
-        return notificationId;
       }
       
-      return null;
+      // Schedule second notification if multiple reminders enabled
+      if (multipleReminders && task.useMultipleReminders !== false) {
+        const secondReminderMins = task.secondReminderMinutes || secondReminderTime;
+        if (secondReminderMins > reminderMinutes) {
+          // If second reminder is set to be earlier than first reminder, swap them
+          const secondReminderDate = new Date(taskDate.getTime() - (secondReminderMins * 60000));
+          
+          if (secondReminderDate > new Date()) {
+            result.secondary = await Notifications.scheduleNotificationAsync({
+              content: {
+                title: `Early Reminder: ${task.title}`,
+                body: `You have a language task coming up in ${secondReminderMins} minutes`,
+                data: { taskId: task.id },
+                sound: notificationSettings.sound,
+                vibrate: notificationSettings.vibration ? [0, 250, 250, 250] : null,
+              },
+              trigger: secondReminderDate,
+            });
+          }
+        }
+      }
+      
+      return result;
     } catch (error) {
       console.error('Error scheduling notification:', error);
-      return null;
+      return { primary: null, secondary: null };
+    }
+  };
+
+  // Cancel notifications for a task
+  const cancelTaskNotifications = async (task) => {
+    try {
+      if (task.notificationId) {
+        await Notifications.cancelScheduledNotificationAsync(task.notificationId);
+      }
+      if (task.secondNotificationId) {
+        await Notifications.cancelScheduledNotificationAsync(task.secondNotificationId);
+      }
+    } catch (error) {
+      console.error('Error cancelling notifications:', error);
     }
   };
 
@@ -305,6 +413,7 @@ const App = () => {
 
   // Initial data loading
   useEffect(() => {
+    loadNotificationSettings();
     registerForPushNotifications();
     fetchTasks();
     fetchUserProfile();
@@ -341,6 +450,11 @@ const App = () => {
     };
   }, []);
 
+  // Save notification settings when they change
+  useEffect(() => {
+    saveNotificationSettings();
+  }, [enableNotifications, reminderTime, notificationSettings, multipleReminders, secondReminderTime]);
+
   // Update marked dates whenever tasks change
   useEffect(() => {
     const newMarkedDates = {};
@@ -366,6 +480,24 @@ const App = () => {
     AsyncStorage.setItem('offlineTasks', JSON.stringify(tasks));
   }, [tasks, selectedDate]);
 
+  // Handle custom reminder time input
+  const handleCustomReminderChange = (text) => {
+    // Only allow numbers
+    const numericValue = text.replace(/[^0-9]/g, '');
+    setCustomReminderTime(numericValue);
+  };
+
+  const saveCustomReminderTime = () => {
+    const customMinutes = parseInt(customReminderTime);
+    if (customMinutes > 0) {
+      setReminderTime(customMinutes);
+      setShowCustomReminderInput(false);
+      setCustomReminderTime('');
+    } else {
+      Alert.alert('Invalid Time', 'Please enter a valid number of minutes');
+    }
+  };
+
   // Add a new task
   const addTask = async (isSuggested = false) => {
     try {
@@ -384,6 +516,8 @@ const App = () => {
         time: formattedTime,
         date: selectedDate || new Date().toISOString().split('T')[0],
         reminderMinutes: reminderTime,
+        useMultipleReminders: multipleReminders,
+        secondReminderMinutes: secondReminderTime,
         progress: 'Not Started',
         suggestedTaskId: isSuggested ? selectedSuggestedTask : null
       };
@@ -393,12 +527,20 @@ const App = () => {
         const response = await api.post('/tasks', taskData);
         const newTask = response.data;
         
-        // Schedule notification
-        const notificationId = await scheduleTaskNotification(newTask);
-        if (notificationId) {
-          newTask.notificationId = notificationId;
-          // Update task on server with notification ID
-          await api.put(`/tasks/${newTask.id}`, { notificationId });
+        // Schedule notifications if enabled
+        if (enableNotifications) {
+          const notificationIds = await scheduleTaskNotifications(newTask);
+          if (notificationIds.primary || notificationIds.secondary) {
+            // Update task with notification IDs
+            newTask.notificationId = notificationIds.primary;
+            newTask.secondNotificationId = notificationIds.secondary;
+            
+            // Update task on server with notification IDs
+            await api.put(`/tasks/${newTask.id}`, { 
+              notificationId: notificationIds.primary,
+              secondNotificationId: notificationIds.secondary 
+            });
+          }
         }
         
         // Add the new task with the ID from the server
@@ -410,7 +552,7 @@ const App = () => {
         setSuggestedTasksOpen(false);
         
         // Show confirmation
-        Alert.alert('Success', 'Task added successfully and reminder set!');
+        Alert.alert('Success', 'Task added successfully' + (enableNotifications ? ' and reminder set!' : '!'));
       } catch (err) {
         console.error('Error adding task to server:', err);
         
@@ -418,10 +560,15 @@ const App = () => {
         const tempId = Date.now().toString();
         const newTask = { ...taskData, id: tempId };
         
-        // Schedule notification for offline task
-        const notificationId = await scheduleTaskNotification(newTask);
-        if (notificationId) {
-          newTask.notificationId = notificationId;
+        // Schedule notification for offline task if enabled
+        if (enableNotifications) {
+          const notificationIds = await scheduleTaskNotifications(newTask);
+          if (notificationIds.primary) {
+            newTask.notificationId = notificationIds.primary;
+          }
+          if (notificationIds.secondary) {
+            newTask.secondNotificationId = notificationIds.secondary;
+          }
         }
         
         // Add to local state
@@ -435,7 +582,8 @@ const App = () => {
         
         Alert.alert(
           'Offline Mode',
-          'Your task has been saved locally and will sync when you reconnect to the internet. Reminder has been set!',
+          'Your task has been saved locally and will sync when you reconnect to the internet.' + 
+          (enableNotifications ? ' Reminder has been set!' : ''),
           [{ text: 'OK' }]
         );
       }
@@ -466,7 +614,9 @@ const App = () => {
         description: taskDescription,
         time: formattedTime,
         date: selectedDate || editingTask.date,
-        reminderMinutes: reminderTime
+        reminderMinutes: reminderTime,
+        useMultipleReminders: multipleReminders,
+        secondReminderMinutes: secondReminderTime
       };
       
       // Update in local state first for responsiveness
@@ -474,16 +624,28 @@ const App = () => {
         task.id === editingTask.id ? updatedTask : task
       ));
       
-      // Schedule new notification
-      const notificationId = await scheduleTaskNotification(updatedTask);
-      if (notificationId) {
-        updatedTask.notificationId = notificationId;
+      // Cancel existing notifications
+      await cancelTaskNotifications(editingTask);
+      
+      // Schedule new notifications if enabled
+      if (enableNotifications) {
+        const notificationIds = await scheduleTaskNotifications(updatedTask);
+        if (notificationIds.primary) {
+          updatedTask.notificationId = notificationIds.primary;
+        }
+        if (notificationIds.secondary) {
+          updatedTask.secondNotificationId = notificationIds.secondary;
+        }
+      } else {
+        // Clear notification IDs if notifications are disabled
+        updatedTask.notificationId = null;
+        updatedTask.secondNotificationId = null;
       }
       
       // Try to update on server
       try {
         await api.put(`/tasks/${editingTask.id}`, updatedTask);
-        Alert.alert('Success', 'Task updated successfully and reminder reset!');
+        Alert.alert('Success', 'Task updated successfully' + (enableNotifications ? ' and reminder reset!' : '!'));
       } catch (err) {
         console.error('Error updating task on server:', err);
         
@@ -517,10 +679,8 @@ const App = () => {
       const taskToRemove = tasks.find(task => task.id === taskId);
       if (!taskToRemove) return;
       
-      // Cancel any scheduled notification
-      if (taskToRemove.notificationId) {
-        await Notifications.cancelScheduledNotificationAsync(taskToRemove.notificationId);
-      }
+      // Cancel any scheduled notifications
+      await cancelTaskNotifications(taskToRemove);
       
       // Remove from local state first for responsiveness
       setTasks(prevTasks => prevTasks.filter(task => task.id !== taskId));
@@ -565,7 +725,9 @@ const App = () => {
     now.setHours(parseInt(timeComponents[0]), parseInt(timeComponents[1]));
     setTaskTime(now);
     
-    setReminderTime(task.reminderMinutes);
+    setReminderTime(task.reminderMinutes || reminderTime);
+    setMultipleReminders(task.useMultipleReminders || false);
+    setSecondReminderTime(task.secondReminderMinutes || secondReminderTime);
     setSelectedDate(task.date);
     setEditTaskModalVisible(true);
   };
@@ -626,6 +788,8 @@ const App = () => {
     setTaskTime(new Date());
     setReminderTime(15);
     setSelectedSuggestedTask(null);
+    setShowCustomReminderInput(false);
+    setCustomReminderTime('');
   };
 
   // Filter tasks by date
