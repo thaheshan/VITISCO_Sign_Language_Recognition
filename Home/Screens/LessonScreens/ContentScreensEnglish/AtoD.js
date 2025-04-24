@@ -135,25 +135,25 @@ export default function AlphabetLessonScreen({ navigate , ...props}) {
             letter: 'A', 
             sign: require('../../../assets/videos/Thahee.mp4'), 
             signText: 'Hand forms letter A shape',
-            characterVideo: require('../../../assets/videos/Scene - Jackie.mp4')
+            characterVideo: require('../../../Characters/0323 (2)(2).mp4')
           },
           { 
             letter: 'B', 
             sign: require('../../../assets/videos/Thahee.mp4'), 
             signText: 'Open palm moving rightward',
-            characterVideo: require('../../../assets/videos/Scene - Jackie.mp4')
+            characterVideo: require('../../../Characters/0323 (2)(2).mp4')
           },
           { 
             letter: 'C', 
             sign: require('../../../assets/videos/Thahee.mp4'), 
             signText: 'Extended palm with circular motion',
-            characterVideo: require('../../../assets/videos/Scene - Jackie.mp4')
+            characterVideo: require('../../../Characters/0323 (2)(2).mp4')
           },
           { 
             letter: 'D', 
             sign: require('../../../assets/videos/Thahee.mp4'), 
             signText: 'Pinky finger pointing upward',
-            characterVideo: require('../../../assets/videos/Scene - Jackie.mp4')
+            characterVideo: require('../../../Characters/0323 (2)(2).mp4')
           },
           
         ],
@@ -166,8 +166,8 @@ export default function AlphabetLessonScreen({ navigate , ...props}) {
   
   // Default character video for waiting and congrats states
   const defaultCharacterVideos = {
-    waiting: require('../../../assets/videos/Scene - Jackie.mp4'),
-    congrats: require('../../../assets/videos/Scene - Jackie.mp4')
+    waiting: require('../../../Characters/0323 (2)(8).mp4'),
+    congrats: require('../../../Characters/0323 (2)(9).mp4')
   };
   
   // Get appropriate video based on character state and current card
