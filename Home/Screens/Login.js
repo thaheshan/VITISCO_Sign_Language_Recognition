@@ -219,7 +219,7 @@ const LoginScreen = ({navigation}) =>  {
       <StatusBar barStyle="dark-content" />
       <View style={styles.logoSection}>
         <Logo />
-        <Text style={styles.brandName}>VITISCO</Text>
+       
         {apiMessage && <Text style={styles.apiMessageText}>{apiMessage}</Text>}
         {apiError && <Text style={styles.apiErrorText}>{apiError}</Text>}
       </View>
@@ -290,7 +290,6 @@ const handleLogin = () => {
     >
       <StatusBar barStyle="dark-content" />
       <View style={styles.header}>
-        <Text style={styles.brandText}>VITISCO</Text>
       </View>
       <View style={styles.logoSection}>
         <Logo />
@@ -384,7 +383,7 @@ const handleLogin = () => {
         </TouchableOpacity>
       </View>
       <TouchableOpacity 
-        style={styles.backButton}
+        style={styles.backButton2}
         onPress={() => setCurrentScreen('welcome')}
         activeOpacity={0.7}
       >
@@ -494,10 +493,13 @@ const handleLogin = () => {
         { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }
       ]}
     >
+      
       <StatusBar barStyle="dark-content" />
-      <View style={styles.smallLogoContainer}>
+      <View style={styles.smallLogoContainer2}>
         <Logo small />
       </View>
+
+      
       <View style={styles.formContainerWithIndicator}>
         <Text style={styles.stepIndicator}>2 of 3</Text>
         <View style={styles.inputContainer}>
@@ -582,7 +584,15 @@ const handleLogin = () => {
         >
           <Text style={styles.buttonText}>Next</Text>
         </TouchableOpacity>
+        
       </View>
+         <TouchableOpacity 
+        style={styles.backButton}
+        onPress={() => setCurrentScreen('welcome')}
+        activeOpacity={0.7}
+      >
+        <Ionicons name="arrow-back" size={24} color="#333" />
+      </TouchableOpacity>
     </Animated.View>
   );
 
@@ -654,6 +664,14 @@ const handleLogin = () => {
           <Text style={styles.buttonText}  onPress={() => navigation.navigate('Home', {}, { animation: 'slide_from_right' })}>Finish</Text>
         </TouchableOpacity>
       </View>
+
+         <TouchableOpacity 
+        style={styles.backButton}
+        onPress={() => setCurrentScreen('welcome')}
+        activeOpacity={0.7}
+      >
+        <Ionicons name="arrow-back" size={24} color="#333" />
+      </TouchableOpacity>
     </Animated.View>
   );
 
@@ -945,6 +963,11 @@ const styles = StyleSheet.create({
     paddingTop: 40,
     paddingBottom: 10,
   },
+  smallLogoContainer2: {
+    alignItems: 'center',
+    paddingTop: 20,
+    paddingBottom: 10,
+  },
   logoContainer: {
     height: 120,
     width: 120,
@@ -952,12 +975,15 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   logo: {
-    width: 100,
-    height: 100,
+    width: 250,
+    height: 250,
   },
   smallLogo: {
     width: 50,
-    height: 50,
+    height: 250,
+    right: 40,
+    marginTop: -155,
+    marginLeft: -260,
   },
   brandName: {
     fontSize: 24,
@@ -967,7 +993,7 @@ const styles = StyleSheet.create({
     letterSpacing: 8,
   },
   apiMessageText: {
-    marginTop: 15,
+    marginTop: 75,
     fontSize: 16,
     color: '#4B3F72',
     textAlign: 'center',
@@ -1086,9 +1112,14 @@ const styles = StyleSheet.create({
     width: 24,
     height: 24,
   },
-  backButton: {
+   backButton2: {
     position: 'absolute',
     top: 40,
+    left: 20,
+  },
+  backButton: {
+    position: 'absolute',
+    top: 150,
     left: 20,
   },
   formLabel: {

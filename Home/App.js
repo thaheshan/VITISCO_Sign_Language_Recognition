@@ -50,6 +50,8 @@ const App = () => {
   }
 
   return (
+
+    
     <NavigationContainer>
       <Stack.Navigator initialRouteName={ "Login" }>
         <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
@@ -67,6 +69,8 @@ const App = () => {
         <Stack.Screen name="LearnPathway" component={LearningPathwayScreens} />
       </Stack.Navigator>
     </NavigationContainer>
+
+
   );
 };
 
