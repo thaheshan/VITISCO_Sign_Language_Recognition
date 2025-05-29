@@ -671,7 +671,8 @@ const handleLogin = () => {
         activeOpacity={0.7}
       >
         <Ionicons name="arrow-back" size={24} color="#333" />
-      </TouchableOpacity>
+      </TouchableOpacity>2`
+`
     </Animated.View>
   );
 
