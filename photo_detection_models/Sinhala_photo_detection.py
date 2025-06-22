@@ -7,16 +7,16 @@ from PIL import Image, ImageDraw, ImageFont  # For Sinhala text rendering
 
 # Custom classifier with forced input size
 class MyClassifier(Classifier):
-    def __init__(self, modelPath, input_size=200):
+    def __init__(self, modelPath, input_size=300):
         super().__init__(modelPath)
         self.input_size = input_size
 
     def getPrediction(self, img, draw=True):
         try:
             img_resized = cv2.resize(img, (self.input_size, self.input_size))
-            blob = cv2.dnn.blobFromImage(img_resized, scalefactor=1/255.0, size=(self.input_size, self.input_size), swapRB=True)
-            blob = np.transpose(blob, (0, 2, 3, 1))
-            prediction = self.model.predict(blob)
+            img_normalized = img_resized / 255.0
+            img_batch = np.expand_dims(img_normalized, axis=0)
+            prediction = self.model.predict(img_batch)
             index = np.argmax(prediction)
             return prediction[0], index
         except Exception as e:
@@ -25,23 +25,23 @@ class MyClassifier(Classifier):
 
 # Draw Sinhala text using PIL
 def putSinhalaText(img, text, position, font_path="../Iskoola Pota Regular.ttf", font_size=32, color=(0, 0, 0)):
-    pil_img = Image.fromarray(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
-    draw = ImageDraw.Draw(pil_img)
     try:
+        pil_img = Image.fromarray(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
+        draw = ImageDraw.Draw(pil_img)
         font = ImageFont.truetype(font_path, font_size)
+        draw.text(position, text, font=font, fill=color)
+        return cv2.cvtColor(np.array(pil_img), cv2.COLOR_RGB2BGR)
     except Exception as e:
-        print("Font load error:", e)
+        print("Font/Text render error:", e)
         return img
-    draw.text(position, text, font=font, fill=color)
-    return cv2.cvtColor(np.array(pil_img), cv2.COLOR_RGB2BGR)
 
 # Setup
 cap = cv2.VideoCapture(0)
 detector = HandDetector(maxHands=2)
-model_path = "../hand_gesture_model_sinhala.h5"
+model_path = "./VITISCO3.h5"
 
 try:
-    classifier = MyClassifier(model_path, input_size=200)
+    classifier = MyClassifier(model_path, input_size=300)
 except Exception as e:
     print(f"Error loading model: {e}")
     exit()
@@ -53,7 +53,7 @@ except FileNotFoundError:
     actions = ['ං', 'ග්', 'චි', 'ටි', 'ඩි', 'ත්', 'ද්', 'න්', 'ෆ', 'ෟ']
 
 offset = 20
-imgSize = 200
+imgSize = 300
 fps_limit = 30
 prev_time = time.time()
 
@@ -73,11 +73,24 @@ while True:
             x1, y1 = max(x - offset, 0), max(y - offset, 0)
             x2, y2 = min(x + w + offset, img.shape[1]), min(y + h + offset, img.shape[0])
             imgCrop = img[y1:y2, x1:x2]
+
             if imgCrop.size == 0:
                 continue
+
             imgWhite = np.ones((imgSize, imgSize, 3), np.uint8) * 255
-            imgResize = cv2.resize(imgCrop, (imgSize, imgSize))
-            imgWhite[:imgResize.shape[0], :imgResize.shape[1]] = imgResize
+            aspect_ratio = h / w
+
+            if aspect_ratio > 1:
+                k = imgSize / h
+                w_cal = int(k * w)
+                imgResize = cv2.resize(imgCrop, (w_cal, imgSize))
+                imgWhite[:, :w_cal] = imgResize
+            else:
+                k = imgSize / w
+                h_cal = int(k * h)
+                imgResize = cv2.resize(imgCrop, (imgSize, h_cal))
+                imgWhite[:h_cal, :] = imgResize
+
             prediction, index = classifier.getPrediction(imgWhite, draw=False)
             confidence = prediction[index] * 100
             label = actions[index] if index < len(actions) else "Unknown"
@@ -99,14 +112,25 @@ while True:
 
             distance = np.linalg.norm(np.array(hand1['center']) - np.array(hand2['center']))
 
-            # If hands are close together, assume it's a combined two-hand sign
             if distance < 250:
                 imgCrop = img[y_min:y_max, x_min:x_max]
                 if imgCrop.size == 0:
                     continue
+
                 imgWhite = np.ones((imgSize, imgSize, 3), np.uint8) * 255
-                imgResize = cv2.resize(imgCrop, (imgSize, imgSize))
-                imgWhite[:imgResize.shape[0], :imgResize.shape[1]] = imgResize
+                aspect_ratio = imgCrop.shape[0] / imgCrop.shape[1]
+
+                if aspect_ratio > 1:
+                    k = imgSize / imgCrop.shape[0]
+                    w_cal = int(k * imgCrop.shape[1])
+                    imgResize = cv2.resize(imgCrop, (w_cal, imgSize))
+                    imgWhite[:, :w_cal] = imgResize
+                else:
+                    k = imgSize / imgCrop.shape[1]
+                    h_cal = int(k * imgCrop.shape[0])
+                    imgResize = cv2.resize(imgCrop, (imgSize, h_cal))
+                    imgWhite[:h_cal, :] = imgResize
+
                 prediction, index = classifier.getPrediction(imgWhite, draw=False)
                 confidence = prediction[index] * 100
                 label = actions[index] if index < len(actions) else "Unknown"
@@ -115,7 +139,6 @@ while True:
                 cv2.rectangle(imgOutput, (x_min, y_min), (x_max, y_max), (255, 0, 255), 3)
                 cv2.imshow("CombinedCrop", imgCrop)
             else:
-                # Hands too far apart → skip or warn
                 imgOutput = putSinhalaText(imgOutput, "Too far apart for 2H sign", (30, 30), font_size=28, color=(0, 0, 255))
 
     cv2.imshow('Image', imgOutput)
