@@ -11,7 +11,7 @@ import LessonScreen from  "./Screens/Lesson.js";
 import ProgressAnalysisScreen from "./Screens/ProgressAnlaysis/ProgressApp.js";
 import ProfileScreen from "./Screens/Profile.js";
 import SettingsScreen from "./Screens/Settings.js";
-import TranslatorScreen from "./Screens/Translator.js";
+// import TranslatorScreen from "./Screens/Translator.js";
 import TextToSpeechScreen from "./Screens/TexttoSpeech.js";
 import NotificationScreen from "./Screens/Feedback.js";
 import LoginScreen from "./Screens/Login.js";
@@ -62,7 +62,7 @@ const App = () => {
         <Stack.Screen name="ProgressAnalysis" component={ProgressAnalysisScreen}  options={{ headerShown: false }}  />
         <Stack.Screen name="Profile" component={ProfileScreen}  options={{ headerShown: false }}/>
         <Stack.Screen name="Settings" component={SettingsScreen} />
-        <Stack.Screen name="Translator" component={TranslatorScreen} />  
+        {/* <Stack.Screen name="Translator" component={TranslatorScreen} />   */}
          <Stack.Screen name="TextToSpeech" component={TextToSpeechScreen} /> 
         <Stack.Screen name="Notifications" component={NotificationScreen}  options={{ headerShown: false }} />
         <Stack.Screen name="Scheduler" component={SchedulerScreen} />
