@@ -1,8 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, StyleSheet, Alert } from 'react-native';
+import { View, Text, Button, StyleSheet } from 'react-native';
 import { Camera } from 'expo-camera';
 
-export default function SignTransactionScreen() {
+export default function CameraScreen() {
   const [hasPermission, setHasPermission] = useState(null);
   const cameraRef = useRef(null);
 
@@ -10,23 +10,25 @@ export default function SignTransactionScreen() {
     (async () => {
       const { status } = await Camera.requestCameraPermissionsAsync();
       setHasPermission(status === 'granted');
-      if (status !== 'granted') {
-        Alert.alert('Permission denied', 'Camera access is required.');
-      }
     })();
   }, []);
 
   if (hasPermission === null) {
-    return <View><Text>Requesting Camera Permission...</Text></View>;
+    return <Text>Requesting for camera permission...</Text>;
   }
-
   if (hasPermission === false) {
-    return <View><Text>No access to camera</Text></View>;
+    return <Text>No access to camera</Text>;
   }
 
   return (
     <View style={styles.container}>
-      <Camera style={styles.camera} type={Camera.Constants.Type.back} ref={cameraRef} />
+      <Camera style={styles.camera} ref={cameraRef} />
+      <Button title="Take Picture" onPress={async () => {
+        if (cameraRef.current) {
+          const photo = await cameraRef.current.takePictureAsync();
+          console.log(photo.uri);
+        }
+      }} />
     </View>
   );
 }
