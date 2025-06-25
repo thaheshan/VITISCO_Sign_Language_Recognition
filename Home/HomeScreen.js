@@ -12,17 +12,24 @@ import {
   Animated,
   Modal,
   Dimensions,
+  ActivityIndicator
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Feather from '@expo/vector-icons/Feather';
 import AntDesign from '@expo/vector-icons/AntDesign';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useIsFocused } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as FileSystem from 'expo-file-system';
+
+const TASKS_FILE_PATH = FileSystem.documentDirectory + 'tasks.json';
 
 const HomeScreen = () => {
   const navigation = useNavigation();
+  const isFocused = useIsFocused();
   const [showUserId, setShowUserId] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [todaysTasks, setTodaysTasks] = useState([]);
+  const [loadingTasks, setLoadingTasks] = useState(true);
   
   // Animation values
   const addButtonRotation = useRef(new Animated.Value(0)).current;
@@ -40,6 +47,38 @@ const HomeScreen = () => {
   useEffect(() => {
     checkIfFirstTimeUser();
   }, []);
+  
+  // Load today's tasks when screen is focused
+  useEffect(() => {
+    if (isFocused) {
+      loadTodaysTasks();
+    }
+  }, [isFocused]);
+
+  // Load today's tasks from JSON file
+  const loadTodaysTasks = async () => {
+    setLoadingTasks(true);
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      const fileInfo = await FileSystem.getInfoAsync(TASKS_FILE_PATH);
+      
+      if (fileInfo.exists) {
+        const content = await FileSystem.readAsStringAsync(TASKS_FILE_PATH);
+        const allTasks = JSON.parse(content);
+        
+        // Filter tasks for today
+        const todays = allTasks.filter(task => task.date === today);
+        setTodaysTasks(todays);
+      } else {
+        setTodaysTasks([]);
+      }
+    } catch (error) {
+      console.error('Error loading tasks:', error);
+      Alert.alert('Error', 'Failed to load tasks');
+    } finally {
+      setLoadingTasks(false);
+    }
+  };
   
   // Effect to animate the coming soon popup when it opens
   useEffect(() => {
@@ -141,6 +180,18 @@ const HomeScreen = () => {
     outputRange: [0, 1]
   });
 
+  // Get icon for task based on type
+  const getTaskIcon = (type) => {
+    switch (type) {
+      case 'vocabulary': return 'text-outline';
+      case 'grammar': return 'book-outline';
+      case 'listening': return 'headset-outline';
+      case 'speaking': return 'mic-outline';
+      case 'reading': return 'newspaper-outline';
+      default: return 'document-text-outline';
+    }
+  };
+
   // Instructions data
   const instructions = [
     {
@@ -206,52 +257,6 @@ const HomeScreen = () => {
     completeInstructions();
   };
 
-  // Task data
-  const taskItems = [
-    {
-      id: 1,
-      icon: "flame-outline",
-      title: "Lesson Time",
-      subtitle: "TASK 01"
-    },
-    {
-      id: 2,
-      icon: "time-outline",
-      title: "Coursework",
-      subtitle: "TASK 02"
-    },
-    {
-      id: 3,
-      icon: "help-circle-outline",
-      title: "Do Quiz",
-      subtitle: "TASK 03"
-    },
-    {
-      id: 4,
-      icon: "document-text-outline",
-      title: "Assignments",
-      subtitle: "TASK 04"
-    },
-    {
-      id: 5,
-      icon: "create-outline",
-      title: "Sign Forms",
-      subtitle: "TASK 05"
-    },
-    {
-      id: 6,
-      icon: "book-outline",
-      title: "Reading",
-      subtitle: "TASK 06"
-    },
-    {
-      id: 7,
-      icon: "laptop-outline",
-      title: "Lab Work",
-      subtitle: "TASK 07"
-    }
-  ];
-
   return (
     <SafeAreaView style={styles.container}>
       {/* Header */}
@@ -284,7 +289,6 @@ const HomeScreen = () => {
               <TouchableOpacity>
                 <Text style={styles.tabText} >DAILY TASKS</Text>
               </TouchableOpacity>
-          
             </View>
             <TouchableOpacity>
               <Text style={styles.seeAll} onPress={() => navigation.navigate('Scheduler', {}, { animation: 'slide_from_right' })}>See all</Text>
@@ -292,24 +296,46 @@ const HomeScreen = () => {
           </View>
            
           {/* Horizontal Scrollable Task Cards */}
-          <ScrollView 
-            horizontal 
-            showsHorizontalScrollIndicator={false}
-            style={styles.taskScrollContainer}
-            contentContainerStyle={styles.taskScrollContent}
-          >
-            {taskItems.map((task) => (
+          {loadingTasks ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="small" color="#352561" />
+            </View>
+          ) : todaysTasks.length > 0 ? (
+            <ScrollView 
+              horizontal 
+              showsHorizontalScrollIndicator={false}
+              style={styles.taskScrollContainer}
+              contentContainerStyle={styles.taskScrollContent}
+            >
+              {todaysTasks.map((task) => (
+                <TouchableOpacity 
+                  key={task.id}
+                  style={styles.taskCard}
+                  activeOpacity={0.7}
+                >
+                  <Ionicons 
+                    name={getTaskIcon(task.type || 'custom')} 
+                    size={24} 
+                    color="#4A86FF" 
+                  />
+                  <Text style={styles.taskTitle}>{task.title}</Text>
+                  <Text style={styles.taskSubtitle}>
+                    {task.time || 'All Day'}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          ) : (
+            <View style={styles.noTasksContainer}>
+              <Text style={styles.noTasksText}>No tasks for today</Text>
               <TouchableOpacity 
-                key={task.id}
-                style={styles.taskCard}
-                activeOpacity={0.7}
+                style={styles.addTaskButton}
+                onPress={() => navigation.navigate('Scheduler')}
               >
-                <Ionicons name={task.icon} size={24} color="#4A86FF" />
-                <Text style={styles.taskTitle}>{task.title}</Text>
-                <Text style={styles.taskSubtitle}>{task.subtitle}</Text>
+                <Text style={styles.addTaskButtonText}>Add Tasks</Text>
               </TouchableOpacity>
-            ))}
-          </ScrollView>
+            </View>
+          )}
         </View>
 
         {/* Ongoing Lessons Section */}
@@ -905,6 +931,35 @@ const styles = StyleSheet.create({
     borderRightColor: 'transparent',
     borderBottomColor: '#FFFFFF',
     transform: [{ rotate: '180deg' }],
+  },
+  
+  // New styles for tasks loading and display
+  loadingContainer: {
+    height: 120,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  noTasksContainer: {
+    backgroundColor: '#FFFFFF',
+    padding: 20,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  noTasksText: {
+    color: '#666',
+    fontSize: 16,
+    marginBottom: 15,
+  },
+  addTaskButton: {
+    backgroundColor: '#6B5ECD',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 20,
+  },
+  addTaskButtonText: {
+    color: '#FFFFFF',
+    fontWeight: 'bold',
   },
   
 // Coming Soon popup styles
