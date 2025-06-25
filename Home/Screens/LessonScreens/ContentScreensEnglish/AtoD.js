@@ -135,7 +135,7 @@ export default function AlphabetLessonScreen({ navigate , ...props}) {
             letter: 'A', 
             sign: require('../../../assets/videos/Thahee.mp4'), 
             signText: 'Hand forms letter A shape',
-            characterVideo: require('../../../Characters/0323 (2)(2).mp4')
+            characterVideo: require('../../../Characters/0323 (2)(8).mp4')
           },
           { 
             letter: 'B', 

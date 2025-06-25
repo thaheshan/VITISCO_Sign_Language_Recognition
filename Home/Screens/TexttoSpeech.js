@@ -101,7 +101,10 @@ const TranslateScreen = ({ route, navigation }) => {
             selectedLanguage === 'Sinhala' && styles.selectedLanguage
           ]}
           onPress={() => handleLanguageSelect('Sinhala')}
+          
         >
+
+        
           <Text style={styles.languageButtonText}>Sinhala</Text>
         </TouchableOpacity>
         
