@@ -283,35 +283,33 @@ export default function SignLanguageQuizScreen({ navigate, ...props }) {
           {
             id: 1,
             term: "D", // Friend in Tamil
-            pronunciation: "Nanbar",
-            videoSource: require('../../../assets/videos/Scene - Jackie.mp4'), // Replace with actual video path
+           
+          
             options: [
-              { id: 1, imageSource: require('../../../assets/b4.png'), isCorrect: false }, // Replace with actual image paths
-              { id: 2, imageSource: require('../../../assets/b4.png'), isCorrect: true },
-              { id: 3, imageSource: require('../../../assets/b4.png'), isCorrect: false },
-              { id: 4, imageSource: require('../../../assets/b4.png'), isCorrect: false }
+              { id: 1, imageSource: require('../../../assets/sign images/images (4).jpg'), isCorrect: false }, // Replace with actual image paths
+              { id: 2, imageSource: require('../../../assets/sign images/images (5).jpg'), isCorrect: true },
+              { id: 3, imageSource: require('../../../assets/sign images/images (6).jpg'), isCorrect: false },
+              { id: 4, imageSource: require('../../../assets/sign images/images (7).jpg'), isCorrect: false }
             ]
           },
           {
             id: 2,
             term: "C", // Hello in Tamil
-            videoSource: require('../../../assets/videos/Scene - Jackie.mp4'),
             options: [
-              { id: 1, imageSource: require('../../../assets/b4.png'), isCorrect: true },
-              { id: 2, imageSource: require('../../../assets/b4.png'), isCorrect: false },
-              { id: 3, imageSource: require('../../../assets/b4.png'), isCorrect: false },
-              { id: 4, imageSource: require('../../../assets/b4.png'), isCorrect: false }
+              { id: 1, imageSource: require('../../../assets/sign images/images (7).jpg'), isCorrect: false }, // Replace with actual image paths
+              { id: 2, imageSource: require('../../../assets/sign images/images (4).jpg'), isCorrect: false },
+              { id: 3, imageSource: require('../../../assets/sign images/images (5).jpg'), isCorrect: false },
+              { id: 4, imageSource: require('../../../assets/sign images/images (6).jpg'), isCorrect: true }
             ]
           },
           {
             id: 3,
             term: "A", // Thank you in Tamil
-            videoSource: require('../../../assets/videos/Scene - Jackie.mp4'),
             options: [
-              { id: 1, imageSource: require('../../../assets/b4.png'), isCorrect: false },
-              { id: 2, imageSource: require('../../../assets/b4.png'), isCorrect: false },
-              { id: 3, imageSource: require('../../../assets/b4.png'), isCorrect: true },
-              { id: 4, imageSource: require('../../../assets/b4.png'), isCorrect: false }
+              { id: 1, imageSource: require('../../../assets/sign images/images (5).jpg'), isCorrect: false }, // Replace with actual image paths
+              { id: 2, imageSource: require('../../../assets/sign images/images (4).jpg'), isCorrect: true },
+              { id: 3, imageSource: require('../../../assets/sign images/images (7).jpg'), isCorrect: false },
+              { id: 4, imageSource: require('../../../assets/sign images/images (6).jpg'), isCorrect: false }
             ]
           },
           {
@@ -319,10 +317,12 @@ export default function SignLanguageQuizScreen({ navigate, ...props }) {
             term: "B", // Good morning in Tamil
             videoSource: require('../../../assets/videos/Scene - Jackie.mp4'),
             options: [
-              { id: 1, imageSource: require('../../../assets/b4.png'), isCorrect: false },
-              { id: 2, imageSource: require('../../../assets/b4.png'), isCorrect: false },
-              { id: 3, imageSource: require('../../../assets/b4.png'), isCorrect: false },
-              { id: 4, imageSource: require('../../../assets/b4.png'), isCorrect: true }
+
+                { id: 1, imageSource: require('../../../assets/sign images/images (6).jpg'), isCorrect: false }, // Replace with actual image paths
+              { id: 2, imageSource: require('../../../assets/sign images/images (4).jpg'), isCorrect: false },
+              { id: 3, imageSource: require('../../../assets/sign images/images (5).jpg'), isCorrect: false },
+              { id: 4, imageSource: require('../../../assets/sign images/images (7).jpg'), isCorrect: true }
+
             ]
           },
       
