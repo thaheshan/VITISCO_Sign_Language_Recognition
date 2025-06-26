@@ -211,58 +211,60 @@ const QuizApp = () => {
   const englishQuestions = [
     {
       id: 1,
-      title: 'Select the correct sign for A',
-      video: require('../images/videos/A.mp4'),
+     
+      video: require('../images/videos/D.mp4'),
       options: [
         { id: 'A', text: 'A' },
         { id: 'B', text: 'B' },
         { id: 'C', text: 'C' },
+        { id: 'D', text: 'D' },
       ],
       correctAnswer: 0, // A is correct
     },
     {
       id: 2,
-      title: 'Select the correct sign for B',
+      title: 'Select the correct sign for T',
       options: [
         { video: require('../images/videos/A.mp4') },
-        { video: require('../images/videos/A.mp4') },
-        { video: require('../images/videos/A.mp4') },
-        { video: require('../images/videos/A.mp4') },
+        { video: require('../images/videos/C.mp4') },
+        { video: require('../images/videos/D.mp4') },
+        { video: require('../images/videos/B.mp4') },
       ],
       gridView: true,
       correctAnswer: 1, // Second video is correct (B)
     },
     {
       id: 3,
-      title: 'Select the correct sign for C',
+      title: 'Select the correct sign for V',
       options: [
+        { video: require('../images/videos/B.mp4') },
+        { video: require('../images/videos/D.mp4') },
         { video: require('../images/videos/A.mp4') },
-        { video: require('../images/videos/A.mp4') },
-        { video: require('../images/videos/A.mp4') },
-        { video: require('../images/videos/A.mp4') },
+        { video: require('../images/videos/C.mp4') },
       ],
       gridView: true,
       correctAnswer: 2, // Third video is correct (C)
     },
     {
       id: 4,
-      title: 'Select the correct sign for D',
+      title: 'Select the correct sign for U',
       video: require('../images/videos/A.mp4'),
       options: [
-        { id: 'A', text: 'A' },
-        { id: 'B', text: 'D' },
-        { id: 'C', text: 'B' },
+        { video: require('../images/videos/D.mp4') },
+        { video: require('../images/videos/A.mp4') },
+        { video: require('../images/videos/C.mp4') },
+        { video: require('../images/videos/B.mp4') },
       ],
       correctAnswer: 1, // D is correct
     },
     {
       id: 5,
-      title: 'Select the correct sign for E',
+      title: 'Select the correct sign for I',
       options: [
-        { video: require('../images/videos/A.mp4') },
-        { video: require('../images/videos/A.mp4') },
-        { video: require('../images/videos/A.mp4') },
-        { video: require('../images/videos/A.mp4') },
+        { video: require('../images/videos/H.mp4') },
+        { video: require('../images/videos/G.mp4') },
+        { video: require('../images/videos/I.mp4') },
+        { video: require('../images/videos/D.mp4') },
       ],
       gridView: true,
       correctAnswer: 3, // Fourth video is correct (E)
@@ -275,7 +277,7 @@ const QuizApp = () => {
     {
       id: 1,
       title: 'Select the correct Tamil letter for this sign',
-      video: require('../images/videos/A.mp4'),
+      video: require('../images/videos/Scene - Jackie 2.mp4'),
       options: [
         { id: 'A', text: 'அ' },
         { id: 'B', text: 'ஆ' },
