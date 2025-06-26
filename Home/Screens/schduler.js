@@ -42,7 +42,7 @@ const DEFAULT_USER_PROFILE = {
   id: 1,
   name: 'Language Learner',
   progress: {
-    vocabularyProgress: 65,
+    Lessontaskcompleted : 65,
     grammarProgress: 78,
     listeningProgress: 42,
     speakingProgress: 51,
