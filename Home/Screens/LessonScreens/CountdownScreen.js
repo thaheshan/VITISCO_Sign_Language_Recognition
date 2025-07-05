@@ -84,7 +84,7 @@ export default function CountDownScreen2({ navigate }) {
         style={styles.skipButton}
         onPress={() => {
           Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-          navigate('GetStarted');
+          navigate('GetStarted2');
         }}
       >
         <Text style={styles.skipText}>Skip</Text>

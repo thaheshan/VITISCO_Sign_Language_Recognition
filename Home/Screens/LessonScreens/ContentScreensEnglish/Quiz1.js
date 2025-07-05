@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { 
+  Platform,
   View, 
   Text, 
   StyleSheet, 
@@ -13,7 +14,6 @@ import {
   Modal
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
-import { Video } from 'expo-av';
 
 const { width, height } = Dimensions.get('window');
 
@@ -262,7 +262,7 @@ export default function SignLanguageQuizScreen({ navigate, ...props }) {
   const [showIntro, setShowIntro] = useState(true);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [selectedOption, setSelectedOption] = useState(null);
-  const [timeRemaining, setTimeRemaining] = useState(30); // Changed to 30 seconds
+  const [timeRemaining, setTimeRemaining] = useState(30);
   const [isCorrect, setIsCorrect] = useState(null);
   const [score, setScore] = useState(0);
   const [correctAnswers, setCorrectAnswers] = useState(0);
@@ -270,7 +270,6 @@ export default function SignLanguageQuizScreen({ navigate, ...props }) {
   const [autoAdvanceTimer, setAutoAdvanceTimer] = useState(null);
   const [showExitWarning, setShowExitWarning] = useState(false);
   
-  const videoRef = useRef(null);
   const timerRef = useRef(null);
   const optionAnim = useRef(new Animated.Value(0)).current;
   
@@ -282,11 +281,10 @@ export default function SignLanguageQuizScreen({ navigate, ...props }) {
         questions: [
           {
             id: 1,
-            term: "D", // Friend in Tamil
-           
-          
+            term: "D",
+            pronunciation: "Letter D",
             options: [
-              { id: 1, imageSource: require('../../../assets/sign images/images (4).jpg'), isCorrect: false }, // Replace with actual image paths
+              { id: 1, imageSource: require('../../../assets/sign images/images (4).jpg'), isCorrect: false },
               { id: 2, imageSource: require('../../../assets/sign images/images (5).jpg'), isCorrect: true },
               { id: 3, imageSource: require('../../../assets/sign images/images (6).jpg'), isCorrect: false },
               { id: 4, imageSource: require('../../../assets/sign images/images (7).jpg'), isCorrect: false }
@@ -294,9 +292,10 @@ export default function SignLanguageQuizScreen({ navigate, ...props }) {
           },
           {
             id: 2,
-            term: "C", // Hello in Tamil
+            term: "C",
+            pronunciation: "Letter C",
             options: [
-              { id: 1, imageSource: require('../../../assets/sign images/images (7).jpg'), isCorrect: false }, // Replace with actual image paths
+              { id: 1, imageSource: require('../../../assets/sign images/images (7).jpg'), isCorrect: false },
               { id: 2, imageSource: require('../../../assets/sign images/images (4).jpg'), isCorrect: false },
               { id: 3, imageSource: require('../../../assets/sign images/images (5).jpg'), isCorrect: false },
               { id: 4, imageSource: require('../../../assets/sign images/images (6).jpg'), isCorrect: true }
@@ -304,9 +303,10 @@ export default function SignLanguageQuizScreen({ navigate, ...props }) {
           },
           {
             id: 3,
-            term: "A", // Thank you in Tamil
+            term: "A",
+            pronunciation: "Letter A",
             options: [
-              { id: 1, imageSource: require('../../../assets/sign images/images (5).jpg'), isCorrect: false }, // Replace with actual image paths
+              { id: 1, imageSource: require('../../../assets/sign images/images (5).jpg'), isCorrect: false },
               { id: 2, imageSource: require('../../../assets/sign images/images (4).jpg'), isCorrect: true },
               { id: 3, imageSource: require('../../../assets/sign images/images (7).jpg'), isCorrect: false },
               { id: 4, imageSource: require('../../../assets/sign images/images (6).jpg'), isCorrect: false }
@@ -314,25 +314,33 @@ export default function SignLanguageQuizScreen({ navigate, ...props }) {
           },
           {
             id: 4,
-            term: "B", // Good morning in Tamil
-            videoSource: require('../../../assets/videos/Scene - Jackie.mp4'),
+            term: "B",
+            pronunciation: "Letter B",
             options: [
-
-                { id: 1, imageSource: require('../../../assets/sign images/images (6).jpg'), isCorrect: false }, // Replace with actual image paths
+              { id: 1, imageSource: require('../../../assets/sign images/images (6).jpg'), isCorrect: false },
               { id: 2, imageSource: require('../../../assets/sign images/images (4).jpg'), isCorrect: false },
               { id: 3, imageSource: require('../../../assets/sign images/images (5).jpg'), isCorrect: false },
               { id: 4, imageSource: require('../../../assets/sign images/images (7).jpg'), isCorrect: true }
-
             ]
           },
-      
+          {
+            id: 5,
+            term: "E",
+            pronunciation: "Letter E",
+            options: [
+              { id: 1, imageSource: require('../../../assets/sign images/images (4).jpg'), isCorrect: true },
+              { id: 2, imageSource: require('../../../assets/sign images/images (5).jpg'), isCorrect: false },
+              { id: 3, imageSource: require('../../../assets/sign images/images (6).jpg'), isCorrect: false },
+              { id: 4, imageSource: require('../../../assets/sign images/images (7).jpg'), isCorrect: false }
+            ]
+          }
         ],
-        xpReward: 40,
+        xpReward: 50,
         achievements: [
           {
             icon: '🏆',
-            title: 'Tamil Beginner',
-            description: 'Complete your first Tamil sign language quiz'
+            title: 'Sign Language Beginner',
+            description: 'Complete your first sign language quiz'
           },
           {
             icon: '🔥',
@@ -346,7 +354,6 @@ export default function SignLanguageQuizScreen({ navigate, ...props }) {
           }
         ]
       }
-      // Additional quizzes could be added here
     }
   };
   
@@ -412,7 +419,7 @@ export default function SignLanguageQuizScreen({ navigate, ...props }) {
     if (showIntro || showResult) return;
     
     // Reset states for new question
-    setTimeRemaining(30); // Set to 30 seconds
+    setTimeRemaining(30);
     setSelectedOption(null);
     setIsCorrect(null);
     optionAnim.setValue(0);
@@ -424,13 +431,6 @@ export default function SignLanguageQuizScreen({ navigate, ...props }) {
       easing: Easing.out(Easing.ease),
       useNativeDriver: true,
     }).start();
-    
-    // Play video if available
-    if (videoRef.current) {
-      videoRef.current.playAsync().catch(error => {
-        console.log("Video playback error:", error);
-      });
-    }
     
     // Start timer countdown
     timerRef.current = setInterval(() => {
@@ -447,12 +447,6 @@ export default function SignLanguageQuizScreen({ navigate, ...props }) {
     // Cleanup on unmount or question change
     return () => {
       clearAllTimers();
-      
-      if (videoRef.current) {
-        videoRef.current.pauseAsync().catch(error => {
-          console.log("Video pause error:", error);
-        });
-      }
     };
   }, [currentQuestion, showIntro, showResult]);
   
@@ -563,7 +557,7 @@ export default function SignLanguageQuizScreen({ navigate, ...props }) {
   const navigateToLearningPathway = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     
-    // If onComplete is provided, call it (similar to navigateNext in the second file)
+    // If onComplete is provided, call it
     if (onComplete) {
       onComplete();
     } else {
@@ -604,7 +598,7 @@ export default function SignLanguageQuizScreen({ navigate, ...props }) {
         />
       ) : (
         <>
-          {/* Progress bar (only show if not in intro screen) */}
+          {/* Progress bar */}
           <ProgressBar current={currentQuestion + 1} total={questions.length} />
           
           {!showResult ? (
@@ -619,21 +613,10 @@ export default function SignLanguageQuizScreen({ navigate, ...props }) {
                 </Text>
               </View>
               
-              {/* Video demonstration */}
-              <View style={styles.videoContainer}>
-                <Video
-                  ref={videoRef}
-                  source={currentQ.videoSource}
-                  style={styles.video}
-                  resizeMode="contain"
-                  isLooping
-                  shouldPlay
-                  useNativeControls={false}
-                />
-                <View style={styles.videoBadge}>
-                  <View style={styles.recordingDot} />
-                  <Text style={styles.videoBadgeText}>Watch Demo</Text>
-                </View>
+              {/* Question illustration */}
+              <View style={styles.questionIllustration}>
+                <Text style={styles.questionLetter}>{currentQ.term}</Text>
+                <Text style={styles.questionSubtext}>Find the matching sign</Text>
               </View>
               
               {/* Timer */}
@@ -696,10 +679,10 @@ export default function SignLanguageQuizScreen({ navigate, ...props }) {
                 timeUp={timeRemaining === 0} 
               />
               
-              {/* Manual continue button (only visible when timeRemaining > 0 and no answer selected) */}
+              {/* Manual continue button */}
               {selectedOption === null && timeRemaining > 0 && (
                 <TouchableOpacity
-                  style={[styles.skipButton]}
+                  style={styles.skipButton}
                   onPress={() => {
                     handleTimeUp();
                   }}
@@ -708,7 +691,7 @@ export default function SignLanguageQuizScreen({ navigate, ...props }) {
                 </TouchableOpacity>
               )}
               
-              {/* Skip to results button (only visible when answer is selected or time is up) */}
+              {/* Next question button */}
               {(selectedOption !== null || timeRemaining === 0) && currentQuestion < questions.length - 1 && (
                 <TouchableOpacity
                   style={styles.continueButton}
@@ -718,7 +701,7 @@ export default function SignLanguageQuizScreen({ navigate, ...props }) {
                 </TouchableOpacity>
               )}
               
-              {/* Finish quiz button (only visible on last question when answered) */}
+              {/* Finish quiz button */}
               {(selectedOption !== null || timeRemaining === 0) && currentQuestion === questions.length - 1 && (
                 <TouchableOpacity
                   style={styles.continueButton}
@@ -751,42 +734,59 @@ export default function SignLanguageQuizScreen({ navigate, ...props }) {
   );
 }
 
-// Main Component Styles
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#c5c6e8',
-    padding: 20,
+    backgroundColor: '#f8f9ff',
+    paddingHorizontal: 20,
+    paddingTop: Platform.OS === 'ios' ? 0 : 20,
   },
   topBar: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginTop: 10,
-    marginBottom: 15,
+    marginBottom: 20,
+    paddingHorizontal: 5,
   },
   xpContainer: {
-    backgroundColor: 'white',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 25,
+    shadowColor: '#667eea',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 6,
+    borderWidth: 1,
+    borderColor: 'rgba(102, 126, 234, 0.1)',
   },
   xpText: {
-    fontSize: 12,
+    fontSize: 14,
     fontWeight: 'bold',
-    color: '#383773',
+    color: '#4c63d2',
+    letterSpacing: 0.5,
   },
   closeButton: {
-    backgroundColor: 'white',
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     justifyContent: 'center',
     alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 6,
+    borderWidth: 1,
+    borderColor: 'rgba(0, 0, 0, 0.05)',
   },
   closeButtonText: {
-    fontSize: 18,
-    color: '#383773',
+    fontSize: 20,
+    color: '#6b7280',
+    fontWeight: '600',
   },
   contentContainer: {
     flex: 1,
@@ -794,56 +794,51 @@ const styles = StyleSheet.create({
   },
   questionContainer: {
     width: '100%',
-    marginBottom: 15,
+    marginBottom: 20,
+    paddingHorizontal: 10,
   },
   questionText: {
-    fontSize: 20,
+    fontSize: 24,
     fontWeight: 'bold',
-    color: '#383773',
+    color: '#1f2937',
     textAlign: 'center',
     textTransform: 'capitalize',
+    lineHeight: 32,
+    marginBottom: 8,
   },
   pronunciationText: {
-    fontSize: 14,
-    color: '#5d5b8d',
+    fontSize: 16,
+    color: '#6b7280',
     textAlign: 'center',
-    marginTop: 5,
+    fontStyle: 'italic',
+    opacity: 0.8,
   },
-  videoContainer: {
-    width: '80%',
-    height: 160,
-    borderRadius: 12,
-    overflow: 'hidden',
-    marginBottom: 15,
+  questionIllustration: {
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    paddingVertical: 30,
+    paddingHorizontal: 40,
+    borderRadius: 20,
+    marginBottom: 25,
+    shadowColor: '#667eea',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.15,
+    shadowRadius: 16,
+    elevation: 8,
     borderWidth: 2,
-    borderColor: '#5d5b8d',
-  },
-  video: {
-    width: '100%',
-    height: '100%',
-    backgroundColor: '#000',
-  },
-  videoBadge: {
-    position: 'absolute',
-    bottom: 10,
-    right: 10,
-    backgroundColor: 'rgba(93, 91, 141, 0.8)',
-    flexDirection: 'row',
+    borderColor: 'rgba(102, 126, 234, 0.1)',
     alignItems: 'center',
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 15,
   },
-  recordingDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#ff5252',
-    marginRight: 5,
+  questionLetter: {
+    fontSize: 48,
+    fontWeight: 'bold',
+    color: '#4c63d2',
+    textAlign: 'center',
+    marginBottom: 8,
   },
-  videoBadgeText: {
-    color: 'white',
-    fontSize: 12,
+  questionSubtext: {
+    fontSize: 14,
+    color: '#6b7280',
+    textAlign: 'center',
     fontWeight: '500',
   },
   optionsGrid: {
@@ -851,94 +846,267 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     justifyContent: 'space-between',
     width: '100%',
-    marginVertical: 10,
+    marginVertical: 20,
   },
   optionWrapper: {
     width: '48%',
-    marginBottom: 15,
+    marginBottom: 16,
   },
   optionButton: {
-    backgroundColor: 'white',
-    borderRadius: 12,
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    borderRadius: 16,
     overflow: 'hidden',
     borderWidth: 2,
-    borderColor: 'transparent',
+    borderColor: 'rgba(102, 126, 234, 0.1)',
+    shadowColor: '#667eea',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 4,
+    transform: [{ scale: 1 }],
   },
   correctOption: {
-    borderColor: '#4caf50',
+    borderColor: '#10b981',
+    borderWidth: 3,
+    shadowColor: '#10b981',
+    shadowOpacity: 0.3,
+    transform: [{ scale: 1.05 }],
   },
   incorrectOption: {
-    borderColor: '#ff5252',
+    borderColor: '#ef4444',
+    borderWidth: 3,
+    shadowColor: '#ef4444',
+    shadowOpacity: 0.3,
+    transform: [{ scale: 0.95 }],
   },
   optionImage: {
     width: '100%',
-    height: 120,
+    height: 140,
+    backgroundColor: '#f9fafb',
   },
   correctIndicator: {
     position: 'absolute',
-    top: 5,
-    right: 5,
-    backgroundColor: '#4caf50',
-    width: 24,
-    height: 24,
-    borderRadius: 12,
+    top: 8,
+    right: 8,
+    backgroundColor: '#10b981',
+    width: 28,
+    height: 28,
+    borderRadius: 14,
     justifyContent: 'center',
     alignItems: 'center',
+    shadowColor: '#10b981',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 4,
   },
   incorrectIndicator: {
     position: 'absolute',
-    top: 5,
-    right: 5,
-    backgroundColor: '#ff5252',
-    width: 24,
-    height: 24,
-    borderRadius: 12,
+    top: 8,
+    right: 8,
+    backgroundColor: '#ef4444',
+    width: 28,
+    height: 28,
+    borderRadius: 14,
     justifyContent: 'center',
     alignItems: 'center',
+    shadowColor: '#ef4444',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 4,
   },
   indicatorText: {
     color: 'white',
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: 'bold',
   },
   continueButton: {
-    backgroundColor: '#5d5b8d',
+    backgroundColor: '#4c63d2',
     width: '100%',
-    paddingVertical: 15,
-    borderRadius: 10,
+    paddingVertical: 18,
+    borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
     marginTop: 'auto',
     marginBottom: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 3,
-    elevation: 3,
+    shadowColor: '#4c63d2',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.3,
+    shadowRadius: 16,
+    elevation: 8,
   },
   skipButton: {
-    backgroundColor: '#9291b9',
+    backgroundColor: '#9ca3af',
     width: '100%',
-    paddingVertical: 15,
-    borderRadius: 10,
+    paddingVertical: 18,
+    borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
     marginTop: 'auto',
     marginBottom: 10,
+    shadowColor: '#9ca3af',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 4,
   },
   skipButtonText: {
     color: 'white',
     fontSize: 16,
     fontWeight: 'bold',
+    letterSpacing: 0.5,
   },
   continueButtonText: {
     color: 'white',
     fontSize: 16,
     fontWeight: 'bold',
+    letterSpacing: 0.5,
   }
 });
 
-// Intro Screen Styles
+// Enhanced Progress Bar Styles
+const progressStyles = StyleSheet.create({
+  container: {
+    width: '100%',
+    marginBottom: 20,
+    paddingHorizontal: 5,
+  },
+  progressBarContainer: {
+    height: 12,
+    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+    borderRadius: 8,
+    overflow: 'hidden',
+    shadowColor: '#667eea',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+    borderWidth: 1,
+    borderColor: 'rgba(102, 126, 234, 0.1)',
+  },
+  progressBar: {
+    height: '100%',
+    borderRadius: 8,
+    shadowColor: '#667eea',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  progressGradient: {
+    flex: 1,
+    borderRadius: 8,
+  },
+  progressText: {
+    textAlign: 'right',
+    marginTop: 8,
+    fontSize: 14,
+    color: '#4b5563',
+    fontWeight: '600',
+    letterSpacing: 0.3,
+  }
+});
+
+// Enhanced Timer Styles
+const timerStyles = StyleSheet.create({
+  container: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 25,
+    alignSelf: 'center',
+    marginVertical: 15,
+    shadowColor: '#667eea',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 6,
+    borderWidth: 1,
+    borderColor: 'rgba(102, 126, 234, 0.1)',
+  },
+  clockIcon: {
+    fontSize: 18,
+    marginRight: 8,
+  },
+  timeText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#1f2937',
+    letterSpacing: 0.5,
+  },
+  timeWarning: {
+    color: '#ef4444',
+    textShadowColor: 'rgba(239, 68, 68, 0.3)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
+  }
+});
+
+// Enhanced Feedback Message Styles
+const feedbackStyles = StyleSheet.create({
+  container: {
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderRadius: 16,
+    marginVertical: 20,
+    width: '100%',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  correctContainer: {
+    backgroundColor: 'rgba(16, 185, 129, 0.15)',
+    borderWidth: 2,
+    borderColor: 'rgba(16, 185, 129, 0.3)',
+  },
+  incorrectContainer: {
+    backgroundColor: 'rgba(239, 68, 68, 0.15)',
+    borderWidth: 2,
+    borderColor: 'rgba(239, 68, 68, 0.3)',
+  },
+  timeUpContainer: {
+    backgroundColor: 'rgba(245, 158, 11, 0.15)',
+    borderWidth: 2,
+    borderColor: 'rgba(245, 158, 11, 0.3)',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderRadius: 16,
+    marginVertical: 20,
+    width: '100%',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  text: {
+    fontSize: 16,
+    fontWeight: '600',
+    textAlign: 'center',
+    letterSpacing: 0.3,
+  },
+  correctText: {
+    color: '#047857',
+  },
+  incorrectText: {
+    color: '#dc2626',
+  },
+  timeUpText: {
+    fontSize: 16,
+    fontWeight: '600',
+    textAlign: 'center',
+    color: '#d97706',
+    letterSpacing: 0.3,
+  }
+});
+
+// Enhanced Intro Screen Styles
 const introStyles = StyleSheet.create({
   container: {
     flex: 1,
@@ -947,269 +1115,206 @@ const introStyles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   card: {
-    backgroundColor: 'white',
-    borderRadius: 16,
-    padding: 24,
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    borderRadius: 24,
+    padding: 28,
     width: '100%',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 4,
+    shadowColor: '#667eea',
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.2,
+    shadowRadius: 24,
+    elevation: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(102, 126, 234, 0.1)',
   },
   title: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: 'bold',
-    color: '#383773',
+    color: '#1f2937',
     textAlign: 'center',
     marginBottom: 8,
+    letterSpacing: 0.5,
   },
   quizTitle: {
-    fontSize: 16,
-    color: '#5d5b8d',
+    fontSize: 18,
+    color: '#6b7280',
     textAlign: 'center',
-    marginBottom: 20,
+    marginBottom: 24,
+    fontWeight: '500',
   },
   infoContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    backgroundColor: '#f8f8ff',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 20,
+    backgroundColor: 'rgba(248, 250, 252, 0.8)',
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 24,
+    borderWidth: 1,
+    borderColor: 'rgba(102, 126, 234, 0.1)',
   },
   infoItem: {
     alignItems: 'center',
     flex: 1,
   },
   infoIcon: {
-    fontSize: 22,
+    fontSize: 24,
     marginBottom: 8,
   },
   infoValue: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: 'bold',
-    color: '#383773',
+    color: '#1f2937',
+    marginBottom: 4,
   },
   infoLabel: {
     fontSize: 12,
-    color: '#666',
+    color: '#6b7280',
+    fontWeight: '500',
+    textAlign: 'center',
   },
   infoDivider: {
     width: 1,
-    backgroundColor: '#ddd',
-    height: '80%',
+    backgroundColor: 'rgba(203, 213, 225, 0.6)',
+    height: '70%',
     alignSelf: 'center',
   },
   achievementsContainer: {
-    marginBottom: 20,
+    marginBottom: 24,
   },
   achievementsTitle: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: 'bold',
-    color: '#383773',
-    marginBottom: 12,
+    color: '#1f2937',
+    marginBottom: 16,
+    letterSpacing: 0.3,
   },
   achievementItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f0f0ff',
-    borderRadius: 10,
-    padding: 12,
-    marginBottom: 8,
+    backgroundColor: 'rgba(243, 244, 246, 0.8)',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(229, 231, 235, 0.8)',
   },
   achievementIcon: {
-    fontSize: 24,
-    marginRight: 12,
+    fontSize: 28,
+    marginRight: 16,
   },
   achievementTextContainer: {
     flex: 1,
   },
   achievementTitle: {
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: 'bold',
-    color: '#383773',
+    color: '#1f2937',
+    marginBottom: 4,
   },
   achievementDesc: {
-    fontSize: 12,
-    color: '#666',
+    fontSize: 14,
+    color: '#6b7280',
+    lineHeight: 20,
   },
   startButton: {
-    backgroundColor: '#5d5b8d',
-    paddingVertical: 16,
-    borderRadius: 10,
+    backgroundColor: '#4c63d2',
+    paddingVertical: 18,
+    borderRadius: 16,
     alignItems: 'center',
+    shadowColor: '#4c63d2',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.3,
+    shadowRadius: 16,
+    elevation: 8,
   },
   startButtonText: {
     color: 'white',
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: 'bold',
+    letterSpacing: 0.5,
   }
 });
 
+// Enhanced Warning Modal Styles
 const warningStyles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
   },
   modalContent: {
-    backgroundColor: 'white',
-    borderRadius: 16,
-    padding: 24,
-    width: '85%',
+    backgroundColor: 'rgba(255, 255, 255, 0.98)',
+    borderRadius: 24,
+    padding: 28,
+    width: '88%',
     shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
+    shadowOffset: { width: 0, height: 16 },
+    shadowOpacity: 0.3,
+    shadowRadius: 32,
+    elevation: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(0, 0, 0, 0.05)',
   },
   warningTitle: {
-    fontSize: 22,
+    fontSize: 24,
     fontWeight: 'bold',
-    color: '#383773',
+    color: '#1f2937',
     textAlign: 'center',
-    marginBottom: 12,
+    marginBottom: 16,
+    letterSpacing: 0.3,
   },
   warningText: {
     fontSize: 16,
-    color: '#666',
-    lineHeight: 22,
+    color: '#6b7280',
+    lineHeight: 24,
     textAlign: 'center',
-    marginBottom: 24,
+    marginBottom: 28,
   },
   buttonContainer: {
     flexDirection: 'column',
     width: '100%',
   },
   stayButton: {
-    backgroundColor: '#5d5b8d',
-    paddingVertical: 14,
-    borderRadius: 10,
+    backgroundColor: '#4c63d2',
+    paddingVertical: 16,
+    borderRadius: 14,
     marginBottom: 12,
     alignItems: 'center',
+    shadowColor: '#4c63d2',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    elevation: 6,
   },
   stayButtonText: {
     color: 'white',
     fontSize: 16,
     fontWeight: 'bold',
+    letterSpacing: 0.3,
   },
   exitButton: {
-    backgroundColor: '#f0f0ff',
-    paddingVertical: 14,
-    borderRadius: 10,
+    backgroundColor: 'rgba(248, 250, 252, 0.95)',
+    paddingVertical: 16,
+    borderRadius: 14,
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#ddd',
+    borderWidth: 2,
+    borderColor: 'rgba(203, 213, 225, 0.8)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
   },
   exitButtonText: {
-    color: '#383773',
+    color: '#4b5563',
     fontSize: 16,
     fontWeight: '600',
+    letterSpacing: 0.3,
   }
 });
 
-// Progress Bar Styles
-const progressStyles = StyleSheet.create({
-  container: {
-    width: '100%',
-    marginBottom: 15,
-  },
-  progressBarContainer: {
-    height: 8,
-    backgroundColor: '#ffffff',
-    borderRadius: 4,
-    overflow: 'hidden',
-  },
-  progressBar: {
-    height: '100%',
-    backgroundColor: '#5d5b8d',
-    borderRadius: 4,
-  },
-  progressText: {
-    textAlign: 'right',
-    marginTop: 4,
-    fontSize: 14,
-    color: '#383773',
-    fontWeight: '500',
-  }
-});
-
-// Timer Styles
-const timerStyles = StyleSheet.create({
-  container: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'white',
-    paddingHorizontal: 15,
-    paddingVertical: 8,
-    borderRadius: 20,
-    alignSelf: 'center',
-    marginVertical: 10,
-  },
-  clockIcon: {
-    fontSize: 16,
-    marginRight: 5,
-  },
-  timeText: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: '#383773',
-  },
-  timeWarning: {
-    color: '#ff5252',
-  }
-});
-
-// Feedback Message Styles
-const feedbackStyles = StyleSheet.create({
-  container: {
-    padding: 12,
-    borderRadius: 8,
-    marginVertical: 15,
-    width: '100%',
-  },
-  correctContainer: {
-    backgroundColor: 'rgba(76, 175, 80, 0.2)',
-  },
-  incorrectContainer: {
-    backgroundColor: 'rgba(255, 82, 82, 0.2)',
-  },
-  timeUpContainer: {
-    backgroundColor: 'rgba(255, 193, 7, 0.2)',
-    padding: 12,
-    borderRadius: 8,
-    marginVertical: 15,
-    width: '100%',
-  },
-  text: {
-    fontSize: 14,
-    fontWeight: '500',
-    textAlign: 'center',
-  },
-  correctText: {
-    color: '#2e7d32',
-  },
-  incorrectText: {
-    color: '#c62828',
-  },
-  timeUpText: {
-    fontSize: 14,
-    fontWeight: '500',
-    textAlign: 'center',
-    color: '#f57f17',
-  }
-});
-
-// Results Screen Styles
+// Enhanced Results Screen Styles
 const resultStyles = StyleSheet.create({
   container: {
     flex: 1,
@@ -1218,105 +1323,169 @@ const resultStyles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   card: {
-    backgroundColor: 'white',
-    borderRadius: 16,
-    padding: 24,
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    borderRadius: 24,
+    padding: 28,
     width: '100%',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 4,
+    shadowColor: '#667eea',
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.2,
+    shadowRadius: 24,
+    elevation: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(102, 126, 234, 0.1)',
   },
   title: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: 'bold',
-    color: '#383773',
+    color: '#1f2937',
     textAlign: 'center',
-    marginBottom: 16,
+    marginBottom: 20,
+    letterSpacing: 0.5,
   },
   scoreContainer: {
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 24,
+    backgroundColor: 'rgba(243, 244, 246, 0.6)',
+    borderRadius: 20,
+    paddingVertical: 20,
+    paddingHorizontal: 24,
   },
   scoreText: {
-    fontSize: 36,
+    fontSize: 48,
     fontWeight: 'bold',
-    color: '#5d5b8d',
+    color: '#4c63d2',
+    marginBottom: 8,
   },
   subtitle: {
-    fontSize: 14,
-    color: '#666',
+    fontSize: 16,
+    color: '#6b7280',
     textAlign: 'center',
+    fontWeight: '500',
   },
   xpContainer: {
-    backgroundColor: '#f0f0ff',
-    borderRadius: 12,
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    marginBottom: 20,
+    backgroundColor: 'rgba(248, 250, 252, 0.8)',
+    borderRadius: 16,
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    marginBottom: 24,
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(102, 126, 234, 0.1)',
   },
   xpText: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: 'bold',
-    color: '#383773',
+    color: '#1f2937',
+    letterSpacing: 0.3,
   },
   statsContainer: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    marginBottom: 24,
-    paddingVertical: 12,
-    backgroundColor: '#f8f8ff',
-    borderRadius: 12,
+    marginBottom: 28,
+    paddingVertical: 20,
+    paddingHorizontal: 16,
+    backgroundColor: 'rgba(248, 250, 252, 0.8)',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(229, 231, 235, 0.8)',
   },
   statItem: {
     alignItems: 'center',
     flex: 1,
   },
   statValue: {
-    fontSize: 20,
+    fontSize: 24,
     fontWeight: 'bold',
-    color: '#383773',
+    color: '#1f2937',
+    marginBottom: 4,
   },
   statLabel: {
-    fontSize: 12,
-    color: '#666',
+    fontSize: 14,
+    color: '#6b7280',
+    fontWeight: '500',
   },
   statDivider: {
     width: 1,
-    backgroundColor: '#ddd',
+    backgroundColor: 'rgba(203, 213, 225, 0.6)',
+    height: '70%',
+    alignSelf: 'center',
+  },
+  achievementsContainer: {
+    marginBottom: 24,
+  },
+  achievementsTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#1f2937',
+    marginBottom: 16,
+    textAlign: 'center',
+    letterSpacing: 0.3,
+  },
+  achievementItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(243, 244, 246, 0.8)',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(229, 231, 235, 0.8)',
+  },
+  achievementIcon: {
+    fontSize: 28,
+    marginRight: 16,
+  },
+  achievementTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#1f2937',
+    marginBottom: 4,
+  },
+  achievementDesc: {
+    fontSize: 14,
+    color: '#6b7280',
+    lineHeight: 20,
   },
   buttonContainer: {
-    marginTop: 10,
+    marginTop: 12,
   },
   retryButton: {
-    backgroundColor: '#5d5b8d',
-    paddingVertical: 15,
-    borderRadius: 10,
+    backgroundColor: '#4c63d2',
+    paddingVertical: 18,
+    borderRadius: 16,
     marginBottom: 12,
     alignItems: 'center',
+    shadowColor: '#4c63d2',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.3,
+    shadowRadius: 16,
+    elevation: 8,
   },
   retryButtonText: {
     color: 'white',
     fontSize: 16,
     fontWeight: 'bold',
+    letterSpacing: 0.5,
   },
   exitButton: {
-    backgroundColor: '#f0f0ff',
-    paddingVertical: 15,
-    borderRadius: 10,
+    backgroundColor: 'rgba(248, 250, 252, 0.95)',
+    paddingVertical: 18,
+    borderRadius: 16,
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#ddd',
+    borderWidth: 2,
+    borderColor: 'rgba(203, 213, 225, 0.8)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 4,
   },
   exitButtonText: {
-    color: '#383773',
+    color: '#4b5563',
     fontSize: 16,
     fontWeight: '600',
+    letterSpacing: 0.3,
   }
 });
 
