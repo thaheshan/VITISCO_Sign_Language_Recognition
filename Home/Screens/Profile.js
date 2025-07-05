@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import {
+  Platform,
   View,
   Text,
   Image,
@@ -11,7 +12,7 @@ import {
   Animated,
   Modal,
   Alert,
-  Platform,
+  
 } from "react-native";
 import { Ionicons, Feather, MaterialIcons } from "@expo/vector-icons";
 import * as ImagePicker from 'expo-image-picker';
