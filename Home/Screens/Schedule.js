@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import {
+  Platform,
   SafeAreaView,
   StyleSheet, 
   Text,
@@ -11,7 +12,7 @@ import {
   Animated,
   Dimensions,
   Alert,
-  Platform,
+  
   StatusBar,
 } from 'react-native';
 

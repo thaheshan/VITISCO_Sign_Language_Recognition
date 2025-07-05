@@ -1,6 +1,7 @@
 // App.js - Finalized Language Learning Task Manager
 import React, { useState, useEffect, useRef } from 'react';
 import { 
+  Platform,
   View, 
   Text, 
   StyleSheet, 
@@ -12,7 +13,7 @@ import {
   SafeAreaView,
   ActivityIndicator,
   Alert,
-  Platform,
+  
   Switch
 } from 'react-native';
 import { Calendar } from 'react-native-calendars';
