@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { 
-  View, Text, StyleSheet, Switch, TouchableOpacity, SafeAreaView, StatusBar,
-  Modal, TextInput, Alert, ScrollView, KeyboardAvoidingView, Platform
+    Platform, View, Text, StyleSheet, Switch, TouchableOpacity, SafeAreaView, StatusBar,
+  Modal, TextInput, Alert, ScrollView, KeyboardAvoidingView
 } from 'react-native';
 
 const SettingsScreen = () => {
