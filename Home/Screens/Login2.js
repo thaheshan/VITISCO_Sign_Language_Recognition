@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
-  Platform,
   StyleSheet,
   Text,
   View,
@@ -12,7 +11,7 @@ import {
   Animated,
   Easing,
   KeyboardAvoidingView,
- 
+  
   ScrollView,
   Keyboard,
   TouchableWithoutFeedback,
