@@ -6,7 +6,7 @@ import {
   StyleSheet, 
   SafeAreaView, 
   TouchableOpacity, 
-  Platform,
+
   Image, 
   ScrollView,
   Animated,
@@ -413,7 +413,7 @@ const HomeScreen = () => {
           {/* Speech Therapy Card - Now triggers the Coming Soon popup */}
           <TouchableOpacity 
             style={styles.lessonCard} 
-            onPress={handleSpeechTherapyPress}
+            onPress={() => navigation.navigate('SpeechTherapyIntro', {}, { animation: 'slide_from_right' })}
             activeOpacity={0.9}
           >
             <View>
@@ -424,7 +424,7 @@ const HomeScreen = () => {
                 <View style={[styles.avatar, { backgroundColor: '#FF9800' }]} />
                 <View style={[styles.avatar, { backgroundColor: '#FF5722' }]} />
               </View>
-              <Text style={styles.dueDate}>Coming Soon</Text>
+              <Text style={styles.dueDate}>Coming Soon  </Text>
             </View>
             <View style={styles.progressCircle}>
               <Text style={styles.progressText}>0%</Text>
