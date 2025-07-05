@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react"
 import {
+  Platform,
   View,
   Text,
   TextInput,
@@ -11,7 +12,7 @@ import {
   StyleSheet,
   Clipboard,
   KeyboardAvoidingView,
-  Platform,
+  
 } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 import Ionicons from "react-native-vector-icons/Ionicons"
